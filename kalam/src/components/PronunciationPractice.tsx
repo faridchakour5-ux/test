@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
 import { PronunciationResult, WordStatus, evaluatePronunciation } from '../domain/pronunciation';
 import { UiLang, StringKey, t } from '../i18n/strings';
@@ -35,7 +35,11 @@ export function PronunciationPractice({ lang, expected, onResult, target = DEFAU
   const available = isSpeechInputAvailable();
   const COLOR: Record<WordStatus, string> = { correct: colors.success, close: colors.warning, wrong: colors.danger, missing: colors.textMuted };
 
-  useEffect(() => () => cancelListening(), []);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; cancelListening(); };
+  }, []);
 
   if (!available) {
     return <KText muted accessibilityLiveRegion="polite">{t(lang, 'micUnavailable')}</KText>;
@@ -44,6 +48,7 @@ export function PronunciationPractice({ lang, expected, onResult, target = DEFAU
   const start = async () => {
     setListening(true); setOutcome(null); setHeardLive('');
     await tts.stop(); // le micro ne doit pas capter la voix de l'application
+    if (!mounted.current) return; // écran quitté pendant l'arrêt de la voix: on n'ouvre pas le micro
     const r = await listenOnce({ lang: TARGET_LOCALE[target], patienceMs: profile.speechPatienceMs, maxMs: 10_000, onPartial: setHeardLive });
     setListening(false);
     setHeardLive('');

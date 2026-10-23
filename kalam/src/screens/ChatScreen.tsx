@@ -14,6 +14,7 @@ import { UiLang, t, tf } from '../i18n/strings';
 import { cancelListening, isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
 import { createSentenceSplitter } from '../speech/sentences';
 import { tts } from '../speech/tts';
+import { useStopInBackground } from '../speech/useStopInBackground';
 import { parseTagged, tagMessage } from '../domain/duo';
 import { DEFAULT_TARGET, TARGET_LOCALE, TARGET_NAMES, TargetLang, targetText } from '../domain/targets';
 import { FREE_LESSON_ID, FREE_TOPICS, FreeTopic, getFreeTopic } from '../domain/freeTopics';
@@ -209,6 +210,8 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
     setPartial('');
     dispatch({ type: 'STOP' });
   };
+
+  useStopInBackground(stopAll); // micro, voix et requête coupés dès que l'app passe en arrière-plan
 
   const retrySend = () => {
     const last = messagesRef.current;

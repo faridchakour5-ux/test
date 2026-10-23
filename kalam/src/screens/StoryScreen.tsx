@@ -1,4 +1,5 @@
 import { tts } from '../speech/tts';
+import { useStopInBackground } from '../speech/useStopInBackground';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, Pressable, View } from 'react-native';
 import { BackButton } from '../components/BackButton';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function StoryScreen({ lang, onFinish, onExit }: Props) {
+  useStopInBackground();
   const { colors, profile } = useTheme();
   const [story, setStory] = useState<Story | null>(null);
   const [index, setIndex] = useState(0);

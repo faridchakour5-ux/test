@@ -1,4 +1,5 @@
 import { tts } from '../speech/tts';
+import { useStopInBackground } from '../speech/useStopInBackground';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Card } from '../components/Card';
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function ReviewScreen({ lang, session, onAnswer, onExit, target = DEFAULT_TARGET }: Props) {
+  useStopInBackground();
   const { colors, profile } = useTheme();
   // La séance est figée au départ: répondre ne la modifie pas pendant qu'on la parcourt.
   const queue = useMemo(() => session, []); // eslint-disable-line react-hooks/exhaustive-deps

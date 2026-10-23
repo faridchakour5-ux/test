@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
-import { Linking } from 'react-native';
+import { AppState, AppStateStatus, Linking } from 'react-native';
 import { ChatScreen } from './ChatScreen';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { LESSONS } from '../domain/lessons';
@@ -417,6 +417,52 @@ describe('ChatScreen: apprendre le français', () => {
     await setup('restaurant', 'fr');
     await waitFor(() => expect(screen.getByText('Bonjour et bienvenue !')).toBeTruthy());
     expect(mockAsk.mock.calls[0][0]).toMatchObject({ start: true, targetLang: 'fr' });
+  });
+});
+
+describe('ChatScreen: app en arrière-plan', () => {
+  let handler: (s: AppStateStatus) => void = () => {};
+  beforeEach(() => {
+    jest.spyOn(AppState, 'addEventListener').mockImplementation((_t, h) => { handler = h as (s: AppStateStatus) => void; return { remove: jest.fn() } as never; });
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('pendant l\'écoute: le micro est coupé et l\'écran revient au repos (plus de bouton « Arrêter »)', async () => {
+    mockListen.mockImplementation(() => new Promise(() => {})); // l'écoute ne se termine jamais d'elle-même
+    await setup();
+    await fireEvent.press(screen.getByText('🎤 Parler'));
+    await waitFor(() => expect(screen.getByText('⏹ Arrêter')).toBeTruthy());
+    const { cancelListening } = require('../speech/recognizer'); // eslint-disable-line @typescript-eslint/no-require-imports
+    (cancelListening as jest.Mock).mockClear();
+    await act(async () => { handler('background'); });
+    expect(cancelListening).toHaveBeenCalled();
+    expect(mockStop).toHaveBeenCalled();
+    expect(screen.getByText('🎤 Parler')).toBeTruthy(); // l'interface ne reste pas bloquée sur « écoute »
+    expect(screen.queryByText('⏹ Arrêter')).toBeNull();
+  });
+
+  it('pendant que le professeur parle: la voix est coupée et le mode mains libres est désactivé', async () => {
+    let finishSpeech: (v: string) => void = () => {};
+    mockSpeak.mockImplementation(() => new Promise<string>((r) => { finishSpeech = r; }));
+    mockListen.mockResolvedValue({ ok: true, transcript: 'Hello' });
+    await setup();
+    await fireEvent(screen.getByLabelText('Conversation mains libres'), 'valueChange', true);
+    await fireEvent.press(screen.getByText('🎤 Parler'));
+    await waitFor(() => expect(screen.getByText('⏹ Arrêter la voix')).toBeTruthy());
+    mockListen.mockClear();
+    await act(async () => { handler('inactive'); });
+    expect(screen.getByText('🎤 Parler')).toBeTruthy();
+    await act(async () => { finishSpeech('stopped'); });
+    // l'app est en arrière-plan: le micro ne doit PAS se rouvrir tout seul
+    expect(mockListen).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Conversation mains libres')).toHaveProp('value', false);
+  });
+
+  it('revenir au premier plan ne relance rien', async () => {
+    await setup();
+    mockStop.mockClear();
+    await act(async () => { handler('active'); });
+    expect(mockStop).not.toHaveBeenCalled();
   });
 });
 

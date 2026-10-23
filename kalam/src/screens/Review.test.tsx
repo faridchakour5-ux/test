@@ -1,3 +1,4 @@
+import { AppState, AppStateStatus } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { newCard } from '../domain/srs';
@@ -6,7 +7,8 @@ import { UiLang } from '../i18n/strings';
 import { ReviewScreen } from './ReviewScreen';
 
 const mockSpeak = jest.fn();
-jest.mock('../speech/tts', () => ({ tts: { speak: (...a: unknown[]) => mockSpeak(...a), stop: jest.fn(), hasVoice: async () => true } }));
+const mockStopVoice = jest.fn();
+jest.mock('../speech/tts', () => ({ tts: { speak: (...a: unknown[]) => mockSpeak(...a), stop: (...a: unknown[]) => mockStopVoice(...a), hasVoice: async () => true } }));
 jest.mock('../speech/recognizer', () => ({ isSpeechInputAvailable: () => false, cancelListening: jest.fn(), listenOnce: jest.fn() }));
 
 const show = async (lang: UiLang, target: 'en' | 'fr', key: string) => {
@@ -34,5 +36,18 @@ describe('ReviewScreen selon la langue apprise', () => {
     await show('fr', 'fr', 'fr:restaurant:0');
     expect(screen.getByText('menu')).toBeTruthy();
     expect(screen.queryByText('carte')).toBeNull(); // la réponse n'est pas affichée avant « Voir la réponse »
+  });
+});
+
+describe('ReviewScreen en arrière-plan', () => {
+  afterEach(() => jest.restoreAllMocks());
+  it('la voix est coupée quand l\'app quitte le premier plan', async () => {
+    let handler: (s: AppStateStatus) => void = () => {};
+    jest.spyOn(AppState, 'addEventListener').mockImplementation((_t, h) => { handler = h as (s: AppStateStatus) => void; return { remove: jest.fn() } as never; });
+    await show('fr', 'en', 'restaurant:0');
+    // AVANT d'afficher la réponse: seul l'écran lui-même (pas le composant de prononciation) écoute l'arrière-plan
+    mockStopVoice.mockClear();
+    handler('background');
+    expect(mockStopVoice).toHaveBeenCalled();
   });
 });

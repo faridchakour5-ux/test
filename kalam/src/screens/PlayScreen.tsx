@@ -1,4 +1,5 @@
 import { tts } from '../speech/tts';
+import { useStopInBackground } from '../speech/useStopInBackground';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { BackButton } from '../components/BackButton';
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function PlayScreen({ lang, stars, micAllowed, onCorrect, onExit }: Props) {
+  useStopInBackground();
   const { colors, profile } = useTheme();
   const [rounds, setRounds] = useState<Round[] | null>(null);
   const [index, setIndex] = useState(0);

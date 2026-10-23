@@ -6,6 +6,7 @@ import { DEFAULT_TARGET, TARGET_LOCALE, TargetLang } from '../domain/targets';
 import { PROBLEM_TEXT, problemFromListen } from '../speech/problems';
 import { cancelListening, isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
 import { tts } from '../speech/tts';
+import { useStopInBackground } from '../speech/useStopInBackground';
 import { useTheme } from '../theme/ThemeProvider';
 import { KText } from './KText';
 import { Mascot } from './Mascot';
@@ -21,6 +22,7 @@ interface Props {
 const MARK: Record<WordStatus, string> = { correct: '✓', close: '~', wrong: '✗', missing: '…' };
 
 export function PronunciationPractice({ lang, expected, onResult, target = DEFAULT_TARGET }: Props) {
+  useStopInBackground();
   const { colors, profile } = useTheme();
   const [listening, setListening] = useState(false);
   // Le résultat est rattaché à la phrase demandée: changer de phrase l'efface sans effet de bord.

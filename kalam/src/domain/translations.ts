@@ -3,7 +3,7 @@ export interface Tr { ar: string; es: string; zh: string }
 
 const T = (ar: string, es: string, zh: string): Tr => ({ ar, es, zh });
 
-// Mots et expressions des 20 leçons, indexés par leur forme anglaise.
+// Mots et expressions des 30 leçons, indexés par leur forme anglaise.
 export const VOCAB_TR: Record<string, Tr> = {
   'Hello': T('مرحبًا', 'Hola', '你好'),
   'My name is': T('اسمي', 'Me llamo', '我叫'),
@@ -85,6 +85,46 @@ export const VOCAB_TR: Record<string, Tr> = {
   'actually': T('في الحقيقة', 'en realidad', '其实'),
   'I wonder if': T('أتساءل إن كان', 'me pregunto si', '我想知道是否'),
   'let me explain': T('دعني أشرح', 'déjame explicar', '让我解释一下'),
+  'account': T('حساب', 'cuenta', '账户'),
+  'withdraw money': T('سحب المال', 'sacar dinero', '取钱'),
+  'deposit': T('إيداع', 'ingreso', '存款'),
+  'bank card': T('بطاقة مصرفية', 'tarjeta bancaria', '银行卡'),
+  'medicine': T('دواء', 'medicina', '药'),
+  'allergic': T('لديه حساسية', 'alérgico', '过敏'),
+  'twice a day': T('مرتين في اليوم', 'dos veces al día', '每天两次'),
+  'side effects': T('آثار جانبية', 'efectos secundarios', '副作用'),
+  'neighbour': T('جار', 'vecino', '邻居'),
+  'noisy': T('مزعج', 'ruidoso', '吵闹的'),
+  'borrow': T('يستعير', 'pedir prestado', '借'),
+  'I am sorry': T('أنا آسف', 'lo siento', '对不起'),
+  'What time is it?': T('كم الساعة؟', '¿Qué hora es?', '现在几点？'),
+  'o\'clock': T('تمامًا (الساعة)', 'en punto', '整点'),
+  'half past': T('والنصف', 'y media', '半'),
+  'I am late': T('أنا متأخر', 'llego tarde', '我迟到了'),
+  'shirt': T('قميص', 'camisa', '衬衫'),
+  'shoes': T('حذاء', 'zapatos', '鞋子'),
+  'jacket': T('سترة', 'chaqueta', '夹克'),
+  'too small': T('صغير جدًا', 'demasiado pequeño', '太小了'),
+  'movie': T('فيلم', 'película', '电影'),
+  'seat': T('مقعد', 'asiento', '座位'),
+  'popcorn': T('فشار', 'palomitas', '爆米花'),
+  'subtitles': T('ترجمة', 'subtítulos', '字幕'),
+  'landlord': T('المالك', 'casero', '房东'),
+  'rent': T('الإيجار', 'alquiler', '房租'),
+  'contract': T('عقد', 'contrato', '合同'),
+  'furnished': T('مفروش', 'amueblado', '带家具的'),
+  'headline': T('عنوان رئيسي', 'titular', '头条'),
+  'according to': T('وفقًا لـ', 'según', '根据'),
+  'in the future': T('في المستقبل', 'en el futuro', '在未来'),
+  'it depends': T('يعتمد على', 'depende', '视情况而定'),
+  'Help!': T('النجدة!', '¡Socorro!', '救命！'),
+  'ambulance': T('سيارة إسعاف', 'ambulancia', '救护车'),
+  'accident': T('حادث', 'accidente', '事故'),
+  'call the police': T('اتصل بالشرطة', 'llama a la policía', '报警'),
+  'goal': T('هدف', 'objetivo', '目标'),
+  'improve': T('يتحسّن', 'mejorar', '提高'),
+  'achieve': T('يحقق', 'lograr', '实现'),
+  'in the long run': T('على المدى الطويل', 'a largo plazo', '从长远来看'),
 };
 
 export const LESSON_TITLES_TR: Record<string, { es: string; zh: string }> = {
@@ -108,6 +148,16 @@ export const LESSON_TITLES_TR: Record<string, { es: string; zh: string }> = {
   opinions: { es: 'Dar su opinión', zh: '表达观点' },
   problems: { es: 'Resolver un problema', zh: '解决问题' },
   free: { es: 'Habla libremente', zh: '自由交谈' },
+  bank: { es: 'En el banco', zh: '在银行' },
+  pharmacy: { es: 'En la farmacia', zh: '在药店' },
+  neighbors: { es: 'Los vecinos', zh: '邻居' },
+  time: { es: 'Decir la hora', zh: '说时间' },
+  clothes: { es: 'La ropa', zh: '衣服' },
+  cinema: { es: 'En el cine', zh: '在电影院' },
+  rent: { es: 'Alquilar un piso', zh: '租房' },
+  news: { es: 'Las noticias', zh: '新闻' },
+  emergency: { es: 'Emergencias', zh: '紧急情况' },
+  goals: { es: 'Mis objetivos', zh: '我的目标' },
 };
 
 // Mode enfant: mots (par id), titres de thèmes et d'histoires, phrases des histoires.

@@ -4,9 +4,11 @@ import { addMinutes, completeLesson, goalReached, initialProgress } from './prog
 import { newCard, review } from './srs';
 
 describe('lessons', () => {
-  it('contient 20 leçons uniques avec vocabulaire traduit dans toutes les langues', () => {
-    expect(LESSONS).toHaveLength(20);
-    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(20);
+  it('contient 30 leçons uniques avec vocabulaire traduit dans toutes les langues', () => {
+    expect(LESSONS).toHaveLength(30);
+    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(30);
+    expect(LESSONS.filter((l) => l.level === 'A1').length).toBeGreaterThanOrEqual(8);
+    expect(LESSONS.filter((l) => l.level === 'B1').length).toBeGreaterThanOrEqual(8);
     LESSONS.forEach((l) => {
       expect(l.vocab.length).toBeGreaterThanOrEqual(4);
       (['fr', 'en', 'ar', 'es', 'zh'] as const).forEach((lang) => expect(l.title[lang].trim()).not.toBe(''));

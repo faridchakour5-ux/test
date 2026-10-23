@@ -1,4 +1,4 @@
-// 20 leçons d'anglais organisées par situations (CEFR A1 -> B1), pas par listes de mots.
+// 30 leçons d'anglais organisées par situations (CEFR A1 -> B1), pas par listes de mots.
 import { UiLang } from '../i18n/strings';
 import { LESSON_TITLES_TR, VOCAB_TR } from './translations';
 
@@ -64,6 +64,16 @@ export const LESSONS: Lesson[] = [
   L('travel', 'B1', 'Voyager', 'Travelling', 'السفر', 'You are at the airport and handle check-in and security.', [['boarding pass', 'carte d\'embarquement'], ['luggage', 'bagages'], ['customs', 'douane'], ['gate', 'porte d\'embarquement']]),
   L('opinions', 'B1', 'Donner son avis', 'Giving opinions', 'إبداء الرأي', 'You debate a simple topic with a friend and give reasons.', [['I think that', 'Je pense que'], ['however', 'cependant'], ['because', 'parce que'], ['on the other hand', 'd\'autre part']]),
   L('problems', 'B1', 'Résoudre un problème', 'Solving a problem', 'حل مشكلة', 'You complain politely about a faulty product and ask for a solution.', [['refund', 'remboursement'], ['broken', 'cassé'], ['complaint', 'réclamation'], ['replace', 'remplacer']]),
+  L('bank', 'A2', 'À la banque', 'At the bank', 'في البنك', 'You are at a bank counter asking to open an account and withdraw money.', [['account', 'compte'], ['withdraw money', 'retirer de l\'argent'], ['deposit', 'dépôt'], ['bank card', 'carte bancaire']]),
+  L('pharmacy', 'A2', 'À la pharmacie', 'At the pharmacy', 'في الصيدلية', 'You buy medicine at a pharmacy and ask how to take it.', [['medicine', 'médicament'], ['allergic', 'allergique'], ['twice a day', 'deux fois par jour'], ['side effects', 'effets secondaires']]),
+  L('neighbors', 'A1', 'Les voisins', 'Neighbours', 'الجيران', 'You politely talk to your neighbour about noise.', [['neighbour', 'voisin'], ['noisy', 'bruyant'], ['borrow', 'emprunter'], ['I am sorry', 'je suis désolé']]),
+  L('time', 'A1', 'Dire l\'heure', 'Telling the time', 'قول الوقت', 'You ask for the time and arrange a meeting time with a friend.', [['What time is it?', 'Quelle heure est-il ?'], ['o\'clock', 'pile (heure)'], ['half past', 'et demie'], ['I am late', 'je suis en retard']]),
+  L('clothes', 'A1', 'Les vêtements', 'Clothes', 'الملابس', 'You describe clothes you want to buy in a shop.', [['shirt', 'chemise'], ['shoes', 'chaussures'], ['jacket', 'veste'], ['too small', 'trop petit']]),
+  L('cinema', 'A2', 'Au cinéma', 'At the cinema', 'في السينما', 'You buy cinema tickets and snacks.', [['movie', 'film'], ['seat', 'place'], ['popcorn', 'pop-corn'], ['subtitles', 'sous-titres']]),
+  L('rent', 'B1', 'Louer un appartement', 'Renting a flat', 'استئجار شقة', 'You visit a flat and ask the landlord about the rent and contract.', [['landlord', 'propriétaire'], ['rent', 'loyer'], ['contract', 'contrat'], ['furnished', 'meublé']]),
+  L('news', 'B1', 'Les actualités', 'The news', 'الأخبار', 'You discuss a news story with a friend and give your view.', [['headline', 'gros titre'], ['according to', 'selon'], ['in the future', 'à l\'avenir'], ['it depends', 'ça dépend']]),
+  L('emergency', 'A2', 'Urgences', 'Emergencies', 'الطوارئ', 'You report an emergency on the phone calmly and clearly.', [['Help!', 'Au secours !'], ['ambulance', 'ambulance'], ['accident', 'accident'], ['call the police', 'appeler la police']]),
+  L('goals', 'B1', 'Mes objectifs', 'My goals', 'أهدافي', 'You talk about your goals for next year.', [['goal', 'objectif'], ['improve', 's\'améliorer'], ['achieve', 'réussir à atteindre'], ['in the long run', 'à long terme']]),
   L('free', 'B1', 'Parle librement', 'Free talk', 'تحدث بحرية', 'Free conversation: the learner chooses the topic.', [['by the way', 'au fait'], ['actually', 'en fait'], ['I wonder if', 'je me demande si'], ['let me explain', 'laissez-moi expliquer']]),
 ];
 

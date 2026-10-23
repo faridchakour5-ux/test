@@ -9,6 +9,7 @@ import { UiLang } from '../i18n/strings';
 import { DEFAULT_PALETTE, PaletteId } from '../theme/palettes';
 import { AgeProfileId } from '../theme/profiles';
 import { clearAllKalamData, loadAllConversations } from './conversations';
+import { normalizeCards, normalizeKids, normalizePalette, normalizeProfile, normalizeUiLang } from './normalize';
 import { buildExport } from './exportData';
 import { load, save } from './storage';
 
@@ -47,12 +48,15 @@ export function migrate(saved: Partial<Persisted> & { level?: Level | null }): P
   }
   if (saved.level && LEVELS.includes(saved.level) && !levels.en) levels.en = saved.level; // ancienne version: un seul niveau, l'anglais
   return {
-    ...base,
-    ...saved,
+    // Chaque champ est vérifié: une valeur inconnue ou abîmée est remplacée par une valeur sûre (jamais de plantage).
+    profile: normalizeProfile(saved.profile),
+    uiLang: normalizeUiLang(saved.uiLang),
+    palette: normalizePalette(saved.palette),
+    cards: normalizeCards(saved.cards),
     targetLang: isTargetLang(saved.targetLang) ? saved.targetLang : DEFAULT_TARGET,
     levels,
     progress: normalizeProgress(saved.progress, todayStr()),
-    kids: { ...initialKids(), ...(saved.kids ?? {}) },
+    kids: normalizeKids(saved.kids, initialKids()),
   };
 }
 

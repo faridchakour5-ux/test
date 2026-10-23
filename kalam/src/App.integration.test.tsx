@@ -244,6 +244,42 @@ describe('App: mode enfant', () => {
   });
 });
 
+describe('App: sauvegarde partiellement abîmée (chaque champ est vérifié)', () => {
+  const start = async (state: object) => { mockStore.set('kalam:state:v1', JSON.stringify(state)); await boot(); };
+  const ok = { profile: 'adult', levels: { en: 'A1' }, uiLang: 'fr' };
+
+  it('palette inconnue: thème par défaut, pas de plantage', async () => {
+    await start({ ...ok, palette: 'neon-disco' });
+    expect(await screen.findByText(/Kalam · A1/)).toBeTruthy();
+  });
+  it('profil inconnu: retour au choix du profil', async () => {
+    await start({ ...ok, profile: 'wizard' });
+    expect(await screen.findByText('Qui va apprendre ?')).toBeTruthy();
+  });
+  it('langue d\'interface inconnue: français par défaut', async () => {
+    await start({ ...ok, uiLang: 'klingon' });
+    expect(await screen.findByText(/Kalam · A1/)).toBeTruthy();
+    expect(screen.getByText(/Continuer/)).toBeTruthy();
+  });
+  it.each([
+    ['cartes: un objet au lieu d\'une liste', { cards: { a: 1 } }],
+    ['cartes: des éléments invalides', { cards: [null, 5, 'x', { key: 3 }, { key: 'restaurant:0', ease: 'x', intervalDays: -1, due: 'hier' }] }],
+    ['mode enfant: histoires lues non-liste', { kids: { storiesRead: 'oups', stars: 'beaucoup', consent: 'oui', dailyLimit: 'jamais' } }],
+    ['mode enfant: tout à null', { kids: null }],
+  ])('%s: l\'accueil s\'affiche, la révision et le reste fonctionnent', async (_label, extra) => {
+    await start({ ...ok, ...extra });
+    expect(await screen.findByText(/Kalam · A1/)).toBeTruthy();
+    await fireEvent.press(screen.getByText(/^Réviser/)); // ouvre la révision sans planter
+    expect(await screen.findByText('Rien à réviser pour le moment. Bravo !')).toBeTruthy();
+  });
+  it('mode enfant avec des valeurs abîmées: l\'accueil enfant et l\'espace parents restent utilisables', async () => {
+    await start({ profile: 'kids', uiLang: 'fr', kids: { storiesRead: 7, stars: -3, consent: { micAllowed: 'oui' }, dailyLimit: 12 } });
+    expect(await screen.findByText('Histoires')).toBeTruthy();
+    expect(screen.getByLabelText('0 étoiles')).toBeTruthy(); // les étoiles ne sont ni négatives ni NaN
+    expect(screen.queryByLabelText(/NaN|-3/)).toBeNull();
+  });
+});
+
 describe('App: sauvegarde corrompue', () => {
   it.each(['null', '42', '"texte"', '[]', '[1,2]', 'true'])('une sauvegarde valant %s ne bloque pas l\'app sur le chargement', async (raw) => {
     mockStore.set('kalam:state:v1', raw);

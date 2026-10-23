@@ -5,6 +5,7 @@ import { buildReviewSession } from './src/domain/deck';
 import { LESSONS, getLesson } from './src/domain/lessons';
 import { Card } from './src/domain/srs';
 import { timeIsUp } from './src/domain/parental';
+import { localDay } from './src/domain/progress';
 import { isRtl } from './src/i18n/strings';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -89,7 +90,7 @@ function Root() {
       dueCount={buildReviewSession(app.cards, now, 999).length}
       onReview={() => setRoute({ name: 'review', session: buildReviewSession(app.cards, now) })}
       onSwitchProfile={() => { app.resetProfile(); home(); }} palette={app.palette} onPalette={app.setPalette}
-      onLang={app.setUiLang} onErase={() => { app.eraseAll(); home(); }} />;
+      onLang={app.setUiLang} onErase={() => { app.eraseAll(); home(); }} today={localDay(new Date(now))} />;
   }
 
   return (

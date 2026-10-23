@@ -116,6 +116,12 @@ export const fr = {
   weekChartLabel: '7 derniers jours',
   level: 'Niveau',
   xpPoints: 'points',
+  challengeTitle: 'Défi du jour',
+  chMinutes5: 'Pratique 5 minutes',
+  chMinutes10: 'Pratique 10 minutes',
+  chLesson1: 'Termine une leçon',
+  challengeDone: 'Défi réussi ! +15 points',
+  challengeHint: 'Un nouveau défi demain. Aucune pression.',
 } as const;
 
 export type StringKey = keyof typeof fr;

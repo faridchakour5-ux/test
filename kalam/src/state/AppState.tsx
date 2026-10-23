@@ -3,7 +3,7 @@ import { cardsForLesson } from '../domain/deck';
 import { Level } from '../domain/lessons';
 import { Card, review } from '../domain/srs';
 import { Consent, DailyLimit, grantMic, noConsent, revokeMic } from '../domain/parental';
-import { Progress, XP_PER_REVIEW, addMinutes, addXp, completeLesson, initialProgress, normalizeProgress } from '../domain/progress';
+import { Progress, XP_PER_REVIEW, localDay, addMinutes, addXp, applyChallenge, completeLesson, initialProgress, noteLessonToday, normalizeProgress } from '../domain/progress';
 import { UiLang } from '../i18n/strings';
 import { DEFAULT_PALETTE, PaletteId } from '../theme/palettes';
 import { AgeProfileId } from '../theme/profiles';
@@ -29,7 +29,7 @@ export interface KidsState {
 
 export const initialKids = (): KidsState => ({ stars: 0, storiesRead: [], consent: noConsent(), dailyLimit: 20 });
 
-export const todayStr = () => new Date().toISOString().slice(0, 10);
+export const todayStr = () => localDay();
 
 const initial = (): Persisted => ({ profile: null, level: null, uiLang: 'fr', progress: initialProgress(todayStr()), cards: [], kids: initialKids(), palette: DEFAULT_PALETTE });
 
@@ -73,8 +73,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setUiLang: (uiLang) => update((s) => ({ ...s, uiLang })),
     setGoal: (g) => update((s) => ({ ...s, progress: { ...s.progress, dailyGoalMinutes: g } })),
     logSession: (minutes, lessonId) => update((s) => {
-      let progress = addMinutes(s.progress, minutes, todayStr());
-      if (lessonId) progress = completeLesson(progress, lessonId);
+      const today = todayStr();
+      let progress = addMinutes(s.progress, minutes, today);
+      if (lessonId) progress = noteLessonToday(completeLesson(progress, lessonId), today);
+      progress = applyChallenge(progress, today);
       return { ...s, progress, cards: lessonId ? cardsForLesson(lessonId, s.cards, Date.now()) : s.cards };
     }),
     setPalette: (palette) => update((s) => ({ ...s, palette })),

@@ -118,4 +118,10 @@ export const ar: Record<StringKey, string> = {
   weekChartLabel: 'آخر ٧ أيام',
   level: 'المستوى',
   xpPoints: 'نقطة',
+  challengeTitle: 'تحدّي اليوم',
+  chMinutes5: 'تدرّب ٥ دقائق',
+  chMinutes10: 'تدرّب ١٠ دقائق',
+  chLesson1: 'أنهِ درسًا واحدًا',
+  challengeDone: 'أنجزت التحدي! +١٥ نقطة',
+  challengeHint: 'تحدٍّ جديد غدًا. بلا ضغط.',
 };

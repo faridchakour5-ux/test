@@ -118,4 +118,10 @@ export const es: Record<StringKey, string> = {
   weekChartLabel: 'Últimos 7 días',
   level: 'Nivel',
   xpPoints: 'puntos',
+  challengeTitle: 'Reto del día',
+  chMinutes5: 'Practica 5 minutos',
+  chMinutes10: 'Practica 10 minutos',
+  chLesson1: 'Termina una lección',
+  challengeDone: '¡Reto cumplido! +15 puntos',
+  challengeHint: 'Un nuevo reto mañana. Sin presión.',
 };

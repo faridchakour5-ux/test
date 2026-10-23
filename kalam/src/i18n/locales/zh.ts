@@ -118,4 +118,10 @@ export const zh: Record<StringKey, string> = {
   weekChartLabel: '最近 7 天',
   level: '等级',
   xpPoints: '分',
+  challengeTitle: '每日挑战',
+  chMinutes5: '练习 5 分钟',
+  chMinutes10: '练习 10 分钟',
+  chLesson1: '完成一节课',
+  challengeDone: '挑战完成！+15 分',
+  challengeHint: '明天有新挑战，没有压力。',
 };

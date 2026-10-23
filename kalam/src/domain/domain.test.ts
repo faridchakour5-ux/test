@@ -1,6 +1,6 @@
 import { LESSONS, meaning, recommendLessons } from './lessons';
 import { PLACEMENT, scorePlacement } from './level';
-import { addMinutes, addXp, completeLesson, goalReached, initialProgress, lastDays, levelFromXp, normalizeProgress, shiftDay, totalMinutes, xpForLevel } from './progress';
+import { CHALLENGE_POOL, CHALLENGE_XP, ChallengeId, addMinutes, addXp, applyChallenge, challengeProgress, completeLesson, dailyChallenge, goalReached, initialProgress, isChallengeDone, lastDays, lessonsDoneToday, levelFromXp, localDay, noteLessonToday, normalizeProgress, shiftDay, totalMinutes, xpForLevel } from './progress';
 import { newCard, review } from './srs';
 
 describe('lessons', () => {
@@ -207,5 +207,72 @@ describe('niveau d\'expérience (xp)', () => {
     expect(normalizeProgress({} as never, '2026-03-10').xp).toBe(0);
     expect(normalizeProgress({ xp: -4 } as never, '2026-03-10').xp).toBe(0);
     expect(normalizeProgress({ xp: 41.7 } as never, '2026-03-10').xp).toBe(41);
+  });
+});
+
+describe('jour local', () => {
+  it('localDay formate AAAA-MM-JJ avec des zéros', () => {
+    expect(localDay(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05'); // 23h59 locale = encore le 5, même si UTC est le 6
+    expect(localDay(new Date(2026, 10, 30, 0, 1))).toBe('2026-11-30');
+  });
+  it('normalizeProgress remet les minutes à zéro un nouveau jour, garde le reste', () => {
+    const saved = { ...initialProgress('2026-03-09'), minutesToday: 10, streak: 4, xp: 50, completedLessons: ['family'] };
+    const n = normalizeProgress(saved, '2026-03-10');
+    expect(n).toMatchObject({ today: '2026-03-10', minutesToday: 0, streak: 4, xp: 50, completedLessons: ['family'] });
+    expect(normalizeProgress(saved, '2026-03-09').minutesToday).toBe(10); // même jour: conservé
+  });
+});
+
+describe('défi du jour', () => {
+  const T = '2026-03-10';
+  const choose = (id: ChallengeId) => { for (let d = 1; d <= 60; d++) { const day = `2026-04-${String((d % 28) + 1).padStart(2, '0')}`; if (dailyChallenge(day) === id) return day; } throw new Error('introuvable'); };
+
+  it('est stable dans la journée et varie selon les jours', () => {
+    expect(dailyChallenge(T)).toBe(dailyChallenge(T));
+    const seen = new Set<ChallengeId>();
+    for (let d = 1; d <= 28; d++) seen.add(dailyChallenge(`2026-02-${String(d).padStart(2, '0')}`));
+    expect(seen.size).toBeGreaterThanOrEqual(2);
+    seen.forEach((id) => expect(CHALLENGE_POOL).toContain(id));
+  });
+  it('toujours réalisable: aucun défi ne dépend de cartes à réviser', () => {
+    expect(CHALLENGE_POOL.every((id) => ['minutes5', 'minutes10', 'lesson1'].includes(id))).toBe(true);
+  });
+  it('défi minutes: progresse puis donne le bonus UNE seule fois', () => {
+    const day = choose('minutes5');
+    let p = initialProgress(day);
+    expect(isChallengeDone(p, day)).toBe(false);
+    p = applyChallenge(addMinutes(p, 3, day), day);
+    expect(p.xp).toBe(3); // pas encore de bonus
+    expect(challengeProgress('minutes5', p, day)).toEqual({ done: 3, target: 5 });
+    p = applyChallenge(addMinutes(p, 2, day), day);
+    expect(p.xp).toBe(5 + CHALLENGE_XP);
+    expect(p.challengeClaimedDay).toBe(day);
+    const again = applyChallenge(addMinutes(p, 5, day), day);
+    expect(again.xp).toBe(p.xp + 5); // les minutes comptent, mais pas de 2e bonus
+  });
+  it('défi leçon: une leçon terminée (même répétée) le réussit', () => {
+    const day = choose('lesson1');
+    let p = initialProgress(day);
+    p = noteLessonToday(completeLesson(addMinutes(p, 1, day), 'family'), day);
+    p = applyChallenge(p, day);
+    expect(isChallengeDone(p, day)).toBe(true);
+    expect(p.challengeClaimedDay).toBe(day);
+  });
+  it('le compteur de leçons repart à zéro un autre jour', () => {
+    const p = noteLessonToday(initialProgress('2026-03-10'), '2026-03-10');
+    expect(lessonsDoneToday(p, '2026-03-10')).toBe(1);
+    expect(lessonsDoneToday(p, '2026-03-11')).toBe(0);
+  });
+  it('un défi non réussi n\'enlève jamais de points', () => {
+    const day = choose('minutes10');
+    const p = applyChallenge(addMinutes(initialProgress(day), 2, day), day);
+    expect(p.xp).toBe(2);
+    expect(p.challengeClaimedDay).toBeNull();
+  });
+  it('normalizeProgress migre lessonsToday et challengeClaimedDay', () => {
+    const n = normalizeProgress({ lessonsToday: { day: '2026-03-10', count: 2.9 }, challengeClaimedDay: '2026-03-09' } as never, '2026-03-10');
+    expect(n.lessonsToday).toEqual({ day: '2026-03-10', count: 2 });
+    expect(n.challengeClaimedDay).toBe('2026-03-09');
+    expect(normalizeProgress({ lessonsToday: 'x' } as never, '2026-03-10').lessonsToday).toEqual({ day: '2026-03-10', count: 0 });
   });
 });

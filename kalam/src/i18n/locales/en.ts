@@ -118,4 +118,10 @@ export const en: Record<StringKey, string> = {
   weekChartLabel: 'Last 7 days',
   level: 'Level',
   xpPoints: 'points',
+  challengeTitle: 'Daily challenge',
+  chMinutes5: 'Practise for 5 minutes',
+  chMinutes10: 'Practise for 10 minutes',
+  chLesson1: 'Finish one lesson',
+  challengeDone: 'Challenge complete! +15 points',
+  challengeHint: 'A new challenge tomorrow. No pressure.',
 };

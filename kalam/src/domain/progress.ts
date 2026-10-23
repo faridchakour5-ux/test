@@ -8,11 +8,20 @@ export interface Progress {
   completedLessons: string[];
   history: Record<string, number>; // minutes par jour (YYYY-MM-DD), 60 derniers jours
   xp: number; // points d'expérience: ne baissent JAMAIS (pas de punition)
+  lessonsToday: { day: string; count: number }; // leçons terminées aujourd'hui (pour le défi du jour)
+  challengeClaimedDay: string | null; // dernier jour où le bonus du défi a été donné
 }
 
 export const initialProgress = (today: string): Progress => ({
   dailyGoalMinutes: 10, minutesToday: 0, today, streak: 0, lastActiveDay: null, completedLessons: [], history: {}, xp: 0,
+  lessonsToday: { day: today, count: 0 }, challengeClaimedDay: null,
 });
+
+// Jour calendaire LOCAL (YYYY-MM-DD): le « jour » de l'utilisateur change à SON minuit, pas à celui d'UTC.
+export function localDay(date: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
 
 const dayDiff = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
 
@@ -69,13 +78,18 @@ export function normalizeProgress(raw: Partial<Progress> | null | undefined, tod
   }
   return {
     dailyGoalMinutes: (goals.includes(raw.dailyGoalMinutes as number) ? raw.dailyGoalMinutes : base.dailyGoalMinutes) as Progress['dailyGoalMinutes'],
-    minutesToday: num(raw.minutesToday, 0),
-    today: typeof raw.today === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.today) ? raw.today : today,
+    // Nouveau jour depuis la dernière ouverture: on ne montre pas les minutes d'hier comme celles d'aujourd'hui.
+    minutesToday: raw.today === today ? num(raw.minutesToday, 0) : 0,
+    today,
     streak: num(raw.streak, 0),
     lastActiveDay: typeof raw.lastActiveDay === 'string' ? raw.lastActiveDay : null,
     completedLessons: Array.isArray(raw.completedLessons) ? raw.completedLessons.filter((x): x is string => typeof x === 'string') : [],
     history: pruneHistory(history, today),
     xp: Math.floor(num(raw.xp, 0)),
+    lessonsToday: raw.lessonsToday && typeof raw.lessonsToday.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.lessonsToday.day)
+      ? { day: raw.lessonsToday.day, count: Math.floor(num(raw.lessonsToday.count, 0)) }
+      : { day: today, count: 0 },
+    challengeClaimedDay: typeof raw.challengeClaimedDay === 'string' ? raw.challengeClaimedDay : null,
   };
 }
 
@@ -104,4 +118,43 @@ export function levelFromXp(xpRaw: number): LevelInfo {
   const levelStart = xpForLevel(level);
   const nextAt = xpForLevel(level + 1);
   return { level, xp, levelStart, nextAt, fraction: (xp - levelStart) / (nextAt - levelStart) };
+}
+
+// ---------- Défi du jour ----------
+// Toujours réalisable (jamais de dépendance à du contenu à réviser), identique toute la journée.
+export type ChallengeId = 'minutes5' | 'minutes10' | 'lesson1';
+export const CHALLENGE_POOL: ChallengeId[] = ['minutes5', 'minutes10', 'lesson1'];
+export const CHALLENGE_XP = 15;
+
+export function dailyChallenge(day: string): ChallengeId {
+  let h = 0;
+  for (const c of day) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return CHALLENGE_POOL[h % CHALLENGE_POOL.length];
+}
+
+export const lessonsDoneToday = (p: Progress, today: string) => (p.lessonsToday?.day === today ? p.lessonsToday.count : 0);
+
+export function challengeProgress(id: ChallengeId, p: Progress, today: string): { done: number; target: number } {
+  const minutes = p.today === today ? p.minutesToday : 0;
+  switch (id) {
+    case 'minutes5': return { done: Math.min(minutes, 5), target: 5 };
+    case 'minutes10': return { done: Math.min(minutes, 10), target: 10 };
+    case 'lesson1': return { done: Math.min(lessonsDoneToday(p, today), 1), target: 1 };
+  }
+}
+
+export const isChallengeDone = (p: Progress, today: string) => {
+  const { done, target } = challengeProgress(dailyChallenge(today), p, today);
+  return done >= target;
+};
+
+// Note une leçon terminée aujourd'hui (même répétée: le défi compte l'activité, pas la nouveauté).
+export function noteLessonToday(p: Progress, today: string): Progress {
+  return { ...p, lessonsToday: { day: today, count: lessonsDoneToday(p, today) + 1 } };
+}
+
+// Donne le bonus une seule fois par jour, dès que le défi est réussi.
+export function applyChallenge(p: Progress, today: string): Progress {
+  if (p.challengeClaimedDay === today || !isChallengeDone(p, today)) return p;
+  return { ...addXp(p, CHALLENGE_XP), challengeClaimedDay: today };
 }

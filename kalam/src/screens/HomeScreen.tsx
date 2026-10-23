@@ -8,7 +8,8 @@ import { PalettePicker } from '../components/PalettePicker';
 import { PaletteId } from '../theme/palettes';
 import { KText } from '../components/KText';
 import { LESSONS, Level, recommendLessons } from '../domain/lessons';
-import { Progress, goalReached, lastDays } from '../domain/progress';
+import { Progress, goalReached, lastDays, rollDay } from '../domain/progress';
+import { ChallengeCard } from '../components/ChallengeCard';
 import { LevelBadge } from '../components/LevelBadge';
 import { WeekChart } from '../components/WeekChart';
 import { UiLang, isRtl, t } from '../i18n/strings';
@@ -27,9 +28,12 @@ interface Props {
   onPalette: (p: PaletteId) => void;
   onLang: (l: UiLang) => void;
   onErase: () => void;
+  today: string; // jour local courant (YYYY-MM-DD)
 }
 
-export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal, dueCount, onReview, onSwitchProfile, palette, onPalette, onLang, onErase }: Props) {
+export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson, onGoal, dueCount, onReview, onSwitchProfile, palette, onPalette, onLang, onErase, today }: Props) {
+  // La progression sauvegardée peut dater d'hier: on l'aligne sur le jour courant pour l'affichage.
+  const progress = rollDay(storedProgress, today);
   const { colors, profile } = useTheme();
   const rtl = isRtl(lang);
   const row = { flexDirection: rtl ? ('row-reverse' as const) : ('row' as const), gap: 8 };
@@ -67,9 +71,11 @@ export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal, dueCou
 
       <Card><LevelBadge lang={lang} xp={progress.xp} /></Card>
 
+      <ChallengeCard lang={lang} progress={progress} today={today} />
+
       <Card style={{ gap: 8 }}>
         <KText weight="800" accessibilityRole="header">📊 {t(lang, 'thisWeek')}</KText>
-        <WeekChart lang={lang} bars={lastDays(progress, progress.today)} goal={progress.dailyGoalMinutes} lessonsDone={progress.completedLessons.length} />
+        <WeekChart lang={lang} bars={lastDays(progress, today)} goal={progress.dailyGoalMinutes} lessonsDone={progress.completedLessons.length} />
       </Card>
 
       {recommendLessons(level, progress.completedLessons).length > 0 && (

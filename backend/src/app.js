@@ -29,14 +29,15 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
   function readBody(req) {
     return new Promise((resolve, reject) => {
       let data = '';
-      let tooLarge = false;
+      let done = false;
+      const fail = (err) => { if (!done) { done = true; reject(err); } };
       req.on('data', (c) => {
-        if (tooLarge) return;
+        if (done) return;
         data += c;
-        if (data.length > MAX_BODY) { tooLarge = true; data = ''; }
+        if (data.length > MAX_BODY) { data = ''; fail(Object.assign(new Error('too large'), { status: 413 })); }
       });
-      req.on('end', () => (tooLarge ? reject(Object.assign(new Error('too large'), { status: 413 })) : resolve(data)));
-      req.on('error', reject);
+      req.on('end', () => { if (!done) { done = true; resolve(data); } });
+      req.on('error', fail);
     });
   }
 
@@ -101,17 +102,24 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
 
       if (!allow(clientKey(req, trustProxy))) return send(res, 429, { error: 'too many requests' });
       if (!client) return send(res, 503, { error: 'server not configured' });
-      if (!takeBudget()) return send(res, 503, { error: 'daily budget reached' });
 
       let body;
       try { body = JSON.parse(await readBody(req)); }
-      catch (e) { return send(res, e?.status === 413 ? 413 : 400, { error: e?.status === 413 ? 'payload too large' : 'invalid json' }); }
+      catch (e) {
+        if (e?.status !== 413) return send(res, 400, { error: 'invalid json' });
+        // Corps trop gros: on répond, puis on coupe la connexion au lieu de continuer à lire l'envoi.
+        res.setHeader('Connection', 'close');
+        res.on('finish', () => req.destroy());
+        return send(res, 413, { error: 'payload too large' });
+      }
 
       const { value, error } = validateChat(body);
       if (error) return send(res, 400, { error });
       const incoming = value.start ? [{ role: 'user', content: OPENING_PROMPT }] : value.messages;
       const clean = sanitizeMessages(incoming, value.ageProfile);
       if (clean.error) return send(res, 400, { error: clean.error });
+      // Le budget quotidien ne compte que les requêtes valides, celles qui coûtent vraiment un appel à l'IA.
+      if (!takeBudget()) return send(res, 503, { error: 'daily budget reached' });
 
       const params = {
         model,

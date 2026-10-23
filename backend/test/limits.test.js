@@ -60,3 +60,38 @@ test('le plafond quotidien global renvoie 503', async () => {
     assert.deepEqual(await r.json(), { error: 'daily budget reached' });
   });
 });
+
+test('une requête invalide ne consomme pas le budget quotidien', async () => {
+  await withServer({ client, dailyBudget: 1, rate: { max: 100, windowMs: 60_000 } }, async (base) => {
+    const bad = await fetch(`${base}/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{pas du json' });
+    assert.equal(bad.status, 400);
+    const invalid = await fetch(`${base}/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ageProfile: 'adult' }) });
+    assert.equal(invalid.status, 400);
+    assert.equal((await post(base)).status, 200); // l'unique requête du budget est encore disponible
+    assert.equal((await post(base)).status, 503); // et là seulement, il est épuisé
+  });
+});
+
+test('un corps énorme est refusé (413) et la connexion est coupée: le serveur ne lit pas des mégaoctets pour rien', { timeout: 20_000 }, async () => {
+  const http = await import('node:http');
+  await withServer({ client }, async (base) => {
+    const url = new URL(base);
+    const result = await new Promise((resolve) => {
+      let sent = 0;
+      let status = null;
+      const req = http.request({ host: url.hostname, port: url.port, path: '/chat', method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      req.on('response', (res) => { status = res.statusCode; res.resume(); });
+      const chunk = Buffer.alloc(64 * 1024, 'a');
+      const pump = () => {
+        if (sent > 50 * 1024 * 1024 || req.destroyed) return resolve({ sent, status });
+        sent += chunk.length;
+        if (req.write(chunk)) setImmediate(pump); else req.once('drain', pump);
+      };
+      req.on('error', () => resolve({ sent, status }));
+      req.on('close', () => resolve({ sent, status }));
+      pump();
+    });
+    assert.equal(result.status, 413);
+    assert.ok(result.sent < 10 * 1024 * 1024, `le serveur a laissé envoyer ${result.sent} octets`);
+  });
+});

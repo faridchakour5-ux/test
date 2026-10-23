@@ -2,6 +2,7 @@ import React from 'react';
 import { ScrollView, View } from 'react-native';
 import { KButton } from '../components/KButton';
 import { KText } from '../components/KText';
+import { Mascot } from '../components/Mascot';
 import { UiLang, isRtl, t } from '../i18n/strings';
 import { AgeProfileId } from '../theme/profiles';
 import { useTheme } from '../theme/ThemeProvider';
@@ -19,6 +20,7 @@ export function ProfilePickerScreen({ lang, onPick }: Props) {
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={{ flexGrow: 1, padding: 24, paddingTop: 72, gap: 16 }}
     >
+      <View style={{ alignItems: 'center' }}><Mascot mood="cheer" size={150} /></View>
       <View style={{ gap: 8, alignItems: rtl ? 'flex-end' : 'flex-start' }}>
         <KText size={34} weight="800" accessibilityRole="header">{t(lang, 'welcome')}</KText>
         <KText muted>{t(lang, 'tagline')}</KText>

@@ -1,18 +1,21 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, I18nManager, View } from 'react-native';
+import { buildReviewSession } from './src/domain/deck';
 import { LESSONS, getLesson } from './src/domain/lessons';
 import { isRtl } from './src/i18n/strings';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LevelTestScreen } from './src/screens/LevelTestScreen';
 import { ProfilePickerScreen } from './src/screens/ProfilePickerScreen';
+import { ReviewScreen } from './src/screens/ReviewScreen';
 import { AppStateProvider, useApp } from './src/state/AppState';
 import { ThemeProvider } from './src/theme/ThemeProvider';
 
 function Root() {
   const app = useApp();
   const [lessonId, setLessonId] = useState<string | null>(null);
+  const [reviewing, setReviewing] = useState<ReturnType<typeof buildReviewSession> | null>(null);
 
   useEffect(() => {
     I18nManager.allowRTL(true);
@@ -27,6 +30,8 @@ function Root() {
         <ProfilePickerScreen lang={app.uiLang} onPick={app.setProfile} />
       ) : !app.level ? (
         <LevelTestScreen lang={app.uiLang} onDone={app.setLevel} />
+      ) : reviewing ? (
+        <ReviewScreen lang={app.uiLang} session={reviewing} onAnswer={app.reviewCard} onExit={() => setReviewing(null)} />
       ) : lessonId && getLesson(lessonId) ? (
         <ChatScreen
           lang={app.uiLang}
@@ -37,7 +42,9 @@ function Root() {
           onFinish={(m) => { app.logSession(m, lessonId); setLessonId(null); }}
         />
       ) : (
-        <HomeScreen lang={app.uiLang} level={app.level} progress={app.progress} onOpenLesson={setLessonId} onGoal={app.setGoal} />
+        <HomeScreen lang={app.uiLang} level={app.level} progress={app.progress} onOpenLesson={setLessonId} onGoal={app.setGoal}
+          dueCount={buildReviewSession(app.cards, Date.now(), 999).length}
+          onReview={() => setReviewing(buildReviewSession(app.cards, Date.now()))} />
       )}
       <StatusBar style="auto" />
     </ThemeProvider>

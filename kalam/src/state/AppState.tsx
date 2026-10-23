@@ -1,5 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { cardsForLesson } from '../domain/deck';
 import { Level } from '../domain/lessons';
+import { Card, review } from '../domain/srs';
 import { Progress, addMinutes, completeLesson, initialProgress } from '../domain/progress';
 import { UiLang } from '../i18n/strings';
 import { AgeProfileId } from '../theme/profiles';
@@ -10,11 +12,12 @@ interface Persisted {
   level: Level | null;
   uiLang: UiLang;
   progress: Progress;
+  cards: Card[];
 }
 
 export const todayStr = () => new Date().toISOString().slice(0, 10);
 
-const initial = (): Persisted => ({ profile: null, level: null, uiLang: 'fr', progress: initialProgress(todayStr()) });
+const initial = (): Persisted => ({ profile: null, level: null, uiLang: 'fr', progress: initialProgress(todayStr()), cards: [] });
 
 interface Ctx extends Persisted {
   ready: boolean;
@@ -23,6 +26,7 @@ interface Ctx extends Persisted {
   setUiLang: (l: UiLang) => void;
   setGoal: (g: 5 | 10 | 20) => void;
   logSession: (minutes: number, lessonId?: string) => void;
+  reviewCard: (key: string, quality: number) => void;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -50,8 +54,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     logSession: (minutes, lessonId) => update((s) => {
       let progress = addMinutes(s.progress, minutes, todayStr());
       if (lessonId) progress = completeLesson(progress, lessonId);
-      return { ...s, progress };
+      return { ...s, progress, cards: lessonId ? cardsForLesson(lessonId, s.cards, Date.now()) : s.cards };
     }),
+    reviewCard: (key, quality) => update((s) => ({
+      ...s,
+      cards: s.cards.map((c) => (c.key === key ? review(c, quality, Date.now()) : c)),
+    })),
   };
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
 }

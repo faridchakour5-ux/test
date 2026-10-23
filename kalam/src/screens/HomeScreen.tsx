@@ -1,6 +1,8 @@
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Card } from '../components/Card';
+import { KButton } from '../components/KButton';
+import { Mascot } from '../components/Mascot';
 import { KText } from '../components/KText';
 import { LESSONS } from '../domain/lessons';
 import { Level } from '../domain/lessons';
@@ -14,16 +16,25 @@ interface Props {
   progress: Progress;
   onOpenLesson: (id: string) => void;
   onGoal: (g: 5 | 10 | 20) => void;
+  dueCount: number;
+  onReview: () => void;
 }
 
-export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal }: Props) {
+export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal, dueCount, onReview }: Props) {
   const { colors, profile } = useTheme();
   const rtl = isRtl(lang);
   const row = { flexDirection: rtl ? ('row-reverse' as const) : ('row' as const), gap: 8 };
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: 24, paddingTop: 72, gap: 16 }}>
-      <KText size={30} weight="800" accessibilityRole="header">Kalam · {level}</KText>
+      <View style={{ flexDirection: rtl ? 'row-reverse' : 'row', alignItems: 'center', gap: 16 }}>
+        <Mascot mood={goalReached(progress) ? 'cheer' : 'happy'} size={profile.id === 'kids' ? 120 : 80} />
+        <View style={{ flex: 1 }}>
+          <KText size={30} weight="800" accessibilityRole="header">Kalam · {level}</KText>
+          <KText muted>{t(lang, 'hello')}</KText>
+        </View>
+      </View>
+      <KButton label={dueCount > 0 ? `${t(lang, 'review')} (${dueCount} ${t(lang, 'reviewDue')})` : t(lang, 'review')} onPress={onReview} />
 
       <Card style={{ gap: 8 }}>
         <KText weight="600">{t(lang, 'goal')}: {progress.minutesToday}/{progress.dailyGoalMinutes} {t(lang, 'minutes')}</KText>

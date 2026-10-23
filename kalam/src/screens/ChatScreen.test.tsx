@@ -215,6 +215,19 @@ describe('ChatScreen: ouverture par le professeur', () => {
   });
 });
 
+describe('ChatScreen: pratique de la prononciation', () => {
+  it('affiche les mots clés de la leçon, en lit un et propose de le dire', async () => {
+    await setup();
+    expect(screen.queryByText('menu')).toBeNull();
+    await fireEvent.press(screen.getByText(/Pratiquer les mots clés/));
+    expect(screen.getByText('menu')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('menu, carte'));
+    expect(mockSpeak).toHaveBeenCalledWith('menu', expect.objectContaining({ lang: 'en-US' }));
+    // le mot choisi est affiché avec son bouton « Dis-le » (micro disponible dans ce test)
+    await waitFor(() => expect(screen.getByText(/Dis-le/)).toBeTruthy());
+  });
+});
+
 describe('ChatScreen: sortie', () => {
   it('coupe la voix et le micro en quittant', async () => {
     const { onBack } = await setup();

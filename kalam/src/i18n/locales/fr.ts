@@ -104,6 +104,8 @@ export const fr = {
   restartRtl: 'Redémarrez l\'application pour appliquer le sens de lecture.',
   eraseMine: 'Effacer mes données',
   eraseMineBody: 'Supprime votre progression, vos réglages et vos conversations enregistrées sur cet appareil. Action définitive.',
+  practice: 'Pratiquer les mots clés',
+  practiceHint: 'Touche un mot, puis dis-le à voix haute.',
 } as const;
 
 export type StringKey = keyof typeof fr;

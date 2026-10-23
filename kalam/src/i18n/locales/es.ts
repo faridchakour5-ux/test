@@ -106,4 +106,6 @@ export const es: Record<StringKey, string> = {
   restartRtl: 'Reinicia la aplicación para aplicar el sentido de lectura.',
   eraseMine: 'Borrar mis datos',
   eraseMineBody: 'Elimina tu progreso, tus ajustes y tus conversaciones guardadas en este dispositivo. Acción definitiva.',
+  practice: 'Practicar palabras clave',
+  practiceHint: 'Toca una palabra y dila en voz alta.',
 };

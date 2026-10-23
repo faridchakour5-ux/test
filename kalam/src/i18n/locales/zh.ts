@@ -106,4 +106,6 @@ export const zh: Record<StringKey, string> = {
   restartRtl: '请重启应用以应用阅读方向。',
   eraseMine: '删除我的数据',
   eraseMineBody: '将删除此设备上的学习进度、设置和已保存的对话，且无法恢复。',
+  practice: '练习关键词',
+  practiceHint: '点一个词，然后大声说出来。',
 };

@@ -106,4 +106,6 @@ export const ar: Record<StringKey, string> = {
   restartRtl: 'أعد تشغيل التطبيق لتطبيق اتجاه القراءة.',
   eraseMine: 'حذف بياناتي',
   eraseMineBody: 'يحذف تقدمك وإعداداتك ومحادثاتك المحفوظة من هذا الجهاز. لا يمكن التراجع.',
+  practice: 'تدرّب على الكلمات الأساسية',
+  practiceHint: 'المس كلمة ثم انطقها بصوت عالٍ.',
 };

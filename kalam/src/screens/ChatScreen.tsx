@@ -6,7 +6,8 @@ import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
 import { KText } from '../components/KText';
 import { Mascot } from '../components/Mascot';
-import { Lesson, Level } from '../domain/lessons';
+import { PronunciationPractice } from '../components/PronunciationPractice';
+import { Lesson, Level, VocabItem, meaning } from '../domain/lessons';
 import { RETRYABLE_SEND } from '../speech/problems';
 import { PROBLEM_TEXT, problemFromListen, problemFromTeacher } from '../speech/problems';
 import { initialTurn, turnReducer } from '../domain/voiceTurn';
@@ -33,6 +34,8 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   const [input, setInput] = useState('');
   const [partial, setPartial] = useState('');
   const [noVoice, setNoVoice] = useState(false);
+  const [showPractice, setShowPractice] = useState(false);
+  const [practiceItem, setPracticeItem] = useState<VocabItem | null>(null);
   const [turn, dispatch] = useReducer(turnReducer, undefined, initialTurn);
   const micOk = isSpeechInputAvailable();
 
@@ -166,6 +169,25 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
       </View>
 
       <ScrollView ref={scroller} contentContainerStyle={{ padding: 24, gap: 12 }} onContentSizeChange={scrollEnd}>
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: showPractice }} onPress={() => { stopAll(); setShowPractice((v) => !v); }} style={{ minHeight: profile.minTouchSize, justifyContent: 'center' }}>
+          <KText weight="600" style={{ color: colors.primary }}>🎯 {t(lang, 'practice')} {showPractice ? '▲' : '▼'}</KText>
+        </Pressable>
+        {showPractice && (
+          <Card style={{ gap: 10 }}>
+            <KText size={13} muted>{t(lang, 'practiceHint')}</KText>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {lesson.vocab.map((v) => (
+                <Pressable key={v.en} accessibilityRole="button" accessibilityLabel={`${v.en}, ${meaning(v, lang)}`} accessibilityState={{ selected: practiceItem?.en === v.en }}
+                  onPress={() => { stopAll(); setPracticeItem(v); void tts.speak(v.en, { lang: 'en-US', rate: profile.speechRate }); }}
+                  style={{ minHeight: 48, paddingHorizontal: 12, borderRadius: profile.radius, justifyContent: 'center', borderWidth: practiceItem?.en === v.en ? 3 : 1, borderColor: practiceItem?.en === v.en ? colors.primary : colors.border }}>
+                  <KText weight="600">{v.en}</KText>
+                  <KText size={12} muted>{meaning(v, lang)}</KText>
+                </Pressable>
+              ))}
+            </View>
+            {practiceItem && <PronunciationPractice lang={lang} expected={practiceItem.en} />}
+          </Card>
+        )}
         {noVoice && <KText size={14} style={{ color: colors.warning }}>⚠ {t(lang, 'noVoice')}</KText>}
         {messages.map((m, i) => (
           <Card key={i} style={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '88%', backgroundColor: m.role === 'user' ? colors.primary : colors.surface }}>

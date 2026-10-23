@@ -4,6 +4,7 @@ import { BackButton } from '../components/BackButton';
 import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
 import { KText } from '../components/KText';
+import { LanguagePicker } from '../components/LanguagePicker';
 import { PalettePicker } from '../components/PalettePicker';
 import { PaletteId } from '../theme/palettes';
 import { DailyLimit, checkGate, makeGate } from '../domain/parental';
@@ -22,9 +23,10 @@ interface Props {
   onBack: () => void;
   palette: PaletteId;
   onPalette: (p: PaletteId) => void;
+  onLang: (l: UiLang) => void;
 }
 
-export function ParentsScreen({ lang, kids, minutesToday, onMic, onLimit, onSwitchProfile, onErase, onBack, palette, onPalette }: Props) {
+export function ParentsScreen({ lang, kids, minutesToday, onMic, onLimit, onSwitchProfile, onErase, onBack, palette, onPalette, onLang }: Props) {
   const { colors, profile } = useTheme();
   const [gate, setGate] = useState(() => makeGate());
   const [unlocked, setUnlocked] = useState(false);
@@ -97,6 +99,7 @@ export function ParentsScreen({ lang, kids, minutesToday, onMic, onLimit, onSwit
         </View>
       </Card>
 
+      <LanguagePicker value={lang} onChange={onLang} />
       <PalettePicker lang={lang} value={palette} onChange={onPalette} />
 
       <KButton label={t(lang, 'switchProfile')} onPress={onSwitchProfile} />

@@ -5,12 +5,13 @@ describe('contenu enfant', () => {
   it('chaque thème a assez d\'éléments avec les 3 langues', () => {
     for (const t of KIDS_TOPICS) {
       expect(t.items.length).toBeGreaterThanOrEqual(5);
-      t.items.forEach((i) => { expect(i.en && i.fr && i.ar && i.emoji).toBeTruthy(); });
+      (['fr', 'en', 'ar', 'es', 'zh'] as const).forEach((l) => expect(t.title[l].trim()).not.toBe(''));
+      t.items.forEach((i) => { expect(i.en && i.fr && i.ar && i.es && i.zh && i.emoji).toBeTruthy(); });
       expect(new Set(t.items.map((i) => i.id)).size).toBe(t.items.length);
     }
   });
   it('les histoires ont 5 phrases traduites', () => {
-    STORIES.forEach((s) => { expect(s.sentences).toHaveLength(5); s.sentences.forEach((x) => expect(x.fr && x.ar).toBeTruthy()); });
+    STORIES.forEach((s) => { expect(s.sentences).toHaveLength(5); s.sentences.forEach((x) => expect(x.fr && x.ar && x.es && x.zh).toBeTruthy()); });
   });
 });
 

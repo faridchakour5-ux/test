@@ -1,13 +1,17 @@
-import { LESSONS } from './lessons';
+import { LESSONS, meaning } from './lessons';
 import { PLACEMENT, scorePlacement } from './level';
 import { addMinutes, completeLesson, goalReached, initialProgress } from './progress';
 import { newCard, review } from './srs';
 
 describe('lessons', () => {
-  it('contient 20 leçons uniques avec vocabulaire', () => {
+  it('contient 20 leçons uniques avec vocabulaire traduit dans toutes les langues', () => {
     expect(LESSONS).toHaveLength(20);
     expect(new Set(LESSONS.map((l) => l.id)).size).toBe(20);
-    LESSONS.forEach((l) => expect(l.vocab.length).toBeGreaterThanOrEqual(4));
+    LESSONS.forEach((l) => {
+      expect(l.vocab.length).toBeGreaterThanOrEqual(4);
+      (['fr', 'en', 'ar', 'es', 'zh'] as const).forEach((lang) => expect(l.title[lang].trim()).not.toBe(''));
+      l.vocab.forEach((v) => { expect(v.fr && v.ar && v.es && v.zh).toBeTruthy(); expect(v.ar).toMatch(/[\u0600-\u06ff]/); expect(v.zh).toMatch(/[\u4e00-\u9fff]/); });
+    });
   });
 });
 
@@ -52,5 +56,16 @@ describe('progress', () => {
     expect(goalReached(p)).toBe(true);
     p = completeLesson(completeLesson(p, 'family'), 'family');
     expect(p.completedLessons).toEqual(['family']);
+  });
+});
+
+describe('meaning', () => {
+  it('donne le sens dans la langue de l\'interface (français pour l\'anglais)', () => {
+    const menu = LESSONS.find((l) => l.id === 'restaurant')!.vocab[0];
+    expect(meaning(menu, 'fr')).toBe('carte');
+    expect(meaning(menu, 'es')).toBe('carta');
+    expect(meaning(menu, 'zh')).toBe('菜单');
+    expect(meaning(menu, 'ar')).toBe('قائمة الطعام');
+    expect(meaning(menu, 'en')).toBe('carte');
   });
 });

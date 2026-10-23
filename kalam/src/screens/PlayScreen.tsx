@@ -7,7 +7,7 @@ import { KText } from '../components/KText';
 import { Mascot } from '../components/Mascot';
 import { PronunciationPractice } from '../components/PronunciationPractice';
 import { KIDS_TOPICS, Round, STARS_PER_CORRECT, buildRounds, newlyUnlocked } from '../domain/kids';
-import { UiLang, t } from '../i18n/strings';
+import { UiLang, pick, t } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
 
 interface Props {
@@ -108,7 +108,7 @@ export function PlayScreen({ lang, stars, micAllowed, onCorrect, onExit }: Props
             <Pressable
               key={o.id}
               accessibilityRole="button"
-              accessibilityLabel={`${o.fr}`}
+              accessibilityLabel={pick(o, lang)}
               accessibilityState={{ disabled: wrong }}
               onPress={() => choose(o.id)}
               style={{ width: 130, minHeight: 130, borderRadius: profile.radius, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', padding: 8,

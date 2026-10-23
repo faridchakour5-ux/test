@@ -1,15 +1,24 @@
 // 20 leçons d'anglais organisées par situations (CEFR A1 -> B1), pas par listes de mots.
+import { UiLang } from '../i18n/strings';
+import { LESSON_TITLES_TR, VOCAB_TR } from './translations';
+
 export type Level = 'A1' | 'A2' | 'B1';
 
 export interface VocabItem {
   en: string;
   fr: string;
+  ar: string;
+  es: string;
+  zh: string;
 }
+
+// Sens d'un mot dans la langue de l'interface. Pour une interface anglaise (langue apprise), on garde le français.
+export const meaning = (v: VocabItem, lang: UiLang): string => (lang === 'en' ? v.fr : v[lang]);
 
 export interface Lesson {
   id: string;
   level: Level;
-  title: { fr: string; en: string; ar: string };
+  title: Record<UiLang, string>;
   scenario: string; // consigne donnée au professeur IA pour le jeu de rôle
   vocab: VocabItem[];
 }
@@ -22,7 +31,18 @@ const L = (
   ar: string,
   scenario: string,
   vocab: [string, string][],
-): Lesson => ({ id, level, title: { fr, en, ar }, scenario, vocab: vocab.map(([e, f]) => ({ en: e, fr: f })) });
+): Lesson => {
+  const tr = LESSON_TITLES_TR[id];
+  if (!tr) throw new Error(`titre manquant pour la leçon ${id}`);
+  return {
+    id, level, title: { fr, en, ar, es: tr.es, zh: tr.zh }, scenario,
+    vocab: vocab.map(([e, f]) => {
+      const v = VOCAB_TR[e];
+      if (!v) throw new Error(`traduction manquante: ${e}`);
+      return { en: e, fr: f, ar: v.ar, es: v.es, zh: v.zh };
+    }),
+  };
+};
 
 export const LESSONS: Lesson[] = [
   L('greetings', 'A1', 'Se présenter', 'Introducing yourself', 'التعريف بالنفس', 'You meet a new person for the first time.', [['Hello', 'Bonjour'], ['My name is', 'Je m\'appelle'], ['Nice to meet you', 'Enchanté'], ['How are you?', 'Comment ça va ?']]),

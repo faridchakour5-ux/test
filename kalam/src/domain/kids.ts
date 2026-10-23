@@ -1,3 +1,6 @@
+import { UiLang } from '../i18n/strings';
+import { KIDS_ITEMS_TR, KIDS_STORY_TR, KIDS_TOPIC_TR } from './translations';
+
 // Contenu et règles du mode enfant (4-8 ans). Tout est local: aucune donnée n'est envoyée à un serveur.
 export interface KidsItem {
   id: string;
@@ -5,34 +8,46 @@ export interface KidsItem {
   en: string;
   fr: string;
   ar: string;
+  es: string;
+  zh: string;
 }
 
 export interface KidsTopic {
   id: string;
   emoji: string;
-  title: { fr: string; en: string; ar: string };
+  title: Record<UiLang, string>;
   items: KidsItem[];
 }
 
-const I = (id: string, emoji: string, en: string, fr: string, ar: string): KidsItem => ({ id, emoji, en, fr, ar });
+const I = (id: string, emoji: string, en: string, fr: string, ar: string): KidsItem => {
+  const tr = KIDS_ITEMS_TR[id];
+  if (!tr) throw new Error(`traduction manquante: ${id}`);
+  return { id, emoji, en, fr, ar, es: tr.es, zh: tr.zh };
+};
+
+const TOPIC = (id: string, emoji: string, fr: string, en: string, ar: string, items: KidsItem[]): KidsTopic => {
+  const tr = KIDS_TOPIC_TR[id];
+  if (!tr) throw new Error(`titre manquant: ${id}`);
+  return { id, emoji, title: { fr, en, ar, es: tr.es, zh: tr.zh }, items };
+};
 
 export const KIDS_TOPICS: KidsTopic[] = [
-  { id: 'animals', emoji: '🐾', title: { fr: 'Animaux', en: 'Animals', ar: 'حيوانات' }, items: [
+  TOPIC('animals', '🐾', 'Animaux', 'Animals', 'حيوانات', [
     I('cat', '🐱', 'cat', 'chat', 'قطة'), I('dog', '🐶', 'dog', 'chien', 'كلب'), I('fish', '🐟', 'fish', 'poisson', 'سمكة'),
     I('bird', '🐦', 'bird', 'oiseau', 'طائر'), I('horse', '🐴', 'horse', 'cheval', 'حصان'), I('rabbit', '🐰', 'rabbit', 'lapin', 'أرنب'),
-  ] },
-  { id: 'fruits', emoji: '🍎', title: { fr: 'Fruits', en: 'Fruits', ar: 'فواكه' }, items: [
+  ]),
+  TOPIC('fruits', '🍎', 'Fruits', 'Fruits', 'فواكه', [
     I('apple', '🍎', 'apple', 'pomme', 'تفاحة'), I('banana', '🍌', 'banana', 'banane', 'موزة'), I('grapes', '🍇', 'grapes', 'raisin', 'عنب'),
     I('orange', '🍊', 'orange', 'orange', 'برتقالة'), I('strawberry', '🍓', 'strawberry', 'fraise', 'فراولة'), I('watermelon', '🍉', 'watermelon', 'pastèque', 'بطيخ'),
-  ] },
-  { id: 'colors', emoji: '🎨', title: { fr: 'Couleurs', en: 'Colors', ar: 'ألوان' }, items: [
+  ]),
+  TOPIC('colors', '🎨', 'Couleurs', 'Colors', 'ألوان', [
     I('red', '🔴', 'red', 'rouge', 'أحمر'), I('blue', '🔵', 'blue', 'bleu', 'أزرق'), I('green', '🟢', 'green', 'vert', 'أخضر'),
     I('yellow', '🟡', 'yellow', 'jaune', 'أصفر'), I('purple', '🟣', 'purple', 'violet', 'بنفسجي'), I('orange-c', '🟠', 'orange', 'orange', 'برتقالي'),
-  ] },
-  { id: 'numbers', emoji: '🔢', title: { fr: 'Chiffres', en: 'Numbers', ar: 'أرقام' }, items: [
+  ]),
+  TOPIC('numbers', '🔢', 'Chiffres', 'Numbers', 'أرقام', [
     I('one', '⭐', 'one', 'un', 'واحد'), I('two', '⭐⭐', 'two', 'deux', 'اثنان'), I('three', '⭐⭐⭐', 'three', 'trois', 'ثلاثة'),
     I('four', '⭐⭐⭐⭐', 'four', 'quatre', 'أربعة'), I('five', '⭐⭐⭐⭐⭐', 'five', 'cinq', 'خمسة'),
-  ] },
+  ]),
 ];
 
 export const getTopic = (id: string) => KIDS_TOPICS.find((t) => t.id === id);
@@ -64,33 +79,42 @@ export function buildRounds(topicId: string, count = 5, rng: Rng = Math.random):
 }
 
 // ---------- Histoires ----------
-export interface StorySentence { en: string; fr: string; ar: string }
-export interface Story { id: string; emoji: string; title: { fr: string; en: string; ar: string }; sentences: StorySentence[] }
+export interface StorySentence { en: string; fr: string; ar: string; es: string; zh: string }
+export interface Story { id: string; emoji: string; title: Record<UiLang, string>; sentences: StorySentence[] }
 
-const S = (en: string, fr: string, ar: string): StorySentence => ({ en, fr, ar });
+
+const ST = (id: string, emoji: string, fr: string, en: string, ar: string, base: [string, string, string][]): Story => {
+  const tr = KIDS_STORY_TR[id];
+  if (!tr) throw new Error(`histoire sans traduction: ${id}`);
+  if (tr.sentences.length !== base.length) throw new Error(`phrases incohérentes: ${id}`);
+  return {
+    id, emoji, title: { fr, en, ar, es: tr.title.es, zh: tr.title.zh },
+    sentences: base.map(([e, f, a], i) => ({ en: e, fr: f, ar: a, es: tr.sentences[i].es, zh: tr.sentences[i].zh })),
+  };
+};
 
 export const STORIES: Story[] = [
-  { id: 'little-cat', emoji: '🐱', title: { fr: 'Le petit chat', en: 'The little cat', ar: 'القطة الصغيرة' }, sentences: [
-    S('I see a little cat.', 'Je vois un petit chat.', 'أرى قطة صغيرة.'),
-    S('The cat is orange.', 'Le chat est orange.', 'القطة برتقالية.'),
-    S('The cat likes fish.', 'Le chat aime le poisson.', 'القطة تحب السمك.'),
-    S('The cat is happy.', 'Le chat est content.', 'القطة سعيدة.'),
-    S('Good night, little cat.', 'Bonne nuit, petit chat.', 'تصبحين على خير أيتها القطة.'),
-  ] },
-  { id: 'red-apple', emoji: '🍎', title: { fr: 'La pomme rouge', en: 'The red apple', ar: 'التفاحة الحمراء' }, sentences: [
-    S('I have a red apple.', 'J\'ai une pomme rouge.', 'عندي تفاحة حمراء.'),
-    S('The apple is big.', 'La pomme est grosse.', 'التفاحة كبيرة.'),
-    S('I give you one half.', 'Je te donne une moitié.', 'أعطيك نصفها.'),
-    S('Thank you, friend!', 'Merci, mon ami !', 'شكرًا يا صديقي!'),
-    S('We eat the apple.', 'Nous mangeons la pomme.', 'نأكل التفاحة.'),
-  ] },
-  { id: 'sunny-day', emoji: '☀️', title: { fr: 'Une belle journée', en: 'A sunny day', ar: 'يوم مشمس' }, sentences: [
-    S('Today is a sunny day.', 'Aujourd\'hui, il y a du soleil.', 'اليوم مشمس.'),
-    S('I go to the park.', 'Je vais au parc.', 'أذهب إلى الحديقة.'),
-    S('I see a bird.', 'Je vois un oiseau.', 'أرى طائرًا.'),
-    S('The bird says hello.', 'L\'oiseau dit bonjour.', 'يقول الطائر مرحبًا.'),
-    S('I say hello too!', 'Moi aussi je dis bonjour !', 'وأنا أيضًا أقول مرحبًا!'),
-  ] },
+  ST('little-cat', '🐱', 'Le petit chat', 'The little cat', 'القطة الصغيرة', [
+    ['I see a little cat.', 'Je vois un petit chat.', 'أرى قطة صغيرة.'],
+    ['The cat is orange.', 'Le chat est orange.', 'القطة برتقالية.'],
+    ['The cat likes fish.', 'Le chat aime le poisson.', 'القطة تحب السمك.'],
+    ['The cat is happy.', 'Le chat est content.', 'القطة سعيدة.'],
+    ['Good night, little cat.', 'Bonne nuit, petit chat.', 'تصبحين على خير أيتها القطة.'],
+  ]),
+  ST('red-apple', '🍎', 'La pomme rouge', 'The red apple', 'التفاحة الحمراء', [
+    ['I have a red apple.', 'J\'ai une pomme rouge.', 'عندي تفاحة حمراء.'],
+    ['The apple is big.', 'La pomme est grosse.', 'التفاحة كبيرة.'],
+    ['I give you one half.', 'Je te donne une moitié.', 'أعطيك نصفها.'],
+    ['Thank you, friend!', 'Merci, mon ami !', 'شكرًا يا صديقي!'],
+    ['We eat the apple.', 'Nous mangeons la pomme.', 'نأكل التفاحة.'],
+  ]),
+  ST('sunny-day', '☀️', 'Une belle journée', 'A sunny day', 'يوم مشمس', [
+    ['Today is a sunny day.', 'Aujourd\'hui, il y a du soleil.', 'اليوم مشمس.'],
+    ['I go to the park.', 'Je vais au parc.', 'أذهب إلى الحديقة.'],
+    ['I see a bird.', 'Je vois un oiseau.', 'أرى طائرًا.'],
+    ['The bird says hello.', 'L\'oiseau dit bonjour.', 'يقول الطائر مرحبًا.'],
+    ['I say hello too!', 'Moi aussi je dis bonjour !', 'وأنا أيضًا أقول مرحبًا!'],
+  ]),
 ];
 
 export const getStory = (id: string) => STORIES.find((s) => s.id === id);

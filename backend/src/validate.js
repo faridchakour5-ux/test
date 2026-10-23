@@ -1,7 +1,7 @@
 // Validation stricte des requêtes: on ne fait jamais confiance au client.
 const PROFILES = ['kids', 'adult', 'senior'];
 const LEVELS = ['A1', 'A2', 'B1'];
-const LANGS = ['fr', 'en', 'ar'];
+export const LANGS = ['fr', 'en', 'ar', 'es', 'zh'];
 export const MAX_MESSAGES = 20;
 export const MAX_CHARS = 500;
 

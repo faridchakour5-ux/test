@@ -1,8 +1,9 @@
 import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
 import { Mascot } from '../components/Mascot';
+import { LanguagePicker } from '../components/LanguagePicker';
 import { PalettePicker } from '../components/PalettePicker';
 import { PaletteId } from '../theme/palettes';
 import { KText } from '../components/KText';
@@ -23,9 +24,11 @@ interface Props {
   onSwitchProfile: () => void;
   palette: PaletteId;
   onPalette: (p: PaletteId) => void;
+  onLang: (l: UiLang) => void;
+  onErase: () => void;
 }
 
-export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal, dueCount, onReview, onSwitchProfile, palette, onPalette }: Props) {
+export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal, dueCount, onReview, onSwitchProfile, palette, onPalette, onLang, onErase }: Props) {
   const { colors, profile } = useTheme();
   const rtl = isRtl(lang);
   const row = { flexDirection: rtl ? ('row-reverse' as const) : ('row' as const), gap: 8 };
@@ -70,8 +73,15 @@ export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal, dueCou
           </Card>
         </Pressable>
       ))}
+      <LanguagePicker value={lang} onChange={onLang} />
       <PalettePicker lang={lang} value={palette} onChange={onPalette} />
       <KButton label={t(lang, 'switchProfile')} onPress={onSwitchProfile} />
+      <Pressable accessibilityRole="button" onPress={() => Alert.alert(t(lang, 'eraseMine'), t(lang, 'eraseMineBody'), [
+        { text: t(lang, 'cancel'), style: 'cancel' },
+        { text: t(lang, 'eraseConfirm'), style: 'destructive', onPress: onErase },
+      ])} style={{ minHeight: profile.minTouchSize, alignItems: 'center', justifyContent: 'center' }}>
+        <KText muted weight="600">{t(lang, 'eraseMine')}</KText>
+      </Pressable>
     </ScrollView>
   );
 }

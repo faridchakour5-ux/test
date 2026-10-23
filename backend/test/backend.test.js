@@ -25,3 +25,12 @@ test('le limiteur bloque après le maximum', () => {
   assert.ok(allow('ip', 0)); assert.ok(allow('ip', 1)); assert.equal(allow('ip', 2), false);
   assert.ok(allow('ip', 2000));
 });
+
+test('accepte toutes les langues d\'interface de l\'app (es et zh compris)', () => {
+  for (const uiLang of ['fr', 'en', 'ar', 'es', 'zh']) assert.ok(validateChat({ ...ok, uiLang }).value, uiLang);
+  assert.ok(validateChat({ ...ok, uiLang: 'de' }).error);
+});
+test('le prompt nomme la langue de l\'apprenant', () => {
+  assert.match(buildSystemPrompt({ ageProfile: 'adult', level: 'A1', uiLang: 'zh' }), /Simplified Chinese/);
+  assert.match(buildSystemPrompt({ ageProfile: 'adult', level: 'A1', uiLang: 'es' }), /Spanish/);
+});

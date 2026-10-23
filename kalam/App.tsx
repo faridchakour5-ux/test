@@ -52,7 +52,7 @@ function Root() {
 
   let screen: React.ReactNode;
   if (!app.profile) {
-    screen = <ProfilePickerScreen lang={app.uiLang} onPick={pickProfile} />;
+    screen = <ProfilePickerScreen lang={app.uiLang} onPick={pickProfile} onLang={app.setUiLang} />;
   } else if (!app.level) {
     screen = <LevelTestScreen lang={app.uiLang} onDone={app.setLevel} />;
   } else if (app.profile === 'kids') {
@@ -69,7 +69,7 @@ function Root() {
     } else if (route.name === 'parents') {
       screen = <ParentsScreen lang={app.uiLang} kids={app.kids} minutesToday={app.progress.minutesToday}
         onMic={app.setMicConsent} onLimit={app.setKidsLimit}
-        onSwitchProfile={() => { app.resetProfile(); home(); }} onErase={() => { app.eraseAll(); home(); }} onBack={home} palette={app.palette} onPalette={app.setPalette} />;
+        onSwitchProfile={() => { app.resetProfile(); home(); }} onErase={() => { app.eraseAll(); home(); }} onBack={home} palette={app.palette} onPalette={app.setPalette} onLang={app.setUiLang} />;
     } else {
       screen = <KidsHomeScreen lang={app.uiLang} stars={app.kids.stars} minutesToday={app.progress.minutesToday} dailyLimit={app.kids.dailyLimit}
         onStories={() => setRoute({ name: 'story' })} onPlay={() => setRoute({ name: 'play' })}
@@ -85,7 +85,8 @@ function Root() {
       onOpenLesson={(id) => setRoute({ name: 'lesson', id })} onGoal={app.setGoal}
       dueCount={buildReviewSession(app.cards, Date.now(), 999).length}
       onReview={() => setRoute({ name: 'review', session: buildReviewSession(app.cards, Date.now()) })}
-      onSwitchProfile={() => { app.resetProfile(); home(); }} palette={app.palette} onPalette={app.setPalette} />;
+      onSwitchProfile={() => { app.resetProfile(); home(); }} palette={app.palette} onPalette={app.setPalette}
+      onLang={app.setUiLang} onErase={() => { app.eraseAll(); home(); }} />;
   }
 
   return (

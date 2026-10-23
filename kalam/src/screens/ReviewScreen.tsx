@@ -5,6 +5,7 @@ import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
 import { KText } from '../components/KText';
 import { Mascot } from '../components/Mascot';
+import { meaning } from '../domain/lessons';
 import { PronunciationPractice } from '../components/PronunciationPractice';
 import { ANSWER_QUALITY, Answer, vocabForKey } from '../domain/deck';
 import { Card as SrsCard } from '../domain/srs';
@@ -64,7 +65,7 @@ export function ReviewScreen({ lang, session, onAnswer, onExit }: Props) {
             <Mascot mood={revealed ? 'happy' : 'thinking'} size={profile.id === 'kids' ? 160 : 100} />
           </View>
           <Card style={{ gap: 12, alignItems: 'center', paddingVertical: 32 }}>
-            <KText size={28} weight="800" style={{ textAlign: 'center' }}>{current?.fr}</KText>
+            <KText size={28} weight="800" style={{ textAlign: 'center' }}>{current ? meaning(current, lang) : ''}</KText>
             {revealed && (
               <>
                 <KText size={26} weight="600" style={{ color: colors.primary, textAlign: 'center' }}>{current?.en}</KText>

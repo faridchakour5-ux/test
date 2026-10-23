@@ -6,7 +6,9 @@
 
 ## Mode ados / adultes / seniors
 - Les messages de conversation sont envoyés à notre serveur, puis à un fournisseur d'IA pour générer la réponse du professeur. Les adresses e-mail, numéros de téléphone, adresses postales et liens sont masqués avant l'envoi.
-- La progression (objectif, série, leçons, cartes de révision) est stockée uniquement sur l'appareil.
+- La progression (objectif, série, leçons, cartes de révision) et vos conversations sont stockées uniquement sur l'appareil, pour que vous puissiez les reprendre. Le bouton « Effacer mes données » les supprime.
+- Le micro (facultatif) est traité par le service de reconnaissance vocale du système (Android ou Apple), qui peut l'envoyer à Google ou Apple. Kalam ne reçoit et ne conserve aucun enregistrement audio.
+- Côté serveur, le texte des messages n'est pas conservé par Kalam au-delà du traitement de la requête (à confirmer selon votre hébergeur et ses journaux).
 
 ## Mode enfant (4-8 ans)
 - Aucune donnée de l'enfant n'est envoyée à un serveur : pas de chat libre avec l'IA, pas de compte, pas d'identifiant publicitaire.

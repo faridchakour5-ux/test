@@ -1,14 +1,15 @@
-import { render, screen } from '@testing-library/react-native';
+import { Alert, Share } from 'react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { initialProgress } from '../domain/progress';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { HomeScreen } from './HomeScreen';
 
 const noop = () => {};
-const home = (progress: ReturnType<typeof initialProgress>, today: string) => (
+const home = (progress: ReturnType<typeof initialProgress>, today: string, onExport: () => Promise<string> = async () => '{}') => (
   <ThemeProvider profileId="adult">
     <HomeScreen lang="fr" level="A1" progress={progress} onOpenLesson={noop} onGoal={noop} dueCount={0} onReview={noop}
-      onSwitchProfile={noop} palette="violet" onPalette={noop} onLang={noop} onErase={noop} today={today} />
+      onSwitchProfile={noop} palette="violet" onPalette={noop} onLang={noop} onErase={noop} onExport={onExport} today={today} />
   </ThemeProvider>
 );
 
@@ -28,5 +29,24 @@ describe('HomeScreen: changement de jour', () => {
     expect(screen.getByText(/Défi du jour/)).toBeTruthy();
     expect(screen.getByText(/Niveau 1/)).toBeTruthy();
     expect(screen.getByText(/Cette semaine/)).toBeTruthy();
+  });
+});
+
+describe('HomeScreen: export des données', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('« Exporter mes données » ouvre le partage avec le JSON complet', async () => {
+    const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction', activityType: undefined });
+    await render(home(initialProgress('2026-03-10'), '2026-03-10', async () => '{"app":"kalam"}'));
+    await fireEvent.press(screen.getByText('Exporter mes données'));
+    await waitFor(() => expect(share).toHaveBeenCalledWith({ title: 'Mes données Kalam', message: '{"app":"kalam"}' }));
+  });
+
+  it('si l\'export échoue, un message clair s\'affiche (pas de plantage)', async () => {
+    jest.spyOn(Share, 'share').mockRejectedValue(new Error('x'));
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    await render(home(initialProgress('2026-03-10'), '2026-03-10'));
+    await fireEvent.press(screen.getByText('Exporter mes données'));
+    await waitFor(() => expect(alert).toHaveBeenCalledWith('L\'export a échoué. Réessayez.'));
   });
 });

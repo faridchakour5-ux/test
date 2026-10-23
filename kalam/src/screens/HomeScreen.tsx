@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, View } from 'react-native';
 import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
 import { Mascot } from '../components/Mascot';
@@ -28,10 +28,11 @@ interface Props {
   onPalette: (p: PaletteId) => void;
   onLang: (l: UiLang) => void;
   onErase: () => void;
+  onExport: () => Promise<string>;
   today: string; // jour local courant (YYYY-MM-DD)
 }
 
-export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson, onGoal, dueCount, onReview, onSwitchProfile, palette, onPalette, onLang, onErase, today }: Props) {
+export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson, onGoal, dueCount, onReview, onSwitchProfile, palette, onPalette, onLang, onErase, onExport, today }: Props) {
   // La progression sauvegardée peut dater d'hier: on l'aligne sur le jour courant pour l'affichage.
   const progress = rollDay(storedProgress, today);
   const { colors, profile } = useTheme();
@@ -104,6 +105,12 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
       <LanguagePicker value={lang} onChange={onLang} />
       <PalettePicker lang={lang} value={palette} onChange={onPalette} />
       <KButton label={t(lang, 'switchProfile')} onPress={onSwitchProfile} />
+      <Pressable accessibilityRole="button" onPress={async () => {
+        try { await Share.share({ title: t(lang, 'exportTitle'), message: await onExport() }); }
+        catch { Alert.alert(t(lang, 'exportFailed')); }
+      }} style={{ minHeight: profile.minTouchSize, alignItems: 'center', justifyContent: 'center' }}>
+        <KText muted weight="600">{t(lang, 'exportMine')}</KText>
+      </Pressable>
       <Pressable accessibilityRole="button" onPress={() => Alert.alert(t(lang, 'eraseMine'), t(lang, 'eraseMineBody'), [
         { text: t(lang, 'cancel'), style: 'cancel' },
         { text: t(lang, 'eraseConfirm'), style: 'destructive', onPress: onErase },

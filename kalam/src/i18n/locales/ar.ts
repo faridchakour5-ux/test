@@ -124,4 +124,7 @@ export const ar: Record<StringKey, string> = {
   chLesson1: 'أنهِ درسًا واحدًا',
   challengeDone: 'أنجزت التحدي! +١٥ نقطة',
   challengeHint: 'تحدٍّ جديد غدًا. بلا ضغط.',
+  exportMine: 'تصدير بياناتي',
+  exportTitle: 'بياناتي في كلام',
+  exportFailed: 'فشل التصدير. حاول مرة أخرى.',
 };

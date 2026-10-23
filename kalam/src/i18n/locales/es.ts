@@ -124,4 +124,7 @@ export const es: Record<StringKey, string> = {
   chLesson1: 'Termina una lección',
   challengeDone: '¡Reto cumplido! +15 puntos',
   challengeHint: 'Un nuevo reto mañana. Sin presión.',
+  exportMine: 'Exportar mis datos',
+  exportTitle: 'Mis datos de Kalam',
+  exportFailed: 'La exportación falló. Inténtalo de nuevo.',
 };

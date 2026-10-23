@@ -40,3 +40,18 @@ export async function clearAllKalamData(): Promise<void> {
     if (mine.length) await AsyncStorage.removeMany(mine);
   } catch { /* ignoré */ }
 }
+
+// Toutes les conversations enregistrées sur l'appareil (pour l'export des données).
+export async function loadAllConversations(): Promise<Record<string, ChatMessage[]>> {
+  const out: Record<string, ChatMessage[]> = {};
+  try {
+    const prefix = 'kalam:conv:v1:';
+    const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith(prefix));
+    for (const k of keys) {
+      const lessonId = k.slice(prefix.length);
+      const msgs = await loadConversation(lessonId);
+      if (msgs.length > 0) out[lessonId] = msgs;
+    }
+  } catch { /* export partiel plutôt qu'un échec */ }
+  return out;
+}

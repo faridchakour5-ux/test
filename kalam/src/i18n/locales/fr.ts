@@ -122,6 +122,9 @@ export const fr = {
   chLesson1: 'Termine une leçon',
   challengeDone: 'Défi réussi ! +15 points',
   challengeHint: 'Un nouveau défi demain. Aucune pression.',
+  exportMine: 'Exporter mes données',
+  exportTitle: 'Mes données Kalam',
+  exportFailed: 'L\'export a échoué. Réessayez.',
 } as const;
 
 export type StringKey = keyof typeof fr;

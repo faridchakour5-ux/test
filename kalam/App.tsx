@@ -73,7 +73,7 @@ function Root() {
     } else if (route.name === 'parents') {
       screen = <ParentsScreen lang={app.uiLang} kids={app.kids} minutesToday={app.progress.minutesToday}
         onMic={app.setMicConsent} onLimit={app.setKidsLimit}
-        onSwitchProfile={() => { app.resetProfile(); home(); }} onErase={() => { app.eraseAll(); home(); }} onBack={home} palette={app.palette} onPalette={app.setPalette} onLang={app.setUiLang} />;
+        onSwitchProfile={() => { app.resetProfile(); home(); }} onErase={() => { app.eraseAll(); home(); }} onBack={home} palette={app.palette} onPalette={app.setPalette} onLang={app.setUiLang} onExport={app.exportData} />;
     } else {
       screen = <KidsHomeScreen lang={app.uiLang} stars={app.kids.stars} minutesToday={app.progress.minutesToday} dailyLimit={app.kids.dailyLimit}
         onStories={() => setRoute({ name: 'story' })} onPlay={() => setRoute({ name: 'play' })}
@@ -90,7 +90,7 @@ function Root() {
       dueCount={buildReviewSession(app.cards, now, 999).length}
       onReview={() => setRoute({ name: 'review', session: buildReviewSession(app.cards, now) })}
       onSwitchProfile={() => { app.resetProfile(); home(); }} palette={app.palette} onPalette={app.setPalette}
-      onLang={app.setUiLang} onErase={() => { app.eraseAll(); home(); }} today={localDay(new Date(now))} />;
+      onLang={app.setUiLang} onErase={() => { app.eraseAll(); home(); }} onExport={app.exportData} today={localDay(new Date(now))} />;
   }
 
   return (

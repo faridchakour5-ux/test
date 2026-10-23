@@ -18,7 +18,7 @@
 - Le consentement parental (date et version du texte) est enregistré localement sur l'appareil.
 
 ## Vos droits (RGPD)
-Accès, rectification, effacement (bouton « Effacer toutes les données »), portabilité. Contact : à renseigner.
+Accès et portabilité (bouton « Exporter mes données » : toutes vos données en JSON lisible), rectification, effacement (bouton « Effacer mes données »). Contact : à renseigner.
 
 ## Points à valider avant la mise en ligne
 - Programme « Famille » de Google Play et déclaration de l'audience cible (enfants) : obligatoire dès que l'app vise les moins de 13 ans.

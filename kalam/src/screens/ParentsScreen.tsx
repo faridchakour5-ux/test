@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, Switch, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, Switch, View } from 'react-native';
 import { BackButton } from '../components/BackButton';
 import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
@@ -24,9 +24,10 @@ interface Props {
   palette: PaletteId;
   onPalette: (p: PaletteId) => void;
   onLang: (l: UiLang) => void;
+  onExport: () => Promise<string>;
 }
 
-export function ParentsScreen({ lang, kids, minutesToday, onMic, onLimit, onSwitchProfile, onErase, onBack, palette, onPalette, onLang }: Props) {
+export function ParentsScreen({ lang, kids, minutesToday, onMic, onLimit, onSwitchProfile, onErase, onBack, palette, onPalette, onLang, onExport }: Props) {
   const { colors, profile } = useTheme();
   const [gate, setGate] = useState(() => makeGate());
   const [unlocked, setUnlocked] = useState(false);
@@ -103,6 +104,11 @@ export function ParentsScreen({ lang, kids, minutesToday, onMic, onLimit, onSwit
       <PalettePicker lang={lang} value={palette} onChange={onPalette} />
 
       <KButton label={t(lang, 'switchProfile')} onPress={onSwitchProfile} />
+
+      <KButton label={t(lang, 'exportMine')} onPress={async () => {
+        try { await Share.share({ title: t(lang, 'exportTitle'), message: await onExport() }); }
+        catch { Alert.alert(t(lang, 'exportFailed')); }
+      }} />
 
       <Card style={{ gap: 8 }}>
         <KText weight="800">{t(lang, 'eraseTitle')}</KText>

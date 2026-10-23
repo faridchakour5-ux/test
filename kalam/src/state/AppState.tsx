@@ -7,7 +7,8 @@ import { Progress, XP_PER_REVIEW, localDay, addMinutes, addXp, applyChallenge, c
 import { UiLang } from '../i18n/strings';
 import { DEFAULT_PALETTE, PaletteId } from '../theme/palettes';
 import { AgeProfileId } from '../theme/profiles';
-import { clearAllKalamData } from './conversations';
+import { clearAllKalamData, loadAllConversations } from './conversations';
+import { buildExport } from './exportData';
 import { load, save } from './storage';
 
 interface Persisted {
@@ -47,6 +48,7 @@ interface Ctx extends Persisted {
   setMicConsent: (on: boolean) => void;
   setKidsLimit: (l: DailyLimit) => void;
   eraseAll: () => void;
+  exportData: () => Promise<string>;
   setPalette: (p: PaletteId) => void;
 }
 
@@ -87,6 +89,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setKidsLimit: (dailyLimit) => update((s) => ({ ...s, kids: { ...s.kids, dailyLimit } })),
     // Droit à l'effacement (RGPD): on remet tout à zéro, y compris le consentement.
     eraseAll: () => { void clearAllKalamData(); setState(initial()); },
+    // Droit à la portabilité (RGPD): renvoie toutes les données de l'appareil en JSON lisible.
+    exportData: async () => buildExport(state, await loadAllConversations()),
     reviewCard: (key, quality) => update((s) => ({
       ...s,
       cards: s.cards.map((c) => (c.key === key ? review(c, quality, Date.now()) : c)),

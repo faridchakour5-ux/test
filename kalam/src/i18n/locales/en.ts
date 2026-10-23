@@ -124,4 +124,7 @@ export const en: Record<StringKey, string> = {
   chLesson1: 'Finish one lesson',
   challengeDone: 'Challenge complete! +15 points',
   challengeHint: 'A new challenge tomorrow. No pressure.',
+  exportMine: 'Export my data',
+  exportTitle: 'My Kalam data',
+  exportFailed: 'Export failed. Please try again.',
 };

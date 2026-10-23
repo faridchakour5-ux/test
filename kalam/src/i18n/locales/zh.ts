@@ -124,4 +124,7 @@ export const zh: Record<StringKey, string> = {
   chLesson1: '完成一节课',
   challengeDone: '挑战完成！+15 分',
   challengeHint: '明天有新挑战，没有压力。',
+  exportMine: '导出我的数据',
+  exportTitle: '我的 Kalam 数据',
+  exportFailed: '导出失败，请重试。',
 };

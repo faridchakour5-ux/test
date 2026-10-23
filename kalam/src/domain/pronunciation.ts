@@ -1,3 +1,4 @@
+import { FALLBACK_LETTERS, nfc, safeRegExp } from '../util/safeRegex';
 // Évaluation de prononciation mot par mot, à partir de ce que la reconnaissance vocale a compris.
 // Limite assumée: on compare du TEXTE reconnu, pas les sons (phonèmes). Un mot mal compris
 // par le moteur est un signal fiable de prononciation difficile à comprendre, pas une mesure acoustique.
@@ -14,13 +15,15 @@ export interface PronunciationResult {
   score: number; // 0-100
 }
 
+
+export const NON_WORD_CHARS = safeRegExp('[^\\p{L}\\p{M}\\p{N}\\s]', 'gu', new RegExp(`[^${FALLBACK_LETTERS}\\s]`, 'g'));
+
 // Mots d'une phrase, en minuscules, avec les lettres de toute langue (é, ñ, ç, ü…) conservées.
 export const normalize = (text: string): string[] =>
-  text
-    .normalize('NFC')
+  nfc(text)
     .toLowerCase()
     .replace(/[’'`]/g, '')
-    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(NON_WORD_CHARS, ' ')
     .split(/\s+/)
     .filter(Boolean);
 

@@ -1,10 +1,14 @@
+import { safeRegExp } from '../util/safeRegex';
+
 // Prépare le texte du professeur pour la synthèse vocale.
+
+export const EMOJI = safeRegExp('\\p{Extended_Pictographic}', 'gu', /[\u{1F000}-\u{1FAFF}\u{2190}-\u{2BFF}\u{FE0F}]/gu);
 
 // Retire ce qu'une voix lirait mal: markdown, émojis, symboles.
 export function cleanForSpeech(text: string): string {
   return text
     .replace(/[*_`#>~]+/g, '')
-    .replace(/\p{Extended_Pictographic}/gu, '')
+    .replace(EMOJI, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
 }

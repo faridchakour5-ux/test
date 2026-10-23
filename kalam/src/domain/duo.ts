@@ -1,18 +1,19 @@
 import { UiLang } from '../i18n/strings';
+import { FALLBACK_LETTERS, nfc, safeRegExp } from '../util/safeRegex';
 import { FreeTopic } from './freeTopics';
 import { Lesson } from './lessons';
 
 // Mode « conversation à deux »: deux personnes pratiquent ensemble, le professeur IA anime et donne la parole à chacun.
 
 export const DUO_LESSON_ID = 'duo';
+export const NAME_FORBIDDEN = safeRegExp("[^\\p{L}\\p{M}\\p{N} '’-]", 'gu', new RegExp(`[^${FALLBACK_LETTERS} '’-]`, 'g'));
 export const MAX_NAME_LENGTH = 16;
 
 // Les prénoms finissent dans la consigne de l'IA: on n'accepte que lettres, chiffres, espace, tiret et apostrophe.
 // Pas de crochets, de retours à la ligne ni de ponctuation: impossible d'y glisser une instruction ou de casser le format « [Nom] ».
 export function sanitizeName(raw: string, fallback: string): string {
-  const cleaned = raw
-    .normalize('NFC')
-    .replace(/[^\p{L}\p{N} '’-]/gu, '')
+  const cleaned = nfc(raw)
+    .replace(NAME_FORBIDDEN, '')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, MAX_NAME_LENGTH)

@@ -23,6 +23,8 @@ import { StickersScreen } from './src/screens/StickersScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { StoryScreen } from './src/screens/StoryScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { ReminderResult, ReminderSetting, disableReminder, enableReminder, remindersAvailable } from './src/notifications/reminders';
+import { reminderTexts, useReminderSync } from './src/notifications/useReminderSync';
 import { AppStateProvider, useApp } from './src/state/AppState';
 import { AgeProfileId } from './src/theme/profiles';
 import { ThemeProvider } from './src/theme/ThemeProvider';
@@ -51,7 +53,21 @@ function Root() {
     I18nManager.forceRTL(isRtl(app.uiLang));
   }, [app.uiLang]);
 
+  useReminderSync(app.ready, app.reminder, app.uiLang, app.profile);
+
   if (!app.ready) return <View style={{ flex: 1, justifyContent: 'center' }}><ActivityIndicator /></View>;
+
+  // Rappel quotidien: l'autorisation n'est demandée qu'ici, quand la personne active le rappel.
+  const changeReminder = async (next: ReminderSetting): Promise<ReminderResult> => {
+    if (next.enabled) {
+      const r = await enableReminder(next, reminderTexts(app.uiLang));
+      if (!r.ok) return r;
+    } else {
+      await disableReminder();
+    }
+    app.setReminder(next);
+    return { ok: true };
+  };
 
   const pickProfile = (p: AgeProfileId) => {
     // Choisir un profil ne change que le profil. Le mode enfant n'a pas besoin de niveau ni de langue apprise
@@ -91,7 +107,7 @@ function Root() {
     screen = <SettingsScreen lang={app.uiLang} dailyGoal={app.progress.dailyGoalMinutes} onGoal={app.setGoal}
       palette={app.palette} onPalette={app.setPalette} onLang={app.setUiLang}
       onSwitchProfile={() => { app.resetProfile(); home(); }} onExport={app.exportData}
-      onErase={() => { app.eraseAll(); home(); }} onBack={home} />;
+      onErase={() => { app.eraseAll(); home(); }} onBack={home} reminder={app.reminder} reminderAvailable={remindersAvailable()} onReminder={changeReminder} />;
   } else if (route.name === 'duo-setup') {
     screen = <DuoSetupScreen lang={app.uiLang} onBack={home}
       onStart={(names, topic) => { void clearConversation(DUO_LESSON_ID).then(() => setRoute({ name: 'duo', names, topic })); }} />;

@@ -23,7 +23,8 @@ const screens = (lang: UiLang): Record<string, React.ReactElement> => ({
   home: <HomeScreen lang={lang} level="A1" progress={initialProgress('2026-01-01')} onOpenLesson={noop} dueCount={2} onReview={noop}
     onDuo={noop} onSettings={noop} onTarget={noop} today="2026-01-01" />,
   settings: <SettingsScreen lang={lang} dailyGoal={10} onGoal={noop} palette="violet" onPalette={noop} onLang={noop} onSwitchProfile={noop}
-    onExport={async () => '{}'} onErase={noop} onBack={noop} />,
+    onExport={async () => '{}'} onErase={noop} onBack={noop}
+    reminder={{ enabled: true, hour: 19, minute: 0 }} reminderAvailable onReminder={async () => ({ ok: true })} />,
   kidsHome: <KidsHomeScreen lang={lang} stars={5} minutesToday={0} dailyLimit={20} onStories={noop} onPlay={noop} onStickers={noop} onParents={noop} />,
   stickers: <StickersScreen lang={lang} stars={9} onBack={noop} />,
   duoSetup: <DuoSetupScreen lang={lang} onStart={noop} onBack={noop} />,

@@ -55,6 +55,13 @@
           "microphonePermission": "Kalam utilise le micro pour que vous pratiquiez la prononciation.",
           "speechRecognitionPermission": "Kalam utilise la reconnaissance vocale pour évaluer votre prononciation."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#3D2FA3"
+        }
       ]
     ],
     "description": "Apprends les langues en parlant."

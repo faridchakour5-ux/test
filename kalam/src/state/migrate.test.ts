@@ -38,6 +38,18 @@ describe('migrate (anciennes sauvegardes)', () => {
 
 // Sauvegardes abîmées au hasard (graine fixe: mêmes entrées à chaque exécution): migrate ne plante jamais,
 // et le résultat respecte toujours les règles de sécurité (consentement micro, limites, doublons).
+describe('migrate: rappel quotidien', () => {
+  it('une ancienne sauvegarde (sans rappel) donne un rappel désactivé à 19:00', () => {
+    expect(migrate({ profile: 'adult' } as never).reminder).toEqual({ enabled: false, hour: 19, minute: 0 });
+  });
+  it('un rappel valide est conservé', () => {
+    expect(migrate({ reminder: { enabled: true, hour: 8, minute: 30 } } as never).reminder).toEqual({ enabled: true, hour: 8, minute: 30 });
+  });
+  it('un rappel abîmé est désactivé', () => {
+    expect(migrate({ reminder: { enabled: true, hour: 99, minute: 0 } } as never).reminder.enabled).toBe(false);
+  });
+});
+
 describe('migrate: sauvegardes hostiles', () => {
   let seed = 987654321;
   const rand = () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -52,6 +64,7 @@ describe('migrate: sauvegardes hostiles', () => {
         levels: rand() < 0.5 ? obj(['en', 'fr', 'ar']) : pick(),
         cards: rand() < 0.5 ? [obj(['key', 'ease', 'intervalDays', 'due']), pick(), obj(['key'])] : pick(),
         progress: rand() < 0.5 ? obj(['history', 'xp', 'streak']) : pick(),
+        reminder: rand() < 0.7 ? obj(['enabled', 'hour', 'minute']) : pick(),
         kids: rand() < 0.7 ? { ...obj(['stars', 'storiesRead', 'dailyLimit']), consent: rand() < 0.5 ? obj(['micAllowed', 'grantedAt', 'version']) : pick() } : pick(),
       };
       const m = migrate(saved as never);
@@ -63,6 +76,9 @@ describe('migrate: sauvegardes hostiles', () => {
       expect(new Set(keys).size).toBe(keys.length);
       for (const c of m.cards) expect(c.ease >= 1.3 && c.ease <= 5 && c.intervalDays >= 0 && Number.isFinite(c.due)).toBe(true);
       expect(['en', 'fr']).toContain(m.targetLang);
+      // Rappel: heure toujours valide, jamais « activé » avec une heure abîmée.
+      expect(Number.isInteger(m.reminder.hour) && m.reminder.hour >= 0 && m.reminder.hour <= 23).toBe(true);
+      expect(Number.isInteger(m.reminder.minute) && m.reminder.minute >= 0 && m.reminder.minute <= 59).toBe(true);
     }
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
   });

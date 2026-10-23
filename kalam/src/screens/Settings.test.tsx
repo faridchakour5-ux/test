@@ -1,14 +1,16 @@
-import { Alert, Share } from 'react-native';
+import { Alert, Linking, Share } from 'react-native';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { ThemeProvider } from '../theme/ThemeProvider';
+import { ReminderResult, ReminderSetting } from '../notifications/reminders';
 import { SettingsScreen } from './SettingsScreen';
 
-type H = Partial<{ onGoal: (g: 5 | 10 | 20) => void; onPalette: (p: string) => void; onLang: (l: string) => void; onSwitchProfile: () => void; onExport: () => Promise<string>; onErase: () => void; onBack: () => void }>;
+type H = Partial<{ onGoal: (g: 5 | 10 | 20) => void; onPalette: (p: string) => void; onLang: (l: string) => void; onSwitchProfile: () => void; onExport: () => Promise<string>; onErase: () => void; onBack: () => void; onReminder: (r: ReminderSetting) => Promise<ReminderResult>; reminder: ReminderSetting; reminderAvailable: boolean }>;
 const show = (h: H = {}, goal: 5 | 10 | 20 = 10) => render(
   <ThemeProvider profileId="adult">
     <SettingsScreen lang="fr" dailyGoal={goal} onGoal={h.onGoal ?? jest.fn()} palette="violet" onPalette={(h.onPalette ?? jest.fn()) as never} onLang={(h.onLang ?? jest.fn()) as never}
-      onSwitchProfile={h.onSwitchProfile ?? jest.fn()} onExport={h.onExport ?? (async () => '{}')} onErase={h.onErase ?? jest.fn()} onBack={h.onBack ?? jest.fn()} />
+      onSwitchProfile={h.onSwitchProfile ?? jest.fn()} onExport={h.onExport ?? (async () => '{}')} onErase={h.onErase ?? jest.fn()} onBack={h.onBack ?? jest.fn()}
+      reminder={h.reminder ?? { enabled: false, hour: 19, minute: 0 }} reminderAvailable={h.reminderAvailable ?? true} onReminder={h.onReminder ?? (async () => ({ ok: true }))} />
   </ThemeProvider>,
 );
 
@@ -71,5 +73,52 @@ describe('SettingsScreen', () => {
     await fireEvent.press(screen.getByText(/Retour/));
     expect(onSwitchProfile).toHaveBeenCalled();
     expect(onBack).toHaveBeenCalled();
+  });
+
+  describe('rappel quotidien', () => {
+    const off = { enabled: false, hour: 19, minute: 0 };
+    const on = { enabled: true, hour: 19, minute: 0 };
+
+    it('désactivé par défaut: pas de choix d\'heure tant qu\'il n\'est pas activé', async () => {
+      await show({ reminder: off });
+      expect(screen.getByLabelText('Me rappeler chaque jour')).toBeTruthy();
+      expect(screen.queryByLabelText('08:00')).toBeNull();
+    });
+
+    it('activer demande l\'activation au reste de l\'app avec l\'heure en cours', async () => {
+      const onReminder = jest.fn(async () => ({ ok: true as const }));
+      await show({ reminder: off, onReminder });
+      await fireEvent(screen.getByLabelText('Me rappeler chaque jour'), 'valueChange', true);
+      expect(onReminder).toHaveBeenCalledWith({ enabled: true, hour: 19, minute: 0 });
+    });
+
+    it('activé: propose 4 heures, la bonne est sélectionnée, et en choisir une autre change l\'heure', async () => {
+      const onReminder = jest.fn(async () => ({ ok: true as const }));
+      await show({ reminder: on, onReminder });
+      expect(screen.getByLabelText('19:00')).toBeSelected();
+      expect(screen.getByLabelText('08:00')).not.toBeSelected();
+      await fireEvent.press(screen.getByLabelText('08:00'));
+      expect(onReminder).toHaveBeenCalledWith({ enabled: true, hour: 8, minute: 0 });
+    });
+
+    it('notifications refusées: message clair, sans bloquer l\'écran', async () => {
+      await show({ reminder: off, onReminder: async () => ({ ok: false as const, reason: 'permission' as const }) });
+      await fireEvent(screen.getByLabelText('Me rappeler chaque jour'), 'valueChange', true);
+      expect(await screen.findByText(/notifications sont refusées/)).toBeTruthy();
+    });
+
+    it('notifications bloquées: propose d\'ouvrir les réglages du téléphone', async () => {
+      const open = jest.spyOn(Linking, 'openSettings').mockResolvedValue(undefined);
+      await show({ reminder: off, onReminder: async () => ({ ok: false as const, reason: 'permission-blocked' as const }) });
+      await fireEvent(screen.getByLabelText('Me rappeler chaque jour'), 'valueChange', true);
+      await fireEvent.press(await screen.findByLabelText('Ouvrir les réglages'));
+      expect(open).toHaveBeenCalledTimes(1);
+    });
+
+    it('appareil sans notifications: interrupteur désactivé et explication', async () => {
+      await show({ reminder: off, reminderAvailable: false });
+      expect(screen.getByLabelText('Me rappeler chaque jour')).toHaveProp('disabled', true);
+      expect(screen.getByText(/pas disponibles sur cet appareil/)).toBeTruthy();
+    });
   });
 });

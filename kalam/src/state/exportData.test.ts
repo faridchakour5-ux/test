@@ -8,6 +8,7 @@ const state = (over: Partial<ExportableState> = {}): ExportableState => ({
   progress: { ...initialProgress('2026-03-10'), xp: 42, streak: 3, completedLessons: ['family'] },
   cards: [newCard('family:0', 0)],
   kids: { ...initialKids(), stars: 7, storiesRead: ['little-cat'] },
+  reminder: { enabled: true, hour: 8, minute: 30 },
   ...over,
 });
 const conv = { restaurant: [{ role: 'user' as const, content: 'I would like water' }, { role: 'assistant' as const, content: 'Of course!' }] };
@@ -19,7 +20,7 @@ describe('buildExport (droit à la portabilité)', () => {
     expect(json).toContain('\n'); // lisible (indenté)
     const d = parse(json);
     expect(d).toMatchObject({ app: 'kalam', formatVersion: EXPORT_FORMAT_VERSION, exportedAt: '2026-03-10T10:00:00.000Z' });
-    expect(d.settings).toEqual({ profile: 'adult', learningLanguage: 'fr', levels: { en: 'A2', fr: 'A1' }, interfaceLanguage: 'fr', palette: 'ocean' });
+    expect(d.settings).toEqual({ profile: 'adult', learningLanguage: 'fr', levels: { en: 'A2', fr: 'A1' }, interfaceLanguage: 'fr', palette: 'ocean', dailyReminder: { enabled: true, hour: 8, minute: 30 } });
     expect(d.progress).toMatchObject({ xp: 42, streak: 3, completedLessons: ['family'] });
     expect(d.vocabularyCards).toHaveLength(1);
     expect(d.kidsMode).toMatchObject({ stars: 7, storiesRead: ['little-cat'], microphoneConsent: { micAllowed: false } });

@@ -8,6 +8,7 @@ import { Progress, XP_PER_REVIEW, localDay, addMinutes, addXp, applyChallenge, c
 import { UiLang } from '../i18n/strings';
 import { DEFAULT_PALETTE, PaletteId } from '../theme/palettes';
 import { AgeProfileId } from '../theme/profiles';
+import { ReminderSetting, defaultReminder, normalizeReminder } from '../notifications/reminders';
 import { clearAllKalamData, loadAllConversations } from './conversations';
 import { normalizeCards, normalizeKids, normalizePalette, normalizeProfile, normalizeUiLang } from './normalize';
 import { buildExport } from './exportData';
@@ -22,6 +23,7 @@ interface Persisted {
   cards: Card[];
   kids: KidsState;
   palette: PaletteId;
+  reminder: ReminderSetting; // rappel quotidien local (désactivé par défaut)
 }
 
 export interface KidsState {
@@ -57,10 +59,11 @@ export function migrate(saved: Partial<Persisted> & { level?: Level | null }): P
     levels,
     progress: normalizeProgress(saved.progress, todayStr()),
     kids: normalizeKids(saved.kids, initialKids()),
+    reminder: normalizeReminder(saved.reminder),
   };
 }
 
-const initial = (): Persisted => ({ profile: null, targetLang: DEFAULT_TARGET, levels: {}, uiLang: 'fr', progress: initialProgress(todayStr()), cards: [], kids: initialKids(), palette: DEFAULT_PALETTE });
+const initial = (): Persisted => ({ profile: null, targetLang: DEFAULT_TARGET, levels: {}, uiLang: 'fr', progress: initialProgress(todayStr()), cards: [], kids: initialKids(), palette: DEFAULT_PALETTE, reminder: defaultReminder() });
 
 interface Ctx extends Persisted {
   ready: boolean;
@@ -80,6 +83,7 @@ interface Ctx extends Persisted {
   eraseAll: () => void;
   exportData: () => Promise<string>;
   setPalette: (p: PaletteId) => void;
+  setReminder: (r: ReminderSetting) => void;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -118,6 +122,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return { ...s, progress, cards: lessonId ? cardsForLesson(lessonId, s.cards, Date.now(), s.targetLang) : s.cards };
     }),
     setPalette: (palette) => update((s) => ({ ...s, palette })),
+    setReminder: (reminder) => update((s) => ({ ...s, reminder })),
     // Changer de profil ne change QUE le profil: niveaux et langue apprise sont conservés.
     resetProfile: () => update((s) => ({ ...s, profile: null })),
     addStars: (n) => update((s) => ({ ...s, kids: { ...s.kids, stars: s.kids.stars + n } })),
@@ -125,7 +130,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setMicConsent: (on) => update((s) => ({ ...s, kids: { ...s.kids, consent: on ? grantMic(s.kids.consent, Date.now()) : revokeMic(s.kids.consent) } })),
     setKidsLimit: (dailyLimit) => update((s) => ({ ...s, kids: { ...s.kids, dailyLimit } })),
     // Droit à l'effacement (RGPD): on remet tout à zéro, y compris le consentement.
-    eraseAll: () => { void clearAllKalamData(); setState(initial()); },
+    eraseAll: () => { void clearAllKalamData(); setState(initial()); }, // le rappel s'arrête de lui-même: useReminderSync le voit repasser à « désactivé »
     // Droit à la portabilité (RGPD): renvoie toutes les données de l'appareil en JSON lisible.
     exportData: async () => buildExport(state, await loadAllConversations()),
     reviewCard: (key, quality) => update((s) => ({

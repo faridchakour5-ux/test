@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { Alert } from 'react-native';
 import { resetGateLock } from './state/gateLock';
 import App from '../App';
 
@@ -18,10 +19,27 @@ jest.mock('./speech/tts', () => ({ tts: { speak: jest.fn(async () => 'done'), sp
 jest.mock('./speech/recognizer', () => ({ isSpeechInputAvailable: () => false, cancelListening: jest.fn(), listenOnce: jest.fn() }));
 jest.mock('./api/teacher', () => ({ ...jest.requireActual('./api/teacher'), askTeacher: jest.fn(async () => 'Hello!'), askTeacherStream: jest.fn() }));
 
+// Faux module natif de notifications: la vraie logique du rappel (src/notifications) tourne, seul le téléphone est simulé.
+const mockNotif = {
+  getPermissionsAsync: jest.fn(async () => ({ granted: true })),
+  requestPermissionsAsync: jest.fn(async () => ({ granted: true })),
+  setNotificationChannelAsync: jest.fn(async () => null),
+  scheduleNotificationAsync: jest.fn(async (_req: unknown) => 'id'),
+  cancelScheduledNotificationAsync: jest.fn(async (_id: string) => undefined),
+  AndroidImportance: { DEFAULT: 5 },
+  SchedulableTriggerInputTypes: { DAILY: 'daily' },
+};
+jest.mock('expo-notifications', () => mockNotif);
+
 const saved = () => JSON.parse(mockStore.get('kalam:state:v1') ?? '{}');
 const boot = async () => { await render(<App />); await act(async () => {}); };
 
-beforeEach(() => mockStore.clear());
+beforeEach(() => {
+  mockStore.clear();
+  mockNotif.getPermissionsAsync.mockImplementation(async () => ({ granted: true }));
+  mockNotif.requestPermissionsAsync.mockImplementation(async () => ({ granted: true }));
+  Object.values(mockNotif).forEach((f) => { if (typeof f === 'function') (f as jest.Mock).mockClear(); });
+});
 
 describe('App: premier lancement', () => {
   it('affiche le choix du profil, de la langue à apprendre et de la langue de l\'interface', async () => {
@@ -326,5 +344,80 @@ describe('App: sauvegarde corrompue', () => {
     await boot();
     // niveau d'anglais invalide -> test de niveau d'anglais (langue inconnue repliée sur l'anglais)
     expect(await screen.findByText('She ___ a teacher.')).toBeTruthy();
+  });
+});
+
+describe('App: rappel quotidien (notifications locales)', () => {
+  const start = async (state: object = {}) => {
+    mockStore.set('kalam:state:v1', JSON.stringify({ profile: 'adult', levels: { en: 'A1' }, uiLang: 'fr', ...state }));
+    await boot();
+    await screen.findByText(/Kalam\s·\sA1/);
+  };
+  const openSettings = async () => { await fireEvent.press(screen.getByLabelText('Réglages')); await screen.findByText('Exporter mes données'); };
+  const toggle = () => fireEvent(screen.getByLabelText('Me rappeler chaque jour'), 'valueChange', true);
+
+  it('désactivé par défaut: rien n\'est programmé et aucune autorisation n\'est demandée', async () => {
+    await start();
+    expect(mockNotif.scheduleNotificationAsync).not.toHaveBeenCalled();
+    expect(mockNotif.requestPermissionsAsync).not.toHaveBeenCalled();
+  });
+
+  it('l\'activer demande l\'autorisation, programme UN rappel quotidien à 19:00 dans la langue de l\'interface, et le sauvegarde', async () => {
+    mockNotif.getPermissionsAsync.mockImplementation(async () => ({ granted: false, canAskAgain: true } as never));
+    await start();
+    await openSettings();
+    await toggle();
+    await waitFor(() => expect(saved().reminder).toEqual({ enabled: true, hour: 19, minute: 0 }));
+    expect(mockNotif.requestPermissionsAsync).toHaveBeenCalledTimes(1);
+    const last = mockNotif.scheduleNotificationAsync.mock.calls.at(-1)![0] as { identifier: string; content: { title: string; body: string }; trigger: { type: string; hour: number; minute: number } };
+    expect(last.identifier).toBe('kalam-daily-reminder');
+    expect(last.trigger).toMatchObject({ type: 'daily', hour: 19, minute: 0 });
+    expect(last.content).toEqual({ title: 'Kalam', body: 'Un petit moment pour parler ? Quelques minutes suffisent.' });
+  });
+
+  it('choisir une autre heure reprogramme le rappel (jamais deux)', async () => {
+    await start({ reminder: { enabled: true, hour: 19, minute: 0 } });
+    await openSettings();
+    await fireEvent.press(screen.getByLabelText('08:00'));
+    await waitFor(() => expect(saved().reminder).toEqual({ enabled: true, hour: 8, minute: 0 }));
+    const calls = mockNotif.scheduleNotificationAsync.mock.calls as unknown as { 0: { identifier: string; trigger: { hour: number } } }[];
+    expect(calls.at(-1)![0].trigger.hour).toBe(8);
+    expect(new Set(calls.map((c) => c[0].identifier))).toEqual(new Set(['kalam-daily-reminder']));
+  });
+
+  it('au lancement, un rappel actif est remis d\'aplomb (redémarrage du téléphone, changement de fuseau)', async () => {
+    await start({ reminder: { enabled: true, hour: 12, minute: 30 } });
+    await waitFor(() => expect(mockNotif.scheduleNotificationAsync).toHaveBeenCalled());
+    expect((mockNotif.scheduleNotificationAsync.mock.calls.at(-1)![0] as { trigger: { hour: number; minute: number } }).trigger).toMatchObject({ hour: 12, minute: 30 });
+    expect(mockNotif.requestPermissionsAsync).not.toHaveBeenCalled(); // jamais de demande toute seule
+  });
+
+  it('autorisation refusée: message clair, rappel non activé et non sauvegardé', async () => {
+    mockNotif.getPermissionsAsync.mockImplementation(async () => ({ granted: false, canAskAgain: true } as never));
+    mockNotif.requestPermissionsAsync.mockImplementation(async () => ({ granted: false, canAskAgain: true } as never));
+    await start();
+    await openSettings();
+    await toggle();
+    expect(await screen.findByText(/notifications sont refusées/)).toBeTruthy();
+    expect(mockNotif.scheduleNotificationAsync).not.toHaveBeenCalled();
+    expect(saved().reminder?.enabled ?? false).toBe(false);
+  });
+
+  it('profil enfant: jamais de rappel, même si une sauvegarde en contient un', async () => {
+    await start({ profile: 'kids' }).catch(() => undefined);
+    mockStore.set('kalam:state:v1', JSON.stringify({ profile: 'kids', levels: { en: 'A1' }, uiLang: 'fr', reminder: { enabled: true, hour: 19, minute: 0 } }));
+    await boot();
+    await screen.findByText('Histoires');
+    expect(mockNotif.scheduleNotificationAsync).not.toHaveBeenCalled();
+    expect(mockNotif.cancelScheduledNotificationAsync).toHaveBeenCalledWith('kalam-daily-reminder');
+  });
+
+  it('effacer les données arrête aussi le rappel', async () => {
+    await start({ reminder: { enabled: true, hour: 19, minute: 0 } });
+    await openSettings();
+    mockNotif.cancelScheduledNotificationAsync.mockClear();
+    jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => { buttons?.find((b) => b.style === 'destructive')?.onPress?.(); });
+    await fireEvent.press(screen.getByText('Effacer mes données'));
+    await waitFor(() => expect(mockNotif.cancelScheduledNotificationAsync).toHaveBeenCalledWith('kalam-daily-reminder'));
   });
 });

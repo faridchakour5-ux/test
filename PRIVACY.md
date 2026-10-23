@@ -24,3 +24,11 @@ Accès et portabilité (bouton « Exporter mes données » : toutes vos données
 - Programme « Famille » de Google Play et déclaration de l'audience cible (enfants) : obligatoire dès que l'app vise les moins de 13 ans.
 - Mentions légales, contact du responsable de traitement, durée de conservation côté serveur (logs).
 - Revue COPPA / RGPD-K (âge du consentement numérique variable selon les pays).
+
+## Rappel quotidien (facultatif)
+- Désactivé par défaut. La personne l'active dans les réglages et choisit l'heure; elle peut l'arrêter à tout moment.
+- Le rappel est une notification **locale**, programmée sur l'appareil: aucun serveur Kalam n'envoie de notification, aucun jeton de notification n'est demandé ni stocké, aucune donnée n'est transmise.
+- L'autorisation « Notifications » du système n'est demandée qu'au moment où la personne active le rappel.
+- Jamais de rappel dans le profil enfant. Le message est doux et sans culpabilisation; il n'y a qu'un rappel par jour.
+- Effacer les données (ou changer pour le profil enfant) arrête le rappel.
+

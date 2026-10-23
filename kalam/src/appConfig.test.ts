@@ -20,7 +20,7 @@ describe('configuration de l\'application (app.json)', () => {
     expect(expo.userInterfaceStyle).toBe('automatic');
   });
 
-  describe('permissions Android: le strict nécessaire (Internet et micro)', () => {
+  describe('permissions Android: le strict nécessaire (Internet, micro, rappel quotidien)', () => {
     const blocked = expo.android?.blockedPermissions ?? [];
     it.each([
       'android.permission.READ_EXTERNAL_STORAGE',
@@ -48,6 +48,22 @@ describe('configuration de l\'application (app.json)', () => {
     });
     it('les textes expliquent l\'usage (prononciation), sans promesse fausse', () => {
       expect(entry?.[1].microphonePermission).toMatch(/prononciation/i);
+    });
+  });
+
+  describe('rappel quotidien (notifications locales)', () => {
+    const entry = (expo.plugins ?? []).find((p) => Array.isArray(p) && p[0] === 'expo-notifications') as [string, { icon?: string; color?: string }] | undefined;
+    it('le plugin est configuré avec une icône monochrome et une couleur (la petite icône Android n\'est pas un carré blanc)', () => {
+      expect(entry).toBeDefined();
+      expect(entry?.[1].icon).toMatch(/monochrome/);
+      expect(entry?.[1].color).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    });
+    it('l\'icône existe dans le dépôt', () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require('fs') as typeof import('fs');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const path = require('path') as typeof import('path');
+      expect(fs.existsSync(path.join(__dirname, '..', entry?.[1].icon ?? 'absent'))).toBe(true);
     });
   });
 

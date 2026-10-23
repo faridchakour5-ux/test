@@ -57,3 +57,7 @@ Chaque réponse du serveur porte un en-tête `X-Request-Id`, repris dans le jour
 
 ## 9. Alerte `npm audit` sur node-forge (connue, sans effet sur l'app)
 `npm audit` signale `node-forge` (via `expo` → `@expo/cli`). C'est un outil de développement (signature des mises à jour EAS Update, non utilisées ici): il n'est **jamais** dans le code de l'application installée sur les téléphones. Ne lancez pas `npm audit fix --force`: il proposerait de revenir à Expo 44 et casserait le projet. À reprendre quand Expo publie une version qui met à jour `node-forge`. Le serveur (`backend/`) n'a aucune alerte.
+
+## 10. Rappel quotidien (notifications)
+Le rappel est une notification locale (`expo-notifications`), sans serveur. Il fonctionne dans le build de développement et le build de production, pas dans Expo Go sur Android. À essayer sur un vrai téléphone: activer le rappel, choisir une heure proche, fermer l'application, attendre la notification, puis redémarrer le téléphone et vérifier qu'il sonne encore le lendemain. Sur Android 13 et plus, l'autorisation « Notifications » est demandée à l'activation; sur certains téléphones, l'économiseur de batterie peut retarder la notification de quelques minutes (c'est voulu: pas d'alarme exacte, pas de permission sensible).
+

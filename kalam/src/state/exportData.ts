@@ -6,6 +6,7 @@ import { PaletteId } from '../theme/palettes';
 import { AgeProfileId } from '../theme/profiles';
 import { Level } from '../domain/lessons';
 import { TargetLang } from '../domain/targets';
+import { ReminderSetting } from '../notifications/reminders';
 import { KidsState } from './AppState';
 
 export interface ExportableState {
@@ -17,6 +18,7 @@ export interface ExportableState {
   progress: Progress;
   cards: Card[];
   kids: KidsState;
+  reminder?: ReminderSetting;
 }
 
 export const EXPORT_FORMAT_VERSION = 1;
@@ -29,7 +31,7 @@ export function buildExport(state: ExportableState, conversations: Record<string
       app: 'kalam',
       formatVersion: EXPORT_FORMAT_VERSION,
       exportedAt: now.toISOString(),
-      settings: { profile: state.profile, learningLanguage: state.targetLang, levels: state.levels, interfaceLanguage: state.uiLang, palette: state.palette },
+      settings: { profile: state.profile, learningLanguage: state.targetLang, levels: state.levels, interfaceLanguage: state.uiLang, palette: state.palette, dailyReminder: state.reminder ?? null },
       progress: state.progress,
       vocabularyCards: state.cards,
       kidsMode: {

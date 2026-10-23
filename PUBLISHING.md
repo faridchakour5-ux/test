@@ -49,3 +49,6 @@ Le serveur expose `POST /chat/stream` (SSE) en plus de `POST /chat`. L'app l'uti
 
 ## 8. Diagnostiquer une panne
 Chaque réponse du serveur porte un en-tête `X-Request-Id`, repris dans le journal (`{"evt":"request","id":...,"status":...,"ms":...}`). Un utilisateur qui signale un problème peut donc être relié à une ligne du journal, sans jamais stocker ses messages ni son adresse IP.
+
+## 9. Alerte `npm audit` sur node-forge (connue, sans effet sur l'app)
+`npm audit` signale `node-forge` (via `expo` → `@expo/cli`). C'est un outil de développement (signature des mises à jour EAS Update, non utilisées ici): il n'est **jamais** dans le code de l'application installée sur les téléphones. Ne lancez pas `npm audit fix --force`: il proposerait de revenir à Expo 44 et casserait le projet. À reprendre quand Expo publie une version qui met à jour `node-forge`. Le serveur (`backend/`) n'a aucune alerte.

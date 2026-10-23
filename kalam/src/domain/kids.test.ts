@@ -2,6 +2,11 @@ import { KIDS_TOPICS, STICKERS, STORIES, buildRounds, newlyUnlocked, unlockedSti
 import { CONSENT_VERSION, checkGate, grantMic, makeGate, minutesLeft, noConsent, revokeMic, timeIsUp } from './parental';
 
 describe('contenu enfant', () => {
+  it('propose au moins 6 thèmes et 5 histoires', () => {
+    expect(KIDS_TOPICS.length).toBeGreaterThanOrEqual(6);
+    expect(STORIES.length).toBeGreaterThanOrEqual(5);
+    expect(new Set(STORIES.map((x) => x.id)).size).toBe(STORIES.length);
+  });
   it('chaque thème a assez d\'éléments avec les 3 langues', () => {
     for (const t of KIDS_TOPICS) {
       expect(t.items.length).toBeGreaterThanOrEqual(5);

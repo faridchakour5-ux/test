@@ -44,6 +44,14 @@ export const KIDS_TOPICS: KidsTopic[] = [
     I('red', '🔴', 'red', 'rouge', 'أحمر'), I('blue', '🔵', 'blue', 'bleu', 'أزرق'), I('green', '🟢', 'green', 'vert', 'أخضر'),
     I('yellow', '🟡', 'yellow', 'jaune', 'أصفر'), I('purple', '🟣', 'purple', 'violet', 'بنفسجي'), I('orange-c', '🟠', 'orange', 'orange', 'برتقالي'),
   ]),
+  TOPIC('body', '🧍', 'Le corps', 'The body', 'الجسم', [
+    I('eye', '👀', 'eye', 'œil', 'عين'), I('nose', '👃', 'nose', 'nez', 'أنف'), I('mouth', '👄', 'mouth', 'bouche', 'فم'),
+    I('hand', '✋', 'hand', 'main', 'يد'), I('foot', '🦶', 'foot', 'pied', 'قدم'), I('ear', '👂', 'ear', 'oreille', 'أذن'),
+  ]),
+  TOPIC('food', '🍽️', 'Nourriture', 'Food', 'طعام', [
+    I('bread', '🍞', 'bread', 'pain', 'خبز'), I('milk', '🥛', 'milk', 'lait', 'حليب'), I('rice', '🍚', 'rice', 'riz', 'أرز'),
+    I('egg', '🥚', 'egg', 'œuf', 'بيضة'), I('cheese', '🧀', 'cheese', 'fromage', 'جبن'), I('pizza', '🍕', 'pizza', 'pizza', 'بيتزا'),
+  ]),
   TOPIC('numbers', '🔢', 'Chiffres', 'Numbers', 'أرقام', [
     I('one', '⭐', 'one', 'un', 'واحد'), I('two', '⭐⭐', 'two', 'deux', 'اثنان'), I('three', '⭐⭐⭐', 'three', 'trois', 'ثلاثة'),
     I('four', '⭐⭐⭐⭐', 'four', 'quatre', 'أربعة'), I('five', '⭐⭐⭐⭐⭐', 'five', 'cinq', 'خمسة'),
@@ -107,6 +115,20 @@ export const STORIES: Story[] = [
     ['I give you one half.', 'Je te donne une moitié.', 'أعطيك نصفها.'],
     ['Thank you, friend!', 'Merci, mon ami !', 'شكرًا يا صديقي!'],
     ['We eat the apple.', 'Nous mangeons la pomme.', 'نأكل التفاحة.'],
+  ]),
+  ST('my-family', '👨‍👩‍👧', 'Ma famille', 'My family', 'عائلتي', [
+    ['This is my family.', 'Voici ma famille.', 'هذه عائلتي.'],
+    ['I love my mother.', 'J\'aime ma maman.', 'أحب أمي.'],
+    ['I love my father.', 'J\'aime mon papa.', 'أحب أبي.'],
+    ['We eat together.', 'Nous mangeons ensemble.', 'نأكل معًا.'],
+    ['I love my family!', 'J\'aime ma famille !', 'أحب عائلتي!'],
+  ]),
+  ST('rainy-day', '🌧️', 'Un jour de pluie', 'A rainy day', 'يوم ممطر', [
+    ['It is a rainy day.', 'Il pleut aujourd\'hui.', 'اليوم ممطر.'],
+    ['I take my umbrella.', 'Je prends mon parapluie.', 'آخذ مظلتي.'],
+    ['The rain is cold.', 'La pluie est froide.', 'المطر بارد.'],
+    ['I go home.', 'Je rentre à la maison.', 'أعود إلى البيت.'],
+    ['I drink warm milk.', 'Je bois du lait chaud.', 'أشرب حليبًا دافئًا.'],
   ]),
   ST('sunny-day', '☀️', 'Une belle journée', 'A sunny day', 'يوم مشمس', [
     ['Today is a sunny day.', 'Aujourd\'hui, il y a du soleil.', 'اليوم مشمس.'],

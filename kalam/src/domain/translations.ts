@@ -118,12 +118,17 @@ export const KIDS_ITEMS_TR: Record<string, { es: string; zh: string }> = {
   orange: { es: 'naranja', zh: '橙子' }, strawberry: { es: 'fresa', zh: '草莓' }, watermelon: { es: 'sandía', zh: '西瓜' },
   red: { es: 'rojo', zh: '红色' }, blue: { es: 'azul', zh: '蓝色' }, green: { es: 'verde', zh: '绿色' },
   yellow: { es: 'amarillo', zh: '黄色' }, purple: { es: 'morado', zh: '紫色' }, 'orange-c': { es: 'naranja', zh: '橙色' },
+  eye: { es: 'ojo', zh: '眼睛' }, nose: { es: 'nariz', zh: '鼻子' }, mouth: { es: 'boca', zh: '嘴巴' },
+  hand: { es: 'mano', zh: '手' }, foot: { es: 'pie', zh: '脚' }, ear: { es: 'oreja', zh: '耳朵' },
+  bread: { es: 'pan', zh: '面包' }, milk: { es: 'leche', zh: '牛奶' }, rice: { es: 'arroz', zh: '米饭' },
+  egg: { es: 'huevo', zh: '鸡蛋' }, cheese: { es: 'queso', zh: '奶酪' }, pizza: { es: 'pizza', zh: '披萨' },
   one: { es: 'uno', zh: '一' }, two: { es: 'dos', zh: '二' }, three: { es: 'tres', zh: '三' }, four: { es: 'cuatro', zh: '四' }, five: { es: 'cinco', zh: '五' },
 };
 
 export const KIDS_TOPIC_TR: Record<string, { es: string; zh: string }> = {
   animals: { es: 'Animales', zh: '动物' }, fruits: { es: 'Frutas', zh: '水果' },
   colors: { es: 'Colores', zh: '颜色' }, numbers: { es: 'Números', zh: '数字' },
+  body: { es: 'El cuerpo', zh: '身体' }, food: { es: 'Comida', zh: '食物' },
 };
 
 export const KIDS_STORY_TR: Record<string, { title: { es: string; zh: string }; sentences: { es: string; zh: string }[] }> = {
@@ -135,6 +140,14 @@ export const KIDS_STORY_TR: Record<string, { title: { es: string; zh: string }; 
     { es: 'Tengo una manzana roja.', zh: '我有一个红苹果。' }, { es: 'La manzana es grande.', zh: '苹果很大。' },
     { es: 'Te doy una mitad.', zh: '我分给你一半。' }, { es: '¡Gracias, amigo!', zh: '谢谢你，朋友！' },
     { es: 'Comemos la manzana.', zh: '我们一起吃苹果。' } ] },
+  'my-family': { title: { es: 'Mi familia', zh: '我的家人' }, sentences: [
+    { es: 'Esta es mi familia.', zh: '这是我的家人。' }, { es: 'Quiero a mi mamá.', zh: '我爱我的妈妈。' },
+    { es: 'Quiero a mi papá.', zh: '我爱我的爸爸。' }, { es: 'Comemos juntos.', zh: '我们一起吃饭。' },
+    { es: '¡Quiero a mi familia!', zh: '我爱我的家人！' } ] },
+  'rainy-day': { title: { es: 'Un día de lluvia', zh: '下雨天' }, sentences: [
+    { es: 'Hoy llueve.', zh: '今天下雨了。' }, { es: 'Cojo mi paraguas.', zh: '我带上雨伞。' },
+    { es: 'La lluvia es fría.', zh: '雨很冷。' }, { es: 'Vuelvo a casa.', zh: '我回家了。' },
+    { es: 'Bebo leche caliente.', zh: '我喝热牛奶。' } ] },
   'sunny-day': { title: { es: 'Un día soleado', zh: '晴朗的一天' }, sentences: [
     { es: 'Hoy hace sol.', zh: '今天是晴天。' }, { es: 'Voy al parque.', zh: '我去公园。' },
     { es: 'Veo un pájaro.', zh: '我看见一只小鸟。' }, { es: 'El pájaro dice hola.', zh: '小鸟说你好。' },

@@ -2,8 +2,8 @@ import appJson from '../app.json';
 
 const expo = appJson.expo as unknown as {
   name: string; slug: string; version: string; scheme?: string; userInterfaceStyle?: string;
-  ios?: { bundleIdentifier?: string };
-  android?: { package?: string; versionCode?: number; blockedPermissions?: string[]; permissions?: string[] };
+  ios?: { bundleIdentifier?: string; buildNumber?: string; infoPlist?: Record<string, unknown> };
+  android?: { package?: string; versionCode?: number; blockedPermissions?: string[]; permissions?: string[]; allowBackup?: boolean };
   plugins?: (string | [string, Record<string, string>])[];
 };
 
@@ -55,5 +55,20 @@ describe('configuration de l\'application (app.json)', () => {
     const splash = (expo.plugins ?? []).find((p) => Array.isArray(p) && p[0] === 'expo-splash-screen') as [string, { backgroundColor?: string; dark?: { backgroundColor?: string } }] | undefined;
     expect(splash?.[1].backgroundColor).toBeTruthy();
     expect(splash?.[1].dark?.backgroundColor).toBeTruthy();
+  });
+
+  describe('confidentialité: les données restent sur l\'appareil', () => {
+    it('la sauvegarde automatique d\'Android est désactivée (conversations et consentement parental ne partent pas vers le compte Google)', () => {
+      expect(expo.android?.allowBackup).toBe(false);
+    });
+  });
+
+  describe('iOS', () => {
+    it('déclare ne pas utiliser de chiffrement non exempté (HTTPS seulement), pour éviter la question à chaque envoi', () => {
+      expect(expo.ios?.infoPlist?.ITSAppUsesNonExemptEncryption).toBe(false);
+    });
+    it('a un numéro de build', () => {
+      expect(expo.ios?.buildNumber).toMatch(/^\d+$/);
+    });
   });
 });

@@ -8,7 +8,11 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kalam.app"
+      "bundleIdentifier": "com.kalam.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +29,8 @@
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.VIBRATE"
       ],
-      "versionCode": 1
+      "versionCode": 1,
+      "allowBackup": false
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -108,18 +108,30 @@ describe('App: mode enfant', () => {
     await waitFor(() => expect(saved()).toMatchObject({ profile: 'kids', targetLang: 'en', levels: { en: 'A1' } }));
   });
 
-  it('l\'espace parents est protégé par une question d\'adulte; une mauvaise réponse est refusée', async () => {
-    mockStore.set('kalam:state:v1', JSON.stringify({ profile: 'kids', levels: { en: 'A1' }, uiLang: 'fr' }));
-    await boot();
-    await fireEvent.press(await screen.findByLabelText('Parents'));
-    expect(await screen.findByText(/Question pour adultes/)).toBeTruthy();
-    const options = screen.getAllByRole('button').filter((b) => /^\d+$/.test(String(b.props.accessibilityLabel ?? '')));
-    expect(options).toHaveLength(4);
-    // On ne connaît pas la bonne réponse: on les essaie jusqu'à voir une mauvaise réponse refusée.
-    await fireEvent.press(options[0]);
-    const refused = screen.queryByText('Mauvaise réponse. Réessayez.');
-    const opened = screen.queryByText('Effacer toutes les données');
-    expect(Boolean(refused) !== Boolean(opened)).toBe(true); // exactement un des deux: refus OU accès (jamais les deux, jamais aucun)
+  describe('espace parents (question d\'adulte déterministe: Math.random figé -> 6 × 6 = 36)', () => {
+    beforeEach(() => {
+      jest.spyOn(Math, 'random').mockReturnValue(0);
+      mockStore.set('kalam:state:v1', JSON.stringify({ profile: 'kids', levels: { en: 'A1' }, uiLang: 'fr' }));
+    });
+    afterEach(() => jest.restoreAllMocks());
+
+    it('une mauvaise réponse est refusée et l\'espace reste fermé', async () => {
+      await boot();
+      await fireEvent.press(await screen.findByLabelText('Parents'));
+      expect(await screen.findByText(/combien font 6 × 6/)).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('26')); // fausse réponse
+      expect(await screen.findByText('Mauvaise réponse. Réessayez.')).toBeTruthy();
+      expect(screen.queryAllByText('Effacer toutes les données')).toHaveLength(0);
+    });
+
+    it('la bonne réponse ouvre l\'espace parents', async () => {
+      await boot();
+      await fireEvent.press(await screen.findByLabelText('Parents'));
+      await fireEvent.press(await screen.findByLabelText('36'));
+      // le titre ET le bouton portent ce texte: on attend au moins un des deux
+      expect((await screen.findAllByText('Effacer toutes les données')).length).toBeGreaterThanOrEqual(1);
+      expect(screen.queryByText('Mauvaise réponse. Réessayez.')).toBeNull();
+    });
   });
 
   it('un enfant n\'a aucun accès à la conversation libre ni au mode à deux depuis l\'accueil enfant', async () => {

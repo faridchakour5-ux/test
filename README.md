@@ -5,6 +5,7 @@ Apprendre les langues en parlant. Monorepo:
 - `backend/` : serveur qui garde la clé API et appelle le professeur IA
 
 ## Documentation
+- `docs/ETAT.md` : où en est le projet, ce qui reste à faire et ce que vous devez faire vous-même (à lire en premier).
 - `docs/ARCHITECTURE.md` : comment l'application est construite et pourquoi (plan du dépôt, parcours d'un message, décisions, tests, recettes).
 - `docs/APPRENDRE.md` : un parcours d'exercices pour apprendre à programmer sur ce projet.
 - `PRIVACY.md` (confidentialité) et `PUBLISHING.md` (mise en ligne).

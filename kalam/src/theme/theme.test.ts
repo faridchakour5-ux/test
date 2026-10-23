@@ -11,3 +11,13 @@ describe('buildTheme', () => {
     expect(buildTheme('kids', false).profile.minTouchSize).toBeGreaterThanOrEqual(64);
   });
 });
+
+describe('buildTheme avec palette', () => {
+  it('applique la palette choisie en clair et en sombre', () => {
+    expect(buildTheme('adult', false, 'ocean').colors.primary).toBe('#0B6E99');
+    expect(buildTheme('adult', true, 'ocean').colors.primary).toBe('#5CC8F2');
+  });
+  it('le contraste élevé des seniors garde la priorité sur la palette', () => {
+    expect(buildTheme('senior', false, 'sunset').colors.text).toBe('#000000');
+  });
+});

@@ -3,19 +3,36 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, I18nManager, View } from 'react-native';
 import { buildReviewSession } from './src/domain/deck';
 import { LESSONS, getLesson } from './src/domain/lessons';
+import { Card } from './src/domain/srs';
+import { timeIsUp } from './src/domain/parental';
 import { isRtl } from './src/i18n/strings';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
+import { KidsHomeScreen } from './src/screens/KidsHomeScreen';
 import { LevelTestScreen } from './src/screens/LevelTestScreen';
+import { ParentsScreen } from './src/screens/ParentsScreen';
+import { PlayScreen } from './src/screens/PlayScreen';
 import { ProfilePickerScreen } from './src/screens/ProfilePickerScreen';
 import { ReviewScreen } from './src/screens/ReviewScreen';
+import { StickersScreen } from './src/screens/StickersScreen';
+import { StoryScreen } from './src/screens/StoryScreen';
 import { AppStateProvider, useApp } from './src/state/AppState';
+import { AgeProfileId } from './src/theme/profiles';
 import { ThemeProvider } from './src/theme/ThemeProvider';
+
+type Route =
+  | { name: 'home' }
+  | { name: 'lesson'; id: string }
+  | { name: 'review'; session: Card[] }
+  | { name: 'story' }
+  | { name: 'play' }
+  | { name: 'stickers' }
+  | { name: 'parents' };
 
 function Root() {
   const app = useApp();
-  const [lessonId, setLessonId] = useState<string | null>(null);
-  const [reviewing, setReviewing] = useState<ReturnType<typeof buildReviewSession> | null>(null);
+  const [route, setRoute] = useState<Route>({ name: 'home' });
+  const home = () => setRoute({ name: 'home' });
 
   useEffect(() => {
     I18nManager.allowRTL(true);
@@ -24,28 +41,56 @@ function Root() {
 
   if (!app.ready) return <View style={{ flex: 1, justifyContent: 'center' }}><ActivityIndicator /></View>;
 
+  const pickProfile = (p: AgeProfileId) => {
+    app.setProfile(p);
+    // Le mode enfant n'a pas de test de niveau: tout est guidé.
+    if (p === 'kids') app.setLevel('A1');
+    home();
+  };
+
+  const timeUp = timeIsUp(app.kids.dailyLimit, app.progress.minutesToday);
+
+  let screen: React.ReactNode;
+  if (!app.profile) {
+    screen = <ProfilePickerScreen lang={app.uiLang} onPick={pickProfile} />;
+  } else if (!app.level) {
+    screen = <LevelTestScreen lang={app.uiLang} onDone={app.setLevel} />;
+  } else if (app.profile === 'kids') {
+    // Mode enfant: aucune route vers le chat libre avec l'IA ni vers les leçons adultes.
+    if (route.name === 'story' && !timeUp) {
+      screen = <StoryScreen lang={app.uiLang}
+        onExit={(m) => { if (m > 0) app.logSession(m); home(); }}
+        onFinish={(id, m) => { app.markStoryRead(id); app.addStars(2); app.logSession(m); home(); }} />;
+    } else if (route.name === 'play' && !timeUp) {
+      screen = <PlayScreen lang={app.uiLang} stars={app.kids.stars} micAllowed={app.kids.consent.micAllowed}
+        onCorrect={() => app.addStars(1)} onExit={(m) => { if (m > 0) app.logSession(m); home(); }} />;
+    } else if (route.name === 'stickers') {
+      screen = <StickersScreen lang={app.uiLang} stars={app.kids.stars} onBack={home} />;
+    } else if (route.name === 'parents') {
+      screen = <ParentsScreen lang={app.uiLang} kids={app.kids} minutesToday={app.progress.minutesToday}
+        onMic={app.setMicConsent} onLimit={app.setKidsLimit}
+        onSwitchProfile={() => { app.resetProfile(); home(); }} onErase={() => { app.eraseAll(); home(); }} onBack={home} palette={app.palette} onPalette={app.setPalette} />;
+    } else {
+      screen = <KidsHomeScreen lang={app.uiLang} stars={app.kids.stars} minutesToday={app.progress.minutesToday} dailyLimit={app.kids.dailyLimit}
+        onStories={() => setRoute({ name: 'story' })} onPlay={() => setRoute({ name: 'play' })}
+        onStickers={() => setRoute({ name: 'stickers' })} onParents={() => setRoute({ name: 'parents' })} />;
+    }
+  } else if (route.name === 'review') {
+    screen = <ReviewScreen lang={app.uiLang} session={route.session} onAnswer={app.reviewCard} onExit={home} />;
+  } else if (route.name === 'lesson' && getLesson(route.id)) {
+    screen = <ChatScreen lang={app.uiLang} lesson={getLesson(route.id) ?? LESSONS[0]} level={app.level} ageProfile={app.profile}
+      onBack={home} onFinish={(m) => { app.logSession(m, route.id); home(); }} />;
+  } else {
+    screen = <HomeScreen lang={app.uiLang} level={app.level} progress={app.progress}
+      onOpenLesson={(id) => setRoute({ name: 'lesson', id })} onGoal={app.setGoal}
+      dueCount={buildReviewSession(app.cards, Date.now(), 999).length}
+      onReview={() => setRoute({ name: 'review', session: buildReviewSession(app.cards, Date.now()) })}
+      onSwitchProfile={() => { app.resetProfile(); home(); }} palette={app.palette} onPalette={app.setPalette} />;
+  }
+
   return (
-    <ThemeProvider profileId={app.profile ?? 'adult'}>
-      {!app.profile ? (
-        <ProfilePickerScreen lang={app.uiLang} onPick={app.setProfile} />
-      ) : !app.level ? (
-        <LevelTestScreen lang={app.uiLang} onDone={app.setLevel} />
-      ) : reviewing ? (
-        <ReviewScreen lang={app.uiLang} session={reviewing} onAnswer={app.reviewCard} onExit={() => setReviewing(null)} />
-      ) : lessonId && getLesson(lessonId) ? (
-        <ChatScreen
-          lang={app.uiLang}
-          lesson={getLesson(lessonId) ?? LESSONS[0]}
-          level={app.level}
-          ageProfile={app.profile}
-          onBack={() => setLessonId(null)}
-          onFinish={(m) => { app.logSession(m, lessonId); setLessonId(null); }}
-        />
-      ) : (
-        <HomeScreen lang={app.uiLang} level={app.level} progress={app.progress} onOpenLesson={setLessonId} onGoal={app.setGoal}
-          dueCount={buildReviewSession(app.cards, Date.now(), 999).length}
-          onReview={() => setReviewing(buildReviewSession(app.cards, Date.now()))} />
-      )}
+    <ThemeProvider profileId={app.profile ?? 'adult'} paletteId={app.palette}>
+      {screen}
       <StatusBar style="auto" />
     </ThemeProvider>
   );

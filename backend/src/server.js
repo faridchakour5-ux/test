@@ -1,6 +1,7 @@
 import http from 'node:http';
 import Anthropic from '@anthropic-ai/sdk';
 import { buildSystemPrompt } from './prompt.js';
+import { sanitizeMessages } from './pii.js';
 import { createRateLimiter } from './rateLimit.js';
 import { validateChat } from './validate.js';
 
@@ -47,12 +48,15 @@ const server = http.createServer(async (req, res) => {
   const { value, error } = validateChat(body);
   if (error) return send(res, 400, { error });
 
+  const clean = sanitizeMessages(value.messages, value.ageProfile);
+  if (clean.error) return send(res, 400, { error: clean.error });
+
   try {
     const reply = await client.messages.create({
       model: MODEL,
       max_tokens: 300,
       system: buildSystemPrompt(value),
-      messages: value.messages,
+      messages: clean.messages,
     });
     const text = reply.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
     send(res, 200, { reply: text });

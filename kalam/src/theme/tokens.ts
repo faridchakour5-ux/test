@@ -7,7 +7,14 @@ export interface Palette {
   primary: string;
   onPrimary: string;
   border: string;
+  // Couleurs d'état: toujours accompagnées d'un symbole ou d'un texte (jamais la couleur seule).
+  success: string;
+  warning: string;
+  danger: string;
 }
+
+export const STATUS_LIGHT = { success: '#17754A', warning: '#8A5300', danger: '#B3261E' };
+export const STATUS_DARK = { success: '#5FD99A', warning: '#FFC060', danger: '#FF8A80' };
 
 export const LIGHT: Palette = {
   background: '#FBF8F3',
@@ -17,6 +24,7 @@ export const LIGHT: Palette = {
   primary: '#3B2FA3',
   onPrimary: '#FFFFFF',
   border: '#E3DED3',
+  ...STATUS_LIGHT,
 };
 
 export const DARK: Palette = {
@@ -27,6 +35,7 @@ export const DARK: Palette = {
   primary: '#9C8CFF',
   onPrimary: '#12111F',
   border: '#34324D',
+  ...STATUS_DARK,
 };
 
 // Contraste élevé (seniors): noir/blanc pur, bouton très marqué.

@@ -3,6 +3,8 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
 import { Mascot } from '../components/Mascot';
+import { PalettePicker } from '../components/PalettePicker';
+import { PaletteId } from '../theme/palettes';
 import { KText } from '../components/KText';
 import { LESSONS } from '../domain/lessons';
 import { Level } from '../domain/lessons';
@@ -18,9 +20,12 @@ interface Props {
   onGoal: (g: 5 | 10 | 20) => void;
   dueCount: number;
   onReview: () => void;
+  onSwitchProfile: () => void;
+  palette: PaletteId;
+  onPalette: (p: PaletteId) => void;
 }
 
-export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal, dueCount, onReview }: Props) {
+export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal, dueCount, onReview, onSwitchProfile, palette, onPalette }: Props) {
   const { colors, profile } = useTheme();
   const rtl = isRtl(lang);
   const row = { flexDirection: rtl ? ('row-reverse' as const) : ('row' as const), gap: 8 };
@@ -65,6 +70,8 @@ export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal, dueCou
           </Card>
         </Pressable>
       ))}
+      <PalettePicker lang={lang} value={palette} onChange={onPalette} />
+      <KButton label={t(lang, 'switchProfile')} onPress={onSwitchProfile} />
     </ScrollView>
   );
 }

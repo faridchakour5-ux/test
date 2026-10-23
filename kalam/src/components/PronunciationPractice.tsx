@@ -15,7 +15,6 @@ interface Props {
 
 // Couleur ET symbole: le sens ne repose jamais sur la couleur seule (daltonisme).
 const MARK: Record<WordStatus, string> = { correct: '✓', close: '~', wrong: '✗', missing: '…' };
-const COLOR: Record<WordStatus, string> = { correct: '#1E8E5A', close: '#B26A00', wrong: '#C62828', missing: '#6B6B80' };
 
 export function PronunciationPractice({ lang, expected, onResult }: Props) {
   const { colors, profile } = useTheme();
@@ -23,6 +22,7 @@ export function PronunciationPractice({ lang, expected, onResult }: Props) {
   const [result, setResult] = useState<PronunciationResult | null>(null);
   const [message, setMessage] = useState<StringKey | null>(null);
   const available = isSpeechInputAvailable();
+  const COLOR: Record<WordStatus, string> = { correct: colors.success, close: colors.warning, wrong: colors.danger, missing: colors.textMuted };
 
   useEffect(() => { setResult(null); setMessage(null); }, [expected]);
   useEffect(() => () => cancelListening(), []);

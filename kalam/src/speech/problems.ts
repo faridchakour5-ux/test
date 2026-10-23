@@ -16,7 +16,7 @@ export function problemFromListen(reason: Exclude<ListenFailure, 'cancelled'>): 
 }
 
 export function problemFromTeacher(kind: TeacherErrorKind): TurnProblem {
-  return kind === 'invalid' ? 'server' : kind; // 'config' est conservé: ce n'est pas une panne passagère
+  return kind === 'invalid' || kind === 'cancelled' ? 'server' : kind; // 'config' est conservé: ce n'est pas une panne passagère
 }
 
 export const PROBLEM_TEXT: Record<TurnProblem, StringKey> = {

@@ -112,4 +112,41 @@ describe('askTeacherStream', () => {
     await assertion;
     jest.useRealTimers();
   });
+
+  it('annulée avant de commencer: aucune requête, aucune erreur à afficher', async () => {
+    const f = jest.fn();
+    const c = new AbortController();
+    c.abort();
+    await expect(askTeacherStream(R(), { fetchImpl: as(f), sleep, signal: c.signal, onDelta: () => {} })).rejects.toMatchObject({ kind: 'cancelled', retryable: false });
+    expect(f).not.toHaveBeenCalled();
+  });
+
+  it('annulée en plein flux: la requête est coupée, pas de nouvelle tentative', async () => {
+    const c = new AbortController();
+    let aborted = false;
+    const f = jest.fn().mockImplementation((_u: string, init: { signal: AbortSignal }) => {
+      init.signal.addEventListener('abort', () => { aborted = true; });
+      let i = 0;
+      return Promise.resolve({
+        ok: true, status: 200,
+        body: { getReader: () => ({ read: async () => {
+          if (i++ === 0) return { done: false, value: enc.encode(sse({ delta: 'Starting to talk' })) };
+          c.abort(); // l'utilisateur interrompt pendant la lecture
+          throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+        } }) },
+      });
+    });
+    await expect(askTeacherStream(R(), { fetchImpl: as(f), sleep, signal: c.signal, onDelta: () => {} })).rejects.toMatchObject({ kind: 'cancelled' });
+    expect(aborted).toBe(true); // la requête réseau a bien été coupée
+    expect(f).toHaveBeenCalledTimes(1);
+  });
+
+  it('ne laisse pas d\'écouteur d\'annulation après la fin', async () => {
+    const c = new AbortController();
+    const add = jest.spyOn(c.signal, 'addEventListener');
+    const remove = jest.spyOn(c.signal, 'removeEventListener');
+    const f = jest.fn().mockResolvedValue(streamResponse([sse({ delta: 'Done here', }, { done: true })]));
+    await askTeacherStream(R(), { fetchImpl: as(f), sleep, signal: c.signal, onDelta: () => {} });
+    expect(remove).toHaveBeenCalledTimes(add.mock.calls.length);
+  });
 });

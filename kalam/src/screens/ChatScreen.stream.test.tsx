@@ -36,7 +36,7 @@ jest.mock('../state/conversations', () => ({
 }));
 
 const lesson = LESSONS.find((l) => l.id === 'restaurant')!;
-type OnDelta = { onDelta: (d: string) => void };
+type OnDelta = { onDelta: (d: string) => void; signal?: AbortSignal };
 
 async function setup() {
   await render(
@@ -131,5 +131,30 @@ describe('ChatScreen en mode flux', () => {
     await fireEvent(screen.getByLabelText('Conversation mains libres'), 'valueChange', true);
     await fireEvent.press(screen.getByText('🎤 Parler'));
     await waitFor(() => expect(mockListen).toHaveBeenCalledTimes(2));
+  });
+
+  it('interrompre la voix annule la requête réseau (plus de jetons gaspillés)', async () => {
+    let signal: AbortSignal | undefined;
+    mockStream.mockImplementation(async (_req: unknown, o: OnDelta) => {
+      signal = o.signal;
+      o.onDelta('A long answer is starting now. ');
+      await new Promise(() => {}); // ne se termine jamais: seule l'annulation peut l'arrêter
+    });
+    await setup();
+    await type('Tell me a story');
+    await waitFor(() => expect(screen.getByText('⏹ Arrêter la voix')).toBeTruthy());
+    expect(signal?.aborted).toBe(false);
+    await fireEvent.press(screen.getByText('⏹ Arrêter la voix'));
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it('quitter l\'écran annule la requête en cours', async () => {
+    let signal: AbortSignal | undefined;
+    mockStream.mockImplementation(async (_req: unknown, o: OnDelta) => { signal = o.signal; await new Promise(() => {}); });
+    await setup();
+    await type('Hello there');
+    await waitFor(() => expect(signal).toBeDefined());
+    await fireEvent.press(screen.getByText(/Retour/));
+    expect(signal?.aborted).toBe(true);
   });
 });

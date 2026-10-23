@@ -20,7 +20,7 @@ export interface TeacherRequest {
   start?: boolean; // le professeur ouvre la conversation (messages vide)
 }
 
-export type TeacherErrorKind = 'offline' | 'timeout' | 'rate' | 'server' | 'invalid' | 'config';
+export type TeacherErrorKind = 'offline' | 'timeout' | 'rate' | 'server' | 'invalid' | 'config' | 'cancelled';
 
 export class TeacherError extends Error {
   constructor(public kind: TeacherErrorKind, public retryable: boolean, message?: string) {
@@ -97,6 +97,7 @@ export const streamingEnabled = (): boolean => process.env.EXPO_PUBLIC_STREAMING
 
 export interface StreamOptions extends AskOptions {
   onDelta: (text: string) => void; // appelé pour chaque morceau de texte reçu
+  signal?: AbortSignal; // permet d'annuler la requête (l'utilisateur interrompt le professeur)
   firstByteMs?: number; // attente max avant le premier morceau
   idleMs?: number; // silence max entre deux morceaux
 }
@@ -128,6 +129,10 @@ async function streamOnce(req: TeacherRequest, o: Required<Pick<StreamOptions, '
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | null = null;
   let timedOut = false;
+  const external = o.signal;
+  if (external?.aborted) throw new TeacherError('cancelled', false);
+  const onExternalAbort = () => controller.abort();
+  external?.addEventListener('abort', onExternalAbort);
   const arm = (ms: number) => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => { timedOut = true; controller.abort(); }, ms);
@@ -168,13 +173,17 @@ async function streamOnce(req: TeacherRequest, o: Required<Pick<StreamOptions, '
     }
   } catch (e) {
     if (e instanceof TeacherError) throw e;
+    // Annulée par l'utilisateur: pas d'erreur à afficher, pas de nouvelle tentative.
+    if (external?.aborted) throw new TeacherError('cancelled', false);
     // Interruption APRÈS du texte: on garde ce qui est arrivé (jamais de nouvelle tentative: ça répéterait des phrases).
     if (text) return { text, partial: true };
     throw new TeacherError(timedOut ? 'timeout' : 'offline', true);
   } finally {
     if (timer) clearTimeout(timer);
+    external?.removeEventListener('abort', onExternalAbort);
   }
 
+  if (external?.aborted) throw new TeacherError('cancelled', false);
   if (!text) throw new TeacherError('server', true, serverError ? 'stream error' : 'empty reply');
   return { text, partial: serverError || !done };
 }
@@ -190,7 +199,7 @@ export async function askTeacherStream(req: TeacherRequest, opts: StreamOptions)
       return await streamOnce(req, { ...opts, onDelta, firstByteMs, idleMs });
     } catch (e) {
       last = e instanceof TeacherError ? e : new TeacherError('server', true);
-      if (received || !last.retryable || attempt === retries) break;
+      if (received || !last.retryable || attempt === retries || opts.signal?.aborted) break;
       await sleep(600 * 2 ** attempt + Math.floor(Math.random() * 200));
     }
   }

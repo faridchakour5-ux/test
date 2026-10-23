@@ -43,6 +43,7 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   const scroller = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const token = useRef(0); // invalide les opérations en vol quand on interrompt ou qu'on quitte
   const listening = useRef(false);
+  const streamAbort = useRef<AbortController | null>(null); // annule la requête réseau en cours
   const mounted = useRef(true);
   const messagesRef = useRef<ChatMessage[]>([]);
   useEffect(() => { messagesRef.current = messages; }, [messages]);
@@ -54,7 +55,7 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
     tts.hasVoice('en-US').then((ok) => { if (mounted.current) setNoVoice(!ok); });
     // `token` est un compteur volontairement lu à la fermeture: il sert à invalider les opérations en vol.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    return () => { mounted.current = false; token.current++; void tts.stop(); cancelListening(); };
+    return () => { mounted.current = false; token.current++; streamAbort.current?.abort(); void tts.stop(); cancelListening(); };
   }, [lesson.id]);
 
   // Sauvegarde locale à chaque changement: rien n'est perdu si l'app est fermée.
@@ -74,6 +75,9 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
     const opening = history.length === 0; // aucun message: le professeur ouvre la scène
     const request = { ageProfile, level, scenario: lesson.scenario, uiLang: lang, messages: history.slice(-20), ...(opening ? { start: true } : {}) };
     const live = () => mounted.current && myToken === token.current;
+    streamAbort.current?.abort(); // une seule réponse en cours à la fois
+    const abort = new AbortController();
+    streamAbort.current = abort;
 
     // Réponse en flux: le texte s'affiche et la voix démarre dès la première phrase complète.
     if (streamingEnabled()) {
@@ -82,6 +86,7 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
       let started = false;
       try {
         await askTeacherStream(request, {
+          signal: abort.signal,
           onDelta: (d) => {
             if (!live()) return;
             if (!started) {
@@ -162,6 +167,7 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   const stopAll = () => {
     token.current++;
     listening.current = false;
+    streamAbort.current?.abort(); // coupe aussi la requête: plus de jetons ni de batterie gaspillés
     cancelListening();
     void tts.stop();
     setPartial('');

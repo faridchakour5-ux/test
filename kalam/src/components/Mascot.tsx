@@ -34,7 +34,7 @@ export function Mascot({ mood = 'happy', size = 120, animated = true }: Props) {
         ]),
       );
       loop.start();
-    });
+    }).catch(() => { /* réglage illisible: pas d'animation, c'est le choix le plus sûr */ });
     return () => { cancelled = true; loop?.stop(); };
   }, [animated, mood, bob]);
 

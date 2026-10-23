@@ -4,7 +4,7 @@ import { ChatScreen } from './ChatScreen';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { LESSONS } from '../domain/lessons';
 import { TeacherError } from '../api/teacher';
-import { loadConversation } from '../state/conversations';
+import { loadConversation, saveConversation } from '../state/conversations';
 
 const mockPush = jest.fn();
 const mockEnd = jest.fn();
@@ -158,5 +158,34 @@ describe('ChatScreen en mode flux', () => {
     await waitFor(() => expect(signal).toBeDefined());
     await fireEvent.press(screen.getByText(/Retour/));
     expect(signal?.aborted).toBe(true);
+  });
+
+  it('regroupe les sauvegardes: des dizaines de morceaux de texte ne provoquent pas des dizaines d\'écritures', async () => {
+    mockStream.mockImplementation(async (_req: unknown, o: OnDelta) => {
+      // morceaux espacés comme sur un vrai réseau (sinon React les fusionne déjà en un seul affichage)
+      for (let i = 0; i < 40; i++) { o.onDelta(`word${i} `); await new Promise((r) => setTimeout(r, 4)); }
+      return { text: 'x', partial: false };
+    });
+    await setup();
+    await type('Tell me a long story');
+    await waitFor(() => expect(screen.getByText(/word39/)).toBeTruthy());
+    await waitFor(() => expect((saveConversation as jest.Mock).mock.calls.length).toBeGreaterThan(0), { timeout: 3000 });
+    const calls = (saveConversation as jest.Mock).mock.calls;
+    expect(calls.length).toBeLessThanOrEqual(4); // 40 morceaux, mais très peu d'écritures
+    const last = calls[calls.length - 1][1] as { role: string; content: string }[];
+    expect(last[last.length - 1].content).toContain('word39'); // la dernière version est bien celle qui est sauvegardée
+  });
+
+  it('quitter l\'écran sauvegarde tout de suite la dernière version (rien n\'est perdu)', async () => {
+    mockStream.mockImplementation(async (_req: unknown, o: OnDelta) => { o.onDelta('A quick answer. '); return { text: 'x', partial: false }; });
+    await setup();
+    (saveConversation as jest.Mock).mockClear();
+    await type('Hello');
+    await waitFor(() => expect(screen.getByText(/A quick answer/)).toBeTruthy());
+    await screen.unmount(); // l'écran se ferme bien avant les 500 ms du regroupement
+    const calls = (saveConversation as jest.Mock).mock.calls;
+    expect(calls.length).toBeGreaterThan(0);
+    const last = calls[calls.length - 1][1] as { content: string }[];
+    expect(last.map((m) => m.content).join(' ')).toContain('A quick answer');
   });
 });

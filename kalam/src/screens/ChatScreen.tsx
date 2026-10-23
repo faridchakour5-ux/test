@@ -21,6 +21,8 @@ import { clearConversation, loadConversation, loadTopicId, saveConversation, sav
 import { AgeProfileId } from '../theme/profiles';
 import { useTheme } from '../theme/ThemeProvider';
 
+const SAVE_DELAY_MS = 500;
+
 interface Props {
   target?: TargetLang; // langue apprise
   duo?: { names: [string, string] }; // mode « conversation à deux »
@@ -74,7 +76,19 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
   }, [lesson.id, isFree, locale]);
 
   // Sauvegarde locale à chaque changement: rien n'est perdu si l'app est fermée.
-  useEffect(() => { if (loaded) void saveConversation(lesson.id, messages); }, [messages, loaded, lesson.id]);
+  // Les sauvegardes sont regroupées: en mode flux le texte change plusieurs fois par seconde, inutile (et coûteux
+  // en batterie) de réécrire tout l'historique à chaque morceau. À la fermeture de l'écran, on sauvegarde tout de suite.
+  useEffect(() => {
+    if (!loaded) return;
+    const timer = setTimeout(() => { void saveConversation(lesson.id, messages); }, SAVE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [messages, loaded, lesson.id]);
+  const latest = useRef({ messages, loaded });
+  useEffect(() => { latest.current = { messages, loaded }; }, [messages, loaded]);
+  useEffect(() => () => {
+    const { messages: last, loaded: ready } = latest.current;
+    if (ready) void saveConversation(lesson.id, last);
+  }, [lesson.id]);
 
   const scrollEnd = () => setTimeout(() => scroller.current?.scrollToEnd({ animated: true }), 60);
 

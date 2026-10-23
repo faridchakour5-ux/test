@@ -167,6 +167,14 @@ describe('ChatScreen: pannes réseau', () => {
     expect(mockAsk.mock.calls[1][0].messages.at(-1)).toEqual({ role: 'user', content: 'Hello teacher' });
   });
 
+  it('mauvaise configuration du serveur: message clair et pas de « Réessayer » inutile', async () => {
+    mockAsk.mockRejectedValueOnce(new TeacherError('config', false));
+    await setup();
+    await type('Hello');
+    await waitFor(() => expect(screen.getByText(/n'est pas configurée correctement/)).toBeTruthy());
+    expect(screen.queryByText('Réessayer')).toBeNull();
+  });
+
   it('une panne de la voix ne bloque pas la conversation', async () => {
     mockSpeak.mockResolvedValue('error');
     mockListen.mockResolvedValue({ ok: true, transcript: 'Hi' });

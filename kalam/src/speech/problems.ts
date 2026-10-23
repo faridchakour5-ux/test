@@ -16,7 +16,7 @@ export function problemFromListen(reason: Exclude<ListenFailure, 'cancelled'>): 
 }
 
 export function problemFromTeacher(kind: TeacherErrorKind): TurnProblem {
-  return kind === 'invalid' ? 'server' : kind;
+  return kind === 'invalid' ? 'server' : kind; // 'config' est conservé: ce n'est pas une panne passagère
 }
 
 export const PROBLEM_TEXT: Record<TurnProblem, StringKey> = {
@@ -31,6 +31,7 @@ export const PROBLEM_TEXT: Record<TurnProblem, StringKey> = {
   timeout: 'pTimeout',
   server: 'pServer',
   rate: 'pRate',
+  config: 'pConfig',
 };
 
 // Problèmes pour lesquels « Réessayer l'envoi » a du sens (le message est déjà écrit).

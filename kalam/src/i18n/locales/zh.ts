@@ -110,4 +110,5 @@ export const zh: Record<StringKey, string> = {
   practiceHint: '点一个词，然后大声说出来。',
   recommended: '为你推荐',
   allLessons: '全部课程',
+  pConfig: '应用配置不正确（服务器地址）。请更新应用。',
 };

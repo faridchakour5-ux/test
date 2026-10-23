@@ -110,4 +110,5 @@ export const es: Record<StringKey, string> = {
   practiceHint: 'Toca una palabra y dila en voz alta.',
   recommended: 'Para ti',
   allLessons: 'Todas las lecciones',
+  pConfig: 'La aplicación no está configurada correctamente (dirección del servidor). Actualízala.',
 };

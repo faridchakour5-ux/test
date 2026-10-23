@@ -19,7 +19,7 @@ export interface TeacherRequest {
   start?: boolean; // le professeur ouvre la conversation (messages vide)
 }
 
-export type TeacherErrorKind = 'offline' | 'timeout' | 'rate' | 'server' | 'invalid';
+export type TeacherErrorKind = 'offline' | 'timeout' | 'rate' | 'server' | 'invalid' | 'config';
 
 export class TeacherError extends Error {
   constructor(public kind: TeacherErrorKind, public retryable: boolean, message?: string) {
@@ -35,14 +35,23 @@ export interface AskOptions {
   sleep?: (ms: number) => Promise<void>;
 }
 
+// En production, le serveur DOIT être en HTTPS (le trafic Android en clair est de toute façon bloqué).
+// Un build oublié sans EXPO_PUBLIC_API_URL tomberait sur localhost: on le signale clairement au lieu d'un faux « hors ligne ».
+export function resolveApiUrl(url: string = API_URL, dev: boolean = __DEV__): string {
+  if (dev) return url;
+  if (!/^https:\/\/[^/\s]+/i.test(url)) throw new TeacherError('config', false, 'API URL must be https in production');
+  return url.replace(/\/+$/, '');
+}
+
 const defaultSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 async function once(req: TeacherRequest, fetchImpl: typeof fetch, timeoutMs: number): Promise<string> {
+  const base = resolveApiUrl(); // avant le try: une mauvaise configuration ne doit pas passer pour une panne réseau
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let res: Response;
   try {
-    res = await fetchImpl(`${API_URL}/chat`, {
+    res = await fetchImpl(`${base}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req),

@@ -1,4 +1,4 @@
-import { TeacherError, askTeacher } from './teacher';
+import { TeacherError, askTeacher, resolveApiUrl } from './teacher';
 
 const req = { ageProfile: 'adult', level: 'A1', scenario: 's', uiLang: 'fr', messages: [{ role: 'user', content: 'Hi' }] } as const;
 const R = () => ({ ...req, messages: [...req.messages] });
@@ -47,5 +47,31 @@ describe('askTeacher', () => {
   it('une réponse vide est une erreur serveur', async () => {
     const f = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
     await expect(askTeacher(R(), { fetchImpl: as(f), sleep, retries: 0 })).rejects.toBeInstanceOf(TeacherError);
+  });
+});
+
+describe('resolveApiUrl', () => {
+  it('accepte tout en développement (localhost, http)', () => {
+    expect(resolveApiUrl('http://localhost:8787', true)).toBe('http://localhost:8787');
+  });
+  it('exige du HTTPS en production', () => {
+    expect(resolveApiUrl('https://api.kalam.app/', false)).toBe('https://api.kalam.app');
+    expect(() => resolveApiUrl('http://localhost:8787', false)).toThrow(TeacherError);
+    expect(() => resolveApiUrl('http://api.kalam.app', false)).toThrow(/https/);
+    expect(() => resolveApiUrl('', false)).toThrow(TeacherError);
+    expect(() => resolveApiUrl('https://', false)).toThrow(TeacherError);
+  });
+  it('l\'erreur de configuration n\'est pas réessayée', () => {
+    try { resolveApiUrl('http://x', false); } catch (e) { expect((e as TeacherError)).toMatchObject({ kind: 'config', retryable: false }); }
+  });
+  it('askTeacher échoue tout de suite avec « config » si le build de production est mal configuré', async () => {
+    const g = globalThis as unknown as { __DEV__: boolean };
+    const before = g.__DEV__;
+    g.__DEV__ = false;
+    const f = jest.fn();
+    try {
+      await expect(askTeacher(R(), { fetchImpl: as(f), sleep })).rejects.toMatchObject({ kind: 'config' });
+      expect(f).not.toHaveBeenCalled();
+    } finally { g.__DEV__ = before; }
   });
 });

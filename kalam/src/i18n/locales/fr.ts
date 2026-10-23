@@ -108,6 +108,7 @@ export const fr = {
   practiceHint: 'Touche un mot, puis dis-le à voix haute.',
   recommended: 'Pour vous',
   allLessons: 'Toutes les leçons',
+  pConfig: 'L\'application n\'est pas configurée correctement (adresse du serveur). Mettez-la à jour.',
 } as const;
 
 export type StringKey = keyof typeof fr;

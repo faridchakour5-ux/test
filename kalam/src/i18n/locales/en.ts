@@ -110,4 +110,5 @@ export const en: Record<StringKey, string> = {
   practiceHint: 'Tap a word, then say it out loud.',
   recommended: 'For you',
   allLessons: 'All lessons',
+  pConfig: 'The app is not configured correctly (server address). Please update it.',
 };

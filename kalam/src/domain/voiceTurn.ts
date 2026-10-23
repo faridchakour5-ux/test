@@ -4,7 +4,7 @@ export type TurnPhase = 'idle' | 'listening' | 'sending' | 'speaking' | 'error';
 
 export type TurnProblem =
   | 'no-speech' | 'permission' | 'permission-blocked' | 'unavailable' | 'network-mic' | 'language' | 'mic-error'
-  | 'offline' | 'timeout' | 'server' | 'rate';
+  | 'offline' | 'timeout' | 'server' | 'rate' | 'config';
 
 export interface TurnState {
   phase: TurnPhase;

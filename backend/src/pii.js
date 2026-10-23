@@ -3,7 +3,7 @@
 const PATTERNS = [
   { name: 'email', re: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi },
   { name: 'phone', re: /(?:\+?\d[\s.-]?){9,}\d/g },
-  { name: 'address', re: /\b\d{1,4}\s+(?:rue|avenue|av\.?|boulevard|bd|chemin|street|st\.?|road|rd\.?|lane|drive)\b/gi },
+  { name: 'address', re: /\b\d{1,4}\s+(?:(?:rue|avenue|av\.?|boulevard|bd|chemin)|(?:[A-Za-z'’-]+\s+){0,2}(?:street|st\.?|road|rd\.?|lane|drive|avenue|ave\.?|boulevard|blvd\.?))(?![A-Za-z])/gi },
   { name: 'url', re: /\bhttps?:\/\/\S+/gi },
 ];
 

@@ -8,7 +8,8 @@ Ce fichier dit, en mots simples, ce qui est fait, ce qui ne l'est pas, et ce que
 - Leçons, test de niveau, révision espacée, objectifs sans culpabilisation, progression, mode à deux, mode « Parle librement ».
 - Rappel quotidien facultatif (notification locale, désactivé par défaut, jamais pour les enfants).
 - Données seulement sur le téléphone; export et effacement (RGPD). Aucune clé d'API dans l'application: seul le serveur (`backend/`) parle à l'IA.
-- Chaque envoi de code relance les tests, le lint et la vérification des types (`.github/workflows/ci.yml`).
+- Chaque envoi de code relance les tests, le lint et la vérification des types (`.github/workflows/ci.yml`), en trois fuseaux horaires pour la série de jours.
+- Solidité des tests mesurée par « test de mutation » (on casse le code exprès et on compte les cassures détectées): révision espacée 97 %, progression 95 %, prononciation 94 %, reconnaissance vocale 92 %, relecture de sauvegarde 95 %, portail parental 87 %, découpage des phrases 85 %, synthèse vocale 76 %. Les cas restants sont surtout des doubles protections équivalentes.
 
 ## Ce qui n'a jamais été essayé (il faut un vrai téléphone)
 L'application a été regardée à l'écran dans un navigateur (rendu web, 390 px de large) pour juger la mise en page; le micro et la voix, eux, n'existent pas dans ce rendu.

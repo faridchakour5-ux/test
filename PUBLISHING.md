@@ -28,3 +28,13 @@ Pour automatiser ensuite: créez un compte de service (Play Console > Accès à 
 
 ## 5. iOS plus tard
 Compte Apple Developer (99 $/an), `eas build --platform ios`, `eas submit --platform ios`.
+
+## 6. Tester la prononciation (build de développement)
+La reconnaissance vocale est un module natif: elle ne marche PAS dans Expo Go (l'app l'indique poliment).
+Pour la tester sur votre téléphone Android:
+```
+cd kalam
+eas build --platform android --profile development
+```
+Installez l'APK obtenu, puis `npx expo start --dev-client`.
+Les builds `preview` et `production` incluent déjà le micro.

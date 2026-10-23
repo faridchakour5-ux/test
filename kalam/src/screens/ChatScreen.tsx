@@ -7,6 +7,7 @@ import { KButton } from '../components/KButton';
 import { KText } from '../components/KText';
 import { Lesson, Level } from '../domain/lessons';
 import { UiLang, t } from '../i18n/strings';
+import { isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
 import { AgeProfileId } from '../theme/profiles';
 import { useTheme } from '../theme/ThemeProvider';
 
@@ -25,6 +26,7 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [listening, setListening] = useState(false);
   const started = useRef(Date.now());
   const scroller = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
@@ -50,6 +52,13 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
       setLoading(false);
       setTimeout(() => scroller.current?.scrollToEnd({ animated: true }), 50);
     }
+  };
+
+  const dictate = async () => {
+    setListening(true); setError(false);
+    const r = await listenOnce('en-US');
+    setListening(false);
+    if (r.ok) setInput(r.transcript.slice(0, 500));
   };
 
   const finish = () => onFinish(Math.max(1, Math.round((Date.now() - started.current) / 60_000)));
@@ -90,6 +99,9 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
           onSubmitEditing={send}
           style={{ minHeight: profile.minTouchSize, borderRadius: profile.radius, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16, color: colors.text, backgroundColor: colors.surface, fontSize: profile.fontScale * 16 }}
         />
+        {isSpeechInputAvailable() && (
+          <KButton label={listening ? t(lang, 'listening') : `🎤 ${t(lang, 'speak')}`} onPress={dictate} />
+        )}
         <KButton label={t(lang, 'send')} onPress={send} />
         <KButton label={t(lang, 'finish')} onPress={finish} />
       </View>

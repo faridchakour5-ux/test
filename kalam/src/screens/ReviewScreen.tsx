@@ -5,6 +5,7 @@ import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
 import { KText } from '../components/KText';
 import { Mascot } from '../components/Mascot';
+import { PronunciationPractice } from '../components/PronunciationPractice';
 import { ANSWER_QUALITY, Answer, vocabForKey } from '../domain/deck';
 import { Card as SrsCard } from '../domain/srs';
 import { UiLang, t } from '../i18n/strings';
@@ -73,6 +74,7 @@ export function ReviewScreen({ lang, session, onAnswer, onExit }: Props) {
               </>
             )}
           </Card>
+          {revealed && current && <PronunciationPractice lang={lang} expected={current.en} />}
           {!revealed ? (
             <KButton label={t(lang, 'reveal')} onPress={() => { setRevealed(true); if (current) speak(current.en); }} />
           ) : (

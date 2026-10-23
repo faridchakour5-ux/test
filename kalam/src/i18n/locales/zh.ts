@@ -127,4 +127,11 @@ export const zh: Record<StringKey, string> = {
   exportMine: '导出我的数据',
   exportTitle: '我的 Kalam 数据',
   exportFailed: '导出失败，请重试。',
+  duoTitle: '双人对话',
+  duoIntro: '两个人一起练习，老师主持并让每个人轮流发言。',
+  duoName1: '第一位的名字',
+  duoName2: '第二位的名字',
+  duoStart: '开始对话',
+  duoTurn: '轮到',
+  anyTopic: '任意话题',
 };

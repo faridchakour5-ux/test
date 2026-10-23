@@ -8,6 +8,10 @@ import { timeIsUp } from './src/domain/parental';
 import { localDay } from './src/domain/progress';
 import { isRtl } from './src/i18n/strings';
 import { ChatScreen } from './src/screens/ChatScreen';
+import { DuoSetupScreen } from './src/screens/DuoSetupScreen';
+import { DUO_LESSON_ID, duoLesson } from './src/domain/duo';
+import { FreeTopic } from './src/domain/freeTopics';
+import { clearConversation } from './src/state/conversations';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { KidsHomeScreen } from './src/screens/KidsHomeScreen';
 import { LevelTestScreen } from './src/screens/LevelTestScreen';
@@ -26,6 +30,8 @@ type Route =
   | { name: 'home' }
   | { name: 'lesson'; id: string }
   | { name: 'review'; session: Card[] }
+  | { name: 'duo-setup' }
+  | { name: 'duo'; names: [string, string]; topic: FreeTopic | null }
   | { name: 'story' }
   | { name: 'play' }
   | { name: 'stickers' }
@@ -79,6 +85,13 @@ function Root() {
         onStories={() => setRoute({ name: 'story' })} onPlay={() => setRoute({ name: 'play' })}
         onStickers={() => setRoute({ name: 'stickers' })} onParents={() => setRoute({ name: 'parents' })} />;
     }
+  } else if (route.name === 'duo-setup') {
+    screen = <DuoSetupScreen lang={app.uiLang} onBack={home}
+      onStart={(names, topic) => { void clearConversation(DUO_LESSON_ID).then(() => setRoute({ name: 'duo', names, topic })); }} />;
+  } else if (route.name === 'duo') {
+    // Conversation à deux: deux personnes, le professeur anime. Jamais disponible en mode enfant (branche ci-dessus).
+    screen = <ChatScreen duo={{ names: route.names }} lang={app.uiLang} lesson={duoLesson(route.names[0], route.names[1], route.topic)} level={app.level} ageProfile={app.profile}
+      onBack={home} onFinish={(m) => { app.logSession(m); home(); }} />;
   } else if (route.name === 'review') {
     screen = <ReviewScreen lang={app.uiLang} session={route.session} onAnswer={app.reviewCard} onExit={home} />;
   } else if (route.name === 'lesson' && getLesson(route.id)) {
@@ -90,7 +103,7 @@ function Root() {
       dueCount={buildReviewSession(app.cards, now, 999).length}
       onReview={() => setRoute({ name: 'review', session: buildReviewSession(app.cards, now) })}
       onSwitchProfile={() => { app.resetProfile(); home(); }} palette={app.palette} onPalette={app.setPalette}
-      onLang={app.setUiLang} onErase={() => { app.eraseAll(); home(); }} onExport={app.exportData} today={localDay(new Date(now))} />;
+      onLang={app.setUiLang} onErase={() => { app.eraseAll(); home(); }} onExport={app.exportData} onDuo={() => setRoute({ name: 'duo-setup' })} today={localDay(new Date(now))} />;
   }
 
   return (

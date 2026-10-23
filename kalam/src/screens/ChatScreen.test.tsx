@@ -4,6 +4,7 @@ import { Linking } from 'react-native';
 import { ChatScreen } from './ChatScreen';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { LESSONS } from '../domain/lessons';
+import { duoLesson } from '../domain/duo';
 import { TeacherError } from '../api/teacher';
 import { loadConversation, loadTopicId, saveTopicId } from '../state/conversations';
 
@@ -284,6 +285,90 @@ describe('ChatScreen: parle librement (choix du sujet)', () => {
     (loadConversation as jest.Mock).mockResolvedValue([{ role: 'assistant', content: 'Welcome!' }]);
     await setup('restaurant');
     expect(screen.queryByText('De quoi veux-tu parler ?')).toBeNull();
+  });
+});
+
+describe('ChatScreen: conversation à deux', () => {
+  async function setupDuo() {
+    await render(
+      <ThemeProvider profileId="adult">
+        <ChatScreen duo={{ names: ['Sara', 'Léo'] }} lang="fr" lesson={duoLesson('Sara', 'Léo', null)} level="A1" ageProfile="adult" onFinish={jest.fn()} onBack={jest.fn()} />
+      </ThemeProvider>,
+    );
+    await act(async () => {});
+  }
+  beforeEach(() => {
+    (loadConversation as jest.Mock).mockResolvedValue([{ role: 'assistant', content: 'Welcome Sara and Léo!' }]);
+  });
+
+  it('étiquette chaque message avec le prénom de qui parle, et passe le tour à l\'autre', async () => {
+    mockAsk.mockResolvedValue('Nice! Léo, what do you think?');
+    await setupDuo();
+    await type('I like pizza');
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
+    expect(mockAsk.mock.calls[0][0].messages.at(-1)).toEqual({ role: 'user', content: '[Sara] I like pizza' });
+    // le tour est passé à Léo
+    await waitFor(() => expect(screen.getByLabelText('Au tour de Léo')).toHaveProp('accessibilityState', { checked: true }));
+    await type('Me too');
+    await waitFor(() => expect(mockAsk).toHaveBeenCalledTimes(2));
+    expect(mockAsk.mock.calls[1][0].messages.at(-1)).toEqual({ role: 'user', content: '[Léo] Me too' });
+  });
+
+  it('affiche le prénom au-dessus du message, sans montrer les crochets', async () => {
+    await setupDuo();
+    await type('Hello everybody');
+    await waitFor(() => expect(screen.getByText('Hello everybody')).toBeTruthy());
+    // « Sara » apparaît sur l'étiquette du message ET dans le sélecteur de tour
+    expect(screen.getAllByText('Sara').length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText('[Sara] Hello everybody')).toBeNull();
+    expect(screen.queryByText(/\[Sara\]/)).toBeNull();
+  });
+
+  it('on peut changer qui parle avant d\'envoyer', async () => {
+    await setupDuo();
+    await fireEvent.press(screen.getByLabelText('Au tour de Léo'));
+    await type('I am Léo');
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
+    expect(mockAsk.mock.calls[0][0].messages.at(-1).content).toBe('[Léo] I am Léo');
+  });
+
+  it('envoie au professeur la consigne à deux (scénario) et reste sous la limite du serveur', async () => {
+    await setupDuo();
+    await type('Hi');
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
+    const req = mockAsk.mock.calls[0][0];
+    expect(req.scenario).toContain('Sara');
+    expect(req.scenario).toContain('Léo');
+    expect(req.scenario.length).toBeLessThanOrEqual(300);
+  });
+
+  it('un très long message reste sous la limite de 500 caractères avec l\'étiquette', async () => {
+    await setupDuo();
+    await type('x'.repeat(500));
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
+    expect(mockAsk.mock.calls[0][0].messages.at(-1).content.length).toBeLessThanOrEqual(500);
+  });
+
+  it('en mode vocal, ce qui est dit est aussi étiqueté', async () => {
+    mockListen.mockResolvedValue({ ok: true, transcript: 'I want to travel' });
+    await setupDuo();
+    await fireEvent.press(screen.getByText('🎤 Parler'));
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
+    expect(mockAsk.mock.calls[0][0].messages.at(-1).content).toBe('[Sara] I want to travel');
+  });
+
+  it('pas de panneau de vocabulaire (aucun mot clé en mode à deux)', async () => {
+    await setupDuo();
+    expect(screen.queryByText(/Pratiquer les mots clés/)).toBeNull();
+  });
+
+  it('hors mode à deux, aucun sélecteur de tour ni étiquette', async () => {
+    (loadConversation as jest.Mock).mockResolvedValue([{ role: 'assistant', content: 'Welcome!' }]);
+    await setup('restaurant');
+    expect(screen.queryByLabelText('Au tour de Sara')).toBeNull();
+    await type('Hello');
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
+    expect(mockAsk.mock.calls[0][0].messages.at(-1).content).toBe('Hello');
   });
 });
 

@@ -29,10 +29,11 @@ interface Props {
   onLang: (l: UiLang) => void;
   onErase: () => void;
   onExport: () => Promise<string>;
+  onDuo: () => void;
   today: string; // jour local courant (YYYY-MM-DD)
 }
 
-export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson, onGoal, dueCount, onReview, onSwitchProfile, palette, onPalette, onLang, onErase, onExport, today }: Props) {
+export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson, onGoal, dueCount, onReview, onSwitchProfile, palette, onPalette, onLang, onErase, onExport, onDuo, today }: Props) {
   // La progression sauvegardée peut dater d'hier: on l'aligne sur le jour courant pour l'affichage.
   const progress = rollDay(storedProgress, today);
   const { colors, profile } = useTheme();
@@ -48,6 +49,7 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
           <KText muted>{t(lang, 'hello')}</KText>
         </View>
       </View>
+      <KButton label={`👥 ${t(lang, 'duoTitle')}`} onPress={onDuo} />
       <KButton label={dueCount > 0 ? `${t(lang, 'review')} (${dueCount} ${t(lang, 'reviewDue')})` : t(lang, 'review')} onPress={onReview} />
 
       <Card style={{ gap: 8 }}>

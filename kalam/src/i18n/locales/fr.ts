@@ -125,6 +125,13 @@ export const fr = {
   exportMine: 'Exporter mes données',
   exportTitle: 'Mes données Kalam',
   exportFailed: 'L\'export a échoué. Réessayez.',
+  duoTitle: 'Conversation à deux',
+  duoIntro: 'Deux personnes pratiquent ensemble. Le professeur anime et donne la parole à chacun.',
+  duoName1: 'Prénom de la personne 1',
+  duoName2: 'Prénom de la personne 2',
+  duoStart: 'Commencer la conversation',
+  duoTurn: 'Au tour de',
+  anyTopic: 'Au choix',
 } as const;
 
 export type StringKey = keyof typeof fr;

@@ -41,3 +41,11 @@ test('start: accepté sans messages, refusé avec des messages', () => {
   assert.ok(validateChat({ ageProfile: 'adult', level: 'A1', start: 'yes', messages: [] }).error);
   assert.ok(validateChat({ ageProfile: 'adult', level: 'A1', messages: [] }).error);
 });
+
+test('mode à deux: consigne de 300 caractères et messages « [Prénom] texte » acceptés (arabe, chinois, accents)', () => {
+  const scenario = 'x'.repeat(300);
+  const r = validateChat({ ageProfile: 'adult', level: 'A1', scenario, messages: [{ role: 'user', content: '[محمد] مرحبًا hello' }, { role: 'assistant', content: 'Welcome!' }, { role: 'user', content: '[小明] 你好 hi' }] });
+  assert.ok(r.value, JSON.stringify(r));
+  assert.ok(validateChat({ ageProfile: 'adult', level: 'A1', scenario: 'x'.repeat(301), messages: [{ role: 'user', content: 'Hi' }] }).error);
+  assert.ok(validateChat({ ageProfile: 'adult', level: 'A1', messages: [{ role: 'user', content: '[' + 'é'.repeat(16) + '] ' + 'a'.repeat(480) }] }).value);
+});

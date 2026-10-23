@@ -127,4 +127,11 @@ export const ar: Record<StringKey, string> = {
   exportMine: 'تصدير بياناتي',
   exportTitle: 'بياناتي في كلام',
   exportFailed: 'فشل التصدير. حاول مرة أخرى.',
+  duoTitle: 'محادثة لشخصين',
+  duoIntro: 'يتدرّب شخصان معًا. المعلّم يدير الحوار ويعطي الدور لكل واحد.',
+  duoName1: 'اسم الشخص الأول',
+  duoName2: 'اسم الشخص الثاني',
+  duoStart: 'ابدأ المحادثة',
+  duoTurn: 'الدور على',
+  anyTopic: 'أي موضوع',
 };

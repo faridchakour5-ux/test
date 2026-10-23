@@ -14,12 +14,14 @@ import { UiLang, t } from '../i18n/strings';
 import { cancelListening, isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
 import { createSentenceSplitter } from '../speech/sentences';
 import { tts } from '../speech/tts';
+import { parseTagged, tagMessage } from '../domain/duo';
 import { FREE_LESSON_ID, FREE_TOPICS, FreeTopic, getFreeTopic } from '../domain/freeTopics';
 import { clearConversation, loadConversation, loadTopicId, saveConversation, saveTopicId } from '../state/conversations';
 import { AgeProfileId } from '../theme/profiles';
 import { useTheme } from '../theme/ThemeProvider';
 
 interface Props {
+  duo?: { names: [string, string] }; // mode « conversation à deux »
   lang: UiLang;
   lesson: Lesson;
   level: Level;
@@ -28,7 +30,7 @@ interface Props {
   onBack: () => void;
 }
 
-export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }: Props) {
+export function ChatScreen({ duo, lang, lesson, level, ageProfile, onFinish, onBack }: Props) {
   const { colors, profile } = useTheme();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -38,6 +40,7 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   const [topic, setTopic] = useState<FreeTopic | null>(null); // sujet choisi (mode « Parle librement »)
   const isFree = lesson.id === FREE_LESSON_ID;
   const scenario = isFree && topic ? topic.scenario : lesson.scenario;
+  const [speaker, setSpeaker] = useState<0 | 1>(0); // qui parle (mode à deux)
   const [showPractice, setShowPractice] = useState(false);
   const [practiceItem, setPracticeItem] = useState<VocabItem | null>(null);
   const [turn, dispatch] = useReducer(turnReducer, undefined, initialTurn);
@@ -151,14 +154,16 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   }, [loaded, requestReply, isFree, topic]);
 
   const submit = useCallback((text: string, fromVoice: boolean) => {
-    const clean = text.trim().slice(0, 500);
-    if (!clean) return;
+    const trimmed = text.trim().slice(0, duo ? 470 : 500); // la marge laisse la place de l'étiquette [Prénom]
+    if (!trimmed) return;
+    const clean = duo ? tagMessage(duo.names[speaker], trimmed) : trimmed;
     const next: ChatMessage[] = [...messagesRef.current, { role: 'user', content: clean }];
     setMessages(next);
+    if (duo) setSpeaker((s) => (s === 0 ? 1 : 0)); // le tour passe à l'autre personne
     dispatch(fromVoice ? { type: 'HEARD' } : { type: 'SEND' });
     scrollEnd();
     void requestReply(next);
-  }, [requestReply]);
+  }, [requestReply, duo, speaker]);
 
   // Phase d'écoute: démarrée à chaque nouvelle prise de parole (bouton micro ou mains libres).
   // On suit `listenId` et pas seulement la phase: React peut regrouper plusieurs étapes rapides.
@@ -231,10 +236,10 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
       </View>
 
       <ScrollView ref={scroller} contentContainerStyle={{ padding: 24, gap: 12 }} onContentSizeChange={scrollEnd}>
-        <Pressable accessibilityRole="button" accessibilityState={{ expanded: showPractice }} onPress={() => { stopAll(); setShowPractice((v) => !v); }} style={{ minHeight: profile.minTouchSize, justifyContent: 'center' }}>
+        {lesson.vocab.length > 0 && <Pressable accessibilityRole="button" accessibilityState={{ expanded: showPractice }} onPress={() => { stopAll(); setShowPractice((v) => !v); }} style={{ minHeight: profile.minTouchSize, justifyContent: 'center' }}>
           <KText weight="600" style={{ color: colors.primary }}>🎯 {t(lang, 'practice')} {showPractice ? '▲' : '▼'}</KText>
-        </Pressable>
-        {showPractice && (
+        </Pressable>}
+        {showPractice && lesson.vocab.length > 0 && (
           <Card style={{ gap: 10 }}>
             <KText size={13} muted>{t(lang, 'practiceHint')}</KText>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -268,7 +273,14 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
         {noVoice && <KText size={14} style={{ color: colors.warning }}>⚠ {t(lang, 'noVoice')}</KText>}
         {messages.map((m, i) => (
           <Card key={i} style={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '88%', backgroundColor: m.role === 'user' ? colors.primary : colors.surface }}>
-            <KText style={{ color: m.role === 'user' ? colors.onPrimary : colors.text }}>{m.content}</KText>
+            {duo && m.role === 'user' ? (
+              <>
+                {parseTagged(m.content).speaker && <KText size={12} weight="800" style={{ color: colors.onPrimary }}>{parseTagged(m.content).speaker}</KText>}
+                <KText style={{ color: colors.onPrimary }}>{parseTagged(m.content).text}</KText>
+              </>
+            ) : (
+              <KText style={{ color: m.role === 'user' ? colors.onPrimary : colors.text }}>{m.content}</KText>
+            )}
             {m.role === 'assistant' && (
               <Pressable accessibilityRole="button" accessibilityLabel={t(lang, 'listen')} onPress={() => { stopAll(); void tts.speak(m.content, { lang: 'en-US', rate: profile.speechRate }); }} style={{ minHeight: 44, justifyContent: 'center' }}>
                 <KText weight="600" style={{ color: colors.primary }}>🔊 {t(lang, 'listen')}</KText>
@@ -293,6 +305,17 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
       )}
 
       <View style={{ padding: 16, gap: 8 }}>
+        {duo && (
+          <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <KText size={13} muted>{t(lang, 'duoTurn')}</KText>
+            {duo.names.map((n, i) => (
+              <Pressable key={i} accessibilityRole="radio" accessibilityState={{ checked: speaker === i }} accessibilityLabel={`${t(lang, 'duoTurn')} ${n}`} onPress={() => setSpeaker(i as 0 | 1)}
+                style={{ flex: 1, minHeight: profile.minTouchSize, borderRadius: profile.radius, alignItems: 'center', justifyContent: 'center', borderWidth: speaker === i ? 3 : 1, borderColor: speaker === i ? colors.primary : colors.border, backgroundColor: colors.surface }}>
+                <KText weight="800">{speaker === i ? '▶ ' : ''}{n}</KText>
+              </Pressable>
+            ))}
+          </View>
+        )}
         {micOk && (
           <>
             <KButton

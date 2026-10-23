@@ -9,7 +9,7 @@ const noop = () => {};
 const home = (progress: ReturnType<typeof initialProgress>, today: string, onExport: () => Promise<string> = async () => '{}') => (
   <ThemeProvider profileId="adult">
     <HomeScreen lang="fr" level="A1" progress={progress} onOpenLesson={noop} onGoal={noop} dueCount={0} onReview={noop}
-      onSwitchProfile={noop} palette="violet" onPalette={noop} onLang={noop} onErase={noop} onExport={onExport} today={today} />
+      onSwitchProfile={noop} palette="violet" onPalette={noop} onLang={noop} onErase={noop} onExport={onExport} onDuo={noop} today={today} />
   </ThemeProvider>
 );
 

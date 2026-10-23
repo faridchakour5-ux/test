@@ -127,4 +127,11 @@ export const es: Record<StringKey, string> = {
   exportMine: 'Exportar mis datos',
   exportTitle: 'Mis datos de Kalam',
   exportFailed: 'La exportación falló. Inténtalo de nuevo.',
+  duoTitle: 'Conversación para dos',
+  duoIntro: 'Dos personas practican juntas. El profesor modera y da el turno a cada una.',
+  duoName1: 'Nombre de la persona 1',
+  duoName2: 'Nombre de la persona 2',
+  duoStart: 'Empezar la conversación',
+  duoTurn: 'Turno de',
+  anyTopic: 'Lo que sea',
 };

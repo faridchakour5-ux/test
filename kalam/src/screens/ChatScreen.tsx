@@ -56,6 +56,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
   const scroller = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const token = useRef(0); // invalide les opérations en vol quand on interrompt ou qu'on quitte
   const listening = useRef(false);
+  const listenSeq = useRef(0); // identifie l'écoute en cours: une écoute annulée ne doit pas libérer la suivante
   const streamAbort = useRef<AbortController | null>(null); // annule la requête réseau en cours
   const mounted = useRef(true);
   const messagesRef = useRef<ChatMessage[]>([]);
@@ -188,12 +189,13 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
   useEffect(() => {
     if (turn.listenId === 0 || turn.phase !== 'listening' || listening.current) return;
     listening.current = true;
+    const myListen = ++listenSeq.current;
     const myToken = ++token.current;
     setPartial('');
     (async () => {
       await tts.stop(); // le micro ne doit jamais capter la voix du professeur
       const r = await listenOnce({ lang: locale, patienceMs: profile.speechPatienceMs, onPartial: (p) => { if (mounted.current && myToken === token.current) setPartial(p); } });
-      listening.current = false;
+      if (listenSeq.current === myListen) listening.current = false;
       if (!mounted.current || myToken !== token.current) return;
       setPartial('');
       if (r.ok) submit(r.transcript, true);
@@ -204,6 +206,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
   const stopAll = () => {
     token.current++;
     listening.current = false;
+    listenSeq.current++;
     streamAbort.current?.abort(); // coupe aussi la requête: plus de jetons ni de batterie gaspillés
     cancelListening();
     void tts.stop();

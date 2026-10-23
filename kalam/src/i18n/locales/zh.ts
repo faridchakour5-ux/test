@@ -111,4 +111,5 @@ export const zh: Record<StringKey, string> = {
   recommended: '为你推荐',
   allLessons: '全部课程',
   pConfig: '应用配置不正确（服务器地址）。请更新应用。',
+  chooseFreeTopic: '你想聊什么话题？',
 };

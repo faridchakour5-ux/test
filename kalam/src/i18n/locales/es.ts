@@ -111,4 +111,5 @@ export const es: Record<StringKey, string> = {
   recommended: 'Para ti',
   allLessons: 'Todas las lecciones',
   pConfig: 'La aplicación no está configurada correctamente (dirección del servidor). Actualízala.',
+  chooseFreeTopic: '¿De qué quieres hablar?',
 };

@@ -33,6 +33,8 @@ jest.mock('../state/conversations', () => ({
   loadConversation: jest.fn(async () => []),
   saveConversation: jest.fn(async () => undefined),
   clearConversation: jest.fn(async () => undefined),
+  loadTopicId: jest.fn(async () => null),
+  saveTopicId: jest.fn(async () => undefined),
 }));
 
 const lesson = LESSONS.find((l) => l.id === 'restaurant')!;

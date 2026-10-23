@@ -5,7 +5,7 @@ import { ChatScreen } from './ChatScreen';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { LESSONS } from '../domain/lessons';
 import { TeacherError } from '../api/teacher';
-import { loadConversation } from '../state/conversations';
+import { loadConversation, loadTopicId, saveTopicId } from '../state/conversations';
 
 const mockSpeak = jest.fn();
 const mockStop = jest.fn();
@@ -28,16 +28,18 @@ jest.mock('../state/conversations', () => ({
   loadConversation: jest.fn(async () => []),
   saveConversation: jest.fn(async () => undefined),
   clearConversation: jest.fn(async () => undefined),
+  loadTopicId: jest.fn(async () => null),
+  saveTopicId: jest.fn(async () => undefined),
 }));
 
 const lesson = LESSONS.find((l) => l.id === 'restaurant')!;
 
-async function setup() {
+async function setup(lessonId = 'restaurant') {
   const onFinish = jest.fn();
   const onBack = jest.fn();
   await render(
     <ThemeProvider profileId="adult">
-      <ChatScreen lang="fr" lesson={lesson} level="A1" ageProfile="adult" onFinish={onFinish} onBack={onBack} />
+      <ChatScreen lang="fr" lesson={LESSONS.find((l) => l.id === lessonId) ?? lesson} level="A1" ageProfile="adult" onFinish={onFinish} onBack={onBack} />
     </ThemeProvider>,
   );
   await act(async () => {}); // laisse le chargement de la conversation se terminer
@@ -232,6 +234,56 @@ describe('ChatScreen: pratique de la prononciation', () => {
     expect(mockSpeak).toHaveBeenCalledWith('menu', expect.objectContaining({ lang: 'en-US' }));
     // le mot choisi est affiché avec son bouton « Dis-le » (micro disponible dans ce test)
     await waitFor(() => expect(screen.getByText(/Dis-le/)).toBeTruthy());
+  });
+});
+
+describe('ChatScreen: parle librement (choix du sujet)', () => {
+  beforeEach(() => {
+    (loadConversation as jest.Mock).mockResolvedValue([]);
+    (loadTopicId as jest.Mock).mockResolvedValue(null);
+  });
+
+  it('propose les sujets et n\'appelle PAS le professeur avant le choix', async () => {
+    await setup('free');
+    expect(screen.getByText('De quoi veux-tu parler ?')).toBeTruthy();
+    expect(screen.getByLabelText('Voyages')).toBeTruthy();
+    await act(async () => {});
+    expect(mockAsk).not.toHaveBeenCalled();
+  });
+
+  it('après le choix, le professeur ouvre avec le scénario du sujet, qui est mémorisé', async () => {
+    mockAsk.mockResolvedValue('Tell me about your best trip!');
+    await setup('free');
+    await fireEvent.press(screen.getByLabelText('Voyages'));
+    await waitFor(() => expect(screen.getByText('Tell me about your best trip!')).toBeTruthy());
+    expect(mockAsk.mock.calls[0][0]).toMatchObject({ start: true, scenario: expect.stringContaining('travel') });
+    expect(saveTopicId).toHaveBeenCalledWith('free', 'travel');
+    expect(screen.queryByText('De quoi veux-tu parler ?')).toBeNull(); // le choix disparaît
+  });
+
+  it('reprend une conversation avec son sujet sans redemander', async () => {
+    (loadConversation as jest.Mock).mockResolvedValue([{ role: 'assistant', content: 'Where did you go?' }]);
+    (loadTopicId as jest.Mock).mockResolvedValue('food');
+    await setup('free');
+    expect(screen.queryByText('De quoi veux-tu parler ?')).toBeNull();
+    await type('I love pasta');
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
+    expect(mockAsk.mock.calls[0][0].scenario).toContain('food');
+  });
+
+  it('« Nouvelle conversation » repropose le choix du sujet sans relancer le professeur', async () => {
+    (loadConversation as jest.Mock).mockResolvedValue([{ role: 'assistant', content: 'Hi!' }]);
+    (loadTopicId as jest.Mock).mockResolvedValue('work');
+    await setup('free');
+    await fireEvent.press(screen.getByText('Nouvelle conversation'));
+    await waitFor(() => expect(screen.getByText('De quoi veux-tu parler ?')).toBeTruthy());
+    expect(mockAsk).not.toHaveBeenCalled();
+  });
+
+  it('les autres leçons n\'affichent jamais ce choix', async () => {
+    (loadConversation as jest.Mock).mockResolvedValue([{ role: 'assistant', content: 'Welcome!' }]);
+    await setup('restaurant');
+    expect(screen.queryByText('De quoi veux-tu parler ?')).toBeNull();
   });
 });
 

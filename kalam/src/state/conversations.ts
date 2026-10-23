@@ -21,8 +21,16 @@ export async function loadConversation(lessonId: string): Promise<ChatMessage[]>
 export const saveConversation = (lessonId: string, messages: ChatMessage[]) => save(key(lessonId), trimConversation(messages));
 
 export async function clearConversation(lessonId: string): Promise<void> {
-  try { await AsyncStorage.removeItem(key(lessonId)); } catch { /* ignoré */ }
+  try { await AsyncStorage.removeItem(key(lessonId)); await AsyncStorage.removeItem(topicKey(lessonId)); } catch { /* ignoré */ }
 }
+
+// Sujet choisi pour le mode « Parle librement » (conservé avec la conversation pour pouvoir la reprendre).
+const topicKey = (lessonId: string) => `kalam:topic:v1:${lessonId}`;
+export async function loadTopicId(lessonId: string): Promise<string | null> {
+  const raw = await load<unknown>(topicKey(lessonId), null);
+  return typeof raw === 'string' && /^[a-z-]{1,20}$/.test(raw) ? raw : null;
+}
+export const saveTopicId = (lessonId: string, topicId: string) => save(topicKey(lessonId), topicId);
 
 // Droit à l'effacement: supprime toutes les données Kalam de l'appareil (état + conversations).
 export async function clearAllKalamData(): Promise<void> {

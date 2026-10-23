@@ -111,4 +111,5 @@ export const ar: Record<StringKey, string> = {
   recommended: 'مقترح لك',
   allLessons: 'كل الدروس',
   pConfig: 'التطبيق غير مهيأ بشكل صحيح (عنوان الخادم). يرجى تحديثه.',
+  chooseFreeTopic: 'عن ماذا تريد أن تتحدث؟',
 };

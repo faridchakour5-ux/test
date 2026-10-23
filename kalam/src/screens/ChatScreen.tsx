@@ -14,7 +14,8 @@ import { UiLang, t } from '../i18n/strings';
 import { cancelListening, isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
 import { createSentenceSplitter } from '../speech/sentences';
 import { tts } from '../speech/tts';
-import { clearConversation, loadConversation, saveConversation } from '../state/conversations';
+import { FREE_LESSON_ID, FREE_TOPICS, FreeTopic, getFreeTopic } from '../domain/freeTopics';
+import { clearConversation, loadConversation, loadTopicId, saveConversation, saveTopicId } from '../state/conversations';
 import { AgeProfileId } from '../theme/profiles';
 import { useTheme } from '../theme/ThemeProvider';
 
@@ -34,6 +35,9 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   const [input, setInput] = useState('');
   const [partial, setPartial] = useState('');
   const [noVoice, setNoVoice] = useState(false);
+  const [topic, setTopic] = useState<FreeTopic | null>(null); // sujet choisi (mode « Parle librement »)
+  const isFree = lesson.id === FREE_LESSON_ID;
+  const scenario = isFree && topic ? topic.scenario : lesson.scenario;
   const [showPractice, setShowPractice] = useState(false);
   const [practiceItem, setPracticeItem] = useState<VocabItem | null>(null);
   const [turn, dispatch] = useReducer(turnReducer, undefined, initialTurn);
@@ -51,12 +55,17 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   // Chargement de la conversation précédente + vérification de la voix anglaise.
   useEffect(() => {
     mounted.current = true;
-    loadConversation(lesson.id).then((m) => { if (mounted.current) { setMessages(m); setLoaded(true); } });
+    Promise.all([loadConversation(lesson.id), isFree ? loadTopicId(lesson.id) : Promise.resolve(null)]).then(([m, topicId]) => {
+      if (!mounted.current) return;
+      setMessages(m);
+      setTopic(getFreeTopic(topicId) ?? null);
+      setLoaded(true);
+    });
     tts.hasVoice('en-US').then((ok) => { if (mounted.current) setNoVoice(!ok); });
     // `token` est un compteur volontairement lu à la fermeture: il sert à invalider les opérations en vol.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     return () => { mounted.current = false; token.current++; streamAbort.current?.abort(); void tts.stop(); cancelListening(); };
-  }, [lesson.id]);
+  }, [lesson.id, isFree]);
 
   // Sauvegarde locale à chaque changement: rien n'est perdu si l'app est fermée.
   useEffect(() => { if (loaded) void saveConversation(lesson.id, messages); }, [messages, loaded, lesson.id]);
@@ -73,7 +82,7 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   const requestReply = useCallback(async (history: ChatMessage[]) => {
     const myToken = ++token.current;
     const opening = history.length === 0; // aucun message: le professeur ouvre la scène
-    const request = { ageProfile, level, scenario: lesson.scenario, uiLang: lang, messages: history.slice(-20), ...(opening ? { start: true } : {}) };
+    const request = { ageProfile, level, scenario, uiLang: lang, messages: history.slice(-20), ...(opening ? { start: true } : {}) };
     const live = () => mounted.current && myToken === token.current;
     streamAbort.current?.abort(); // une seule réponse en cours à la fois
     const abort = new AbortController();
@@ -125,16 +134,21 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
       if (!mounted.current || myToken !== token.current) return;
       dispatch({ type: 'SEND_FAIL', problem: problemFromTeacher(e instanceof TeacherError ? e.kind : 'server') });
     }
-  }, [ageProfile, level, lesson.scenario, lang, speak, profile.speechRate]);
+  }, [ageProfile, level, scenario, lang, speak, profile.speechRate]);
 
   // Conversation vide: c'est le professeur qui prend la parole en premier, comme dans un vrai jeu de rôle.
   const opened = useRef(false);
   useEffect(() => {
     if (!loaded || opened.current || messagesRef.current.length > 0) return;
+    if (isFree && !topic) return; // en mode libre, l'apprenant choisit d'abord le sujet
     opened.current = true;
-    dispatch({ type: 'SEND' });
-    void requestReply([]);
-  }, [loaded, requestReply]);
+    // Déclenché juste après le rendu (et non dans le corps de l'effet): pas de rendu en cascade.
+    void Promise.resolve().then(() => {
+      if (!mounted.current) return;
+      dispatch({ type: 'SEND' });
+      void requestReply([]);
+    });
+  }, [loaded, requestReply, isFree, topic]);
 
   const submit = useCallback((text: string, fromVoice: boolean) => {
     const clean = text.trim().slice(0, 500);
@@ -186,9 +200,12 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
     setMessages([]);
     messagesRef.current = [];
     await clearConversation(lesson.id);
+    if (isFree) { setTopic(null); opened.current = false; return; } // on repropose le choix du sujet
     dispatch({ type: 'SEND' });
     void requestReply([]);
   };
+
+  const chooseTopic = (t: FreeTopic) => { setTopic(t); void saveTopicId(lesson.id, t.id); };
 
   const sendTyped = () => { if (!input.trim() || turn.phase === 'sending') return; const text = input; setInput(''); submit(text, false); };
   const finish = () => { stopAll(); onFinish(Math.max(1, Math.round((Date.now() - startedAt) / 60_000))); };
@@ -233,6 +250,21 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
             {practiceItem && <PronunciationPractice lang={lang} expected={practiceItem.en} />}
           </Card>
         )}
+        {isFree && loaded && !topic && messages.length === 0 && (
+          <Card style={{ gap: 12 }}>
+            <KText size={20} weight="800" accessibilityRole="header">{t(lang, 'chooseFreeTopic')}</KText>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {FREE_TOPICS.map((tp) => (
+                <Pressable key={tp.id} accessibilityRole="button" accessibilityLabel={tp.title[lang]} onPress={() => chooseTopic(tp)}
+                  style={{ minHeight: Math.max(profile.minTouchSize, 56), paddingHorizontal: 14, borderRadius: profile.radius, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <KText size={22}>{tp.emoji}</KText>
+                  <KText weight="600">{tp.title[lang]}</KText>
+                </Pressable>
+              ))}
+            </View>
+          </Card>
+        )}
+        {isFree && topic && <KText size={13} muted>{topic.emoji} {topic.title[lang]}</KText>}
         {noVoice && <KText size={14} style={{ color: colors.warning }}>⚠ {t(lang, 'noVoice')}</KText>}
         {messages.map((m, i) => (
           <Card key={i} style={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '88%', backgroundColor: m.role === 'user' ? colors.primary : colors.surface }}>

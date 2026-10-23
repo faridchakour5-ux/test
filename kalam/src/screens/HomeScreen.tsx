@@ -11,7 +11,7 @@ import { WeekChart } from '../components/WeekChart';
 import { LESSONS, Level, recommendLessons } from '../domain/lessons';
 import { Progress, goalReached, lastDays, rollDay } from '../domain/progress';
 import { DEFAULT_TARGET, TargetLang, lessonKey } from '../domain/targets';
-import { UiLang, isRtl, t } from '../i18n/strings';
+import { UiLang, isRtl, t, tf } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
 
 interface Props {
@@ -26,11 +26,13 @@ interface Props {
   target?: TargetLang; // langue apprise
   onTarget: (t: TargetLang) => void;
   today: string; // jour local courant (YYYY-MM-DD)
+  // Proposition unique d'un rappel doux (après la première leçon). Absente = rien à proposer.
+  reminderOffer?: { time: string; onAccept: () => void; onLater: () => void };
 }
 
 // Accueil: un seul geste évident (« Continuer »), l'essentiel de la progression, puis les leçons.
 // Les réglages vivent dans leur propre écran.
-export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson, dueCount, onReview, onDuo, onSettings, today, target = DEFAULT_TARGET, onTarget }: Props) {
+export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson, dueCount, onReview, onDuo, onSettings, today, target = DEFAULT_TARGET, onTarget, reminderOffer }: Props) {
   // La progression sauvegardée peut dater d'hier: on l'aligne sur le jour courant pour l'affichage.
   const progress = rollDay(storedProgress, today);
   const { colors, profile } = useTheme();
@@ -69,6 +71,15 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
       </Card>
 
       <ChallengeCard lang={lang} progress={progress} today={today} />
+
+      {reminderOffer && (
+        <Card style={{ gap: 10 }}>
+          <KText weight="800" accessibilityRole="header">⏰ {t(lang, 'reminderOfferTitle')}</KText>
+          <KText muted>{t(lang, 'reminderOfferBody')}</KText>
+          <KButton label={tf(lang, 'reminderOfferYes', { time: reminderOffer.time })} onPress={reminderOffer.onAccept} />
+          <KButton variant="secondary" label={t(lang, 'reminderOfferNo')} onPress={reminderOffer.onLater} />
+        </Card>
+      )}
 
       <TargetPicker lang={lang} value={target} onChange={onTarget} />
 

@@ -6,12 +6,12 @@ import { ThemeProvider } from '../theme/ThemeProvider';
 import { HomeScreen } from './HomeScreen';
 
 const noop = () => {};
-type Handlers = Partial<{ onOpenLesson: (id: string) => void; onReview: () => void; onDuo: () => void; onSettings: () => void; onTarget: (t: 'en' | 'fr') => void }>;
+type Handlers = Partial<{ reminderOffer: { time: string; onAccept: () => void; onLater: () => void }; onOpenLesson: (id: string) => void; onReview: () => void; onDuo: () => void; onSettings: () => void; onTarget: (t: 'en' | 'fr') => void }>;
 
 const home = (progress: ReturnType<typeof initialProgress>, today: string, target: 'en' | 'fr' = 'en', h: Handlers = {}, dueCount = 0) => (
   <ThemeProvider profileId="adult">
     <HomeScreen lang="fr" level="A1" progress={progress} onOpenLesson={h.onOpenLesson ?? noop} dueCount={dueCount} onReview={h.onReview ?? noop}
-      onDuo={h.onDuo ?? noop} onSettings={h.onSettings ?? noop} target={target} onTarget={h.onTarget ?? noop} today={today} />
+      onDuo={h.onDuo ?? noop} onSettings={h.onSettings ?? noop} target={target} onTarget={h.onTarget ?? noop} today={today} reminderOffer={h.reminderOffer} />
   </ThemeProvider>
 );
 const P = (over = {}) => ({ ...initialProgress('2026-03-10'), ...over });
@@ -111,4 +111,20 @@ describe('HomeScreen: langue apprise', () => {
     await render(home(P(), '2026-03-10', 'en', {}, 3));
     expect(screen.getByLabelText('Réviser (3)')).not.toHaveStyle({ backgroundColor: 'transparent' });
   });
+  describe('proposition de rappel', () => {
+    it('absente par défaut', async () => {
+      await render(home(P(), '2026-03-10'));
+      expect(screen.queryByText(/Un rappel doux/)).toBeNull();
+    });
+    it('affichée avec l\'heure, deux boutons clairs; « Oui » et « Non merci » appellent la bonne action', async () => {
+      const onAccept = jest.fn(); const onLater = jest.fn();
+      await render(home(P(), '2026-03-10', 'en', { reminderOffer: { time: '19:00', onAccept, onLater } }));
+      expect(screen.getByText(/Un rappel doux/)).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('Oui, à 19:00'));
+      expect(onAccept).toHaveBeenCalledTimes(1);
+      await fireEvent.press(screen.getByLabelText('Non merci'));
+      expect(onLater).toHaveBeenCalledTimes(1);
+    });
+  });
 });
+

@@ -23,7 +23,7 @@ import { StickersScreen } from './src/screens/StickersScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { StoryScreen } from './src/screens/StoryScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
-import { ReminderResult, ReminderSetting, disableReminder, enableReminder, remindersAvailable } from './src/notifications/reminders';
+import { ReminderResult, ReminderSetting, defaultReminder, disableReminder, enableReminder, remindersAvailable, timeLabel } from './src/notifications/reminders';
 import { reminderTexts, useReminderSync } from './src/notifications/useReminderSync';
 import { AppStateProvider, useApp } from './src/state/AppState';
 import { AgeProfileId } from './src/theme/profiles';
@@ -68,6 +68,9 @@ function Root() {
     app.setReminder(next);
     return { ok: true };
   };
+
+  // Une seule proposition, après la première leçon terminée, jamais en profil enfant, seulement si les rappels existent ici.
+  const offerReminder = !app.reminder.enabled && !app.reminderAsked && app.progress.completedLessons.length >= 1 && remindersAvailable();
 
   const pickProfile = (p: AgeProfileId) => {
     // Choisir un profil ne change que le profil. Le mode enfant n'a pas besoin de niveau ni de langue apprise
@@ -126,7 +129,12 @@ function Root() {
       dueCount={buildReviewSession(app.cards, now, 999, app.targetLang).length}
       onReview={() => setRoute({ name: 'review', session: buildReviewSession(app.cards, now, 10, app.targetLang) })}
       onDuo={() => setRoute({ name: 'duo-setup' })} onSettings={() => setRoute({ name: 'settings' })}
-      target={app.targetLang} onTarget={app.setTargetLang} today={localDay(new Date(now))} />;
+      target={app.targetLang} onTarget={app.setTargetLang} today={localDay(new Date(now))}
+      reminderOffer={offerReminder ? {
+        time: timeLabel(defaultReminder().hour, defaultReminder().minute),
+        onAccept: () => { app.markReminderAsked(); void changeReminder({ ...defaultReminder(), enabled: true }); },
+        onLater: app.markReminderAsked,
+      } : undefined} />;
   }
 
   return (

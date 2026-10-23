@@ -26,7 +26,7 @@ Accès et portabilité (bouton « Exporter mes données » : toutes vos données
 - Revue COPPA / RGPD-K (âge du consentement numérique variable selon les pays).
 
 ## Rappel quotidien (facultatif)
-- Désactivé par défaut. La personne l'active dans les réglages et choisit l'heure; elle peut l'arrêter à tout moment.
+- Désactivé par défaut. La personne l'active dans les réglages et choisit l'heure; elle peut l'arrêter à tout moment. Après la première leçon terminée, l'accueil le propose UNE seule fois (« Oui, à 19:00 » ou « Non merci »); un refus n'est jamais redemandé.
 - Le rappel est une notification **locale**, programmée sur l'appareil: aucun serveur Kalam n'envoie de notification, aucun jeton de notification n'est demandé ni stocké, aucune donnée n'est transmise.
 - L'autorisation « Notifications » du système n'est demandée qu'au moment où la personne active le rappel.
 - Jamais de rappel dans le profil enfant. Le message est doux et sans culpabilisation; il n'y a qu'un rappel par jour.

@@ -420,4 +420,42 @@ describe('App: rappel quotidien (notifications locales)', () => {
     await fireEvent.press(screen.getByText('Effacer mes données'));
     await waitFor(() => expect(mockNotif.cancelScheduledNotificationAsync).toHaveBeenCalledWith('kalam-daily-reminder'));
   });
+
+  describe('proposition unique d\'un rappel doux', () => {
+    const afterFirstLesson = { progress: { completedLessons: ['family'] } };
+
+    it('pas de proposition avant la première leçon terminée', async () => {
+      await start();
+      expect(screen.queryByText(/Un rappel doux/)).toBeNull();
+    });
+
+    it('après la première leçon: « Oui » active le rappel à 19:00 (autorisation demandée à ce moment) et la proposition ne revient plus', async () => {
+      mockNotif.getPermissionsAsync.mockImplementation(async () => ({ granted: false, canAskAgain: true } as never));
+      await start(afterFirstLesson);
+      await fireEvent.press(await screen.findByLabelText('Oui, à 19:00'));
+      await waitFor(() => expect(saved().reminder).toEqual({ enabled: true, hour: 19, minute: 0 }));
+      expect(saved().reminderAsked).toBe(true);
+      expect(mockNotif.requestPermissionsAsync).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(/Un rappel doux/)).toBeNull();
+    });
+
+    it('« Non merci »: rien n\'est programmé, aucune autorisation demandée, et on ne repropose jamais', async () => {
+      await start(afterFirstLesson);
+      await fireEvent.press(await screen.findByLabelText('Non merci'));
+      await waitFor(() => expect(saved().reminderAsked).toBe(true));
+      expect(mockNotif.requestPermissionsAsync).not.toHaveBeenCalled();
+      expect(mockNotif.scheduleNotificationAsync).not.toHaveBeenCalled();
+      expect(screen.queryByText(/Un rappel doux/)).toBeNull();
+    });
+
+    it('pas de proposition si elle a déjà été faite, ni si le rappel est déjà actif', async () => {
+      await start({ ...afterFirstLesson, reminderAsked: true });
+      expect(screen.queryByText(/Un rappel doux/)).toBeNull();
+    });
+    it('rappel déjà actif: pas de proposition', async () => {
+      await start({ ...afterFirstLesson, reminder: { enabled: true, hour: 8, minute: 0 } });
+      expect(screen.queryByText(/Un rappel doux/)).toBeNull();
+    });
+  });
 });
+

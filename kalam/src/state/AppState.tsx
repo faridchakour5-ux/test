@@ -24,6 +24,7 @@ interface Persisted {
   kids: KidsState;
   palette: PaletteId;
   reminder: ReminderSetting; // rappel quotidien local (désactivé par défaut)
+  reminderAsked: boolean; // la proposition de rappel (une seule fois, après la 1re leçon) a déjà été faite
 }
 
 export interface KidsState {
@@ -60,10 +61,11 @@ export function migrate(saved: Partial<Persisted> & { level?: Level | null }): P
     progress: normalizeProgress(saved.progress, todayStr()),
     kids: normalizeKids(saved.kids, initialKids()),
     reminder: normalizeReminder(saved.reminder),
+    reminderAsked: saved.reminderAsked === true,
   };
 }
 
-const initial = (): Persisted => ({ profile: null, targetLang: DEFAULT_TARGET, levels: {}, uiLang: 'fr', progress: initialProgress(todayStr()), cards: [], kids: initialKids(), palette: DEFAULT_PALETTE, reminder: defaultReminder() });
+const initial = (): Persisted => ({ profile: null, targetLang: DEFAULT_TARGET, levels: {}, uiLang: 'fr', progress: initialProgress(todayStr()), cards: [], kids: initialKids(), palette: DEFAULT_PALETTE, reminder: defaultReminder(), reminderAsked: false });
 
 interface Ctx extends Persisted {
   ready: boolean;
@@ -84,6 +86,7 @@ interface Ctx extends Persisted {
   exportData: () => Promise<string>;
   setPalette: (p: PaletteId) => void;
   setReminder: (r: ReminderSetting) => void;
+  markReminderAsked: () => void;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -123,6 +126,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }),
     setPalette: (palette) => update((s) => ({ ...s, palette })),
     setReminder: (reminder) => update((s) => ({ ...s, reminder })),
+    markReminderAsked: () => update((s) => ({ ...s, reminderAsked: true })),
     // Changer de profil ne change QUE le profil: niveaux et langue apprise sont conservés.
     resetProfile: () => update((s) => ({ ...s, profile: null })),
     addStars: (n) => update((s) => ({ ...s, kids: { ...s.kids, stars: s.kids.stars + n } })),

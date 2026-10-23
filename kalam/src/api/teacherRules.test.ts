@@ -255,10 +255,11 @@ describe('askTeacherStream: requête, erreurs et temporisations', () => {
     jest.useFakeTimers();
     try {
       let n = 0;
+      let releaseRead: () => void = () => {};
       const res = { ok: true, status: 200, body: { getReader: () => ({ cancel: async () => {}, read: (): Promise<{ done: boolean; value?: Uint8Array }> => {
         n++;
         if (n === 1) return Promise.resolve({ done: false, value: enc.encode(sse({ delta: 'a' })) });
-        return new Promise(() => {}); // plus rien n'arrive
+        return new Promise((_res, rej) => { releaseRead = () => rej(new TypeError('coupé')); }); // plus rien n'arrive
       } }) }, text: async () => '' };
       const controllerSignals: AbortSignal[] = [];
       const f = jest.fn().mockImplementation((_u, init) => { controllerSignals.push(init.signal); return Promise.resolve(res); });
@@ -267,6 +268,8 @@ describe('askTeacherStream: requête, erreurs et temporisations', () => {
       expect(controllerSignals[0].aborted).toBe(false);
       await jest.advanceTimersByTimeAsync(2);
       expect(controllerSignals[0].aborted).toBe(true);
+      releaseRead(); // le réseau finit par signaler la coupure
+      expect(await p).toEqual({ text: 'a', partial: true });
     } finally { jest.useRealTimers(); }
   });
 });

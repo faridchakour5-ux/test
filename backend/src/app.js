@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import http from 'node:http';
 import { buildSystemPrompt } from './prompt.js';
 import { sanitizeMessages } from './pii.js';
@@ -84,6 +85,14 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
   }
 
   return http.createServer(async (req, res) => {
+    // Journal d'accès: identifiant de requête, route, statut et durée. JAMAIS le contenu des messages, JAMAIS l'adresse IP
+    // (données personnelles): de quoi diagnostiquer une panne sans stocker de données d'utilisateur.
+    const requestId = randomUUID();
+    const startedAt = Date.now();
+    res.setHeader('X-Request-Id', requestId);
+    res.on('close', () => {
+      log.info?.(JSON.stringify({ evt: 'request', id: requestId, method: req.method, path: (req.url ?? '').split('?')[0].slice(0, 40), status: res.statusCode, ms: Date.now() - startedAt }));
+    });
     try {
       if (req.method === 'OPTIONS') return send(res, 204, {});
       if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, configured: !!client });

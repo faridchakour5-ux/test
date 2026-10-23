@@ -46,3 +46,6 @@ Le serveur expose `POST /chat/stream` (SSE) en plus de `POST /chat`. L'app l'uti
 - Si la lecture au fil de l'eau n'est pas disponible sur l'appareil, l'app lit toute la réponse puis la rejoue: aucun risque de blocage.
 - Une coupure réseau en plein flux garde le texte déjà reçu, sans jamais relancer la requête (cela répéterait des phrases à voix haute).
 - À tester d'abord sur un vrai téléphone avant de l'activer pour tous. Derrière un proxy, vérifiez qu'il ne met pas les réponses en mémoire tampon (l'en-tête `X-Accel-Buffering: no` est déjà envoyé).
+
+## 8. Diagnostiquer une panne
+Chaque réponse du serveur porte un en-tête `X-Request-Id`, repris dans le journal (`{"evt":"request","id":...,"status":...,"ms":...}`). Un utilisateur qui signale un problème peut donc être relié à une ligne du journal, sans jamais stocker ses messages ni son adresse IP.

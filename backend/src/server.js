@@ -8,6 +8,7 @@ const PORT = Number(process.env.PORT ?? 8787);
 const client = process.env.ANTHROPIC_API_KEY ? new Anthropic({ timeout: 25_000, maxRetries: 2 }) : null;
 
 const app = createApp({
+  log: { info: (line) => console.log(line), error: (...a) => console.error(...a) },
   client,
   model: process.env.KALAM_MODEL ?? 'claude-sonnet-5-5',
   allowedOrigin: process.env.ALLOWED_ORIGIN ?? '*',

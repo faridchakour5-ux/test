@@ -8,7 +8,7 @@
 - Les messages de conversation sont envoyés à notre serveur, puis à un fournisseur d'IA pour générer la réponse du professeur. Les adresses e-mail, numéros de téléphone, adresses postales et liens sont masqués avant l'envoi.
 - La progression (objectif, série, leçons, cartes de révision) et vos conversations sont stockées uniquement sur l'appareil, pour que vous puissiez les reprendre. La sauvegarde automatique du téléphone (Google/Apple) est désactivée pour Kalam : si vous changez de téléphone, utilisez « Exporter mes données » pour conserver votre historique. Le bouton « Effacer mes données » les supprime.
 - Le micro (facultatif) est traité par le service de reconnaissance vocale du système (Android ou Apple), qui peut l'envoyer à Google ou Apple. Kalam ne reçoit et ne conserve aucun enregistrement audio.
-- Côté serveur, le texte des messages n'est pas conservé par Kalam au-delà du traitement de la requête (à confirmer selon votre hébergeur et ses journaux).
+- Côté serveur, le texte des messages n'est pas conservé par Kalam au-delà du traitement de la requête. Le journal technique du serveur contient uniquement un identifiant de requête aléatoire, la route, le code de statut et la durée : **jamais le contenu des messages, jamais l'adresse IP**. (L'hébergeur peut tenir ses propres journaux réseau : à vérifier et à mentionner selon le choix de l'hébergeur.)
 
 ## Mode enfant (4-8 ans)
 - Aucune donnée de l'enfant n'est envoyée à un serveur : pas de chat libre avec l'IA, pas de compte, pas d'identifiant publicitaire.

@@ -7,7 +7,8 @@ export function createSseParser(onEvent: (e: SseEvent) => void) {
   let buffer = '';
 
   function feed(chunk: string): void {
-    buffer += chunk.replace(/\r\n/g, '\n');
+    // Normalisé sur tout le tampon: un « \r\n » coupé entre deux morceaux réseau est reconnu au morceau suivant.
+    buffer = (buffer + chunk).replace(/\r\n/g, '\n');
     let sep: number;
     while ((sep = buffer.indexOf('\n\n')) !== -1) {
       const raw = buffer.slice(0, sep);

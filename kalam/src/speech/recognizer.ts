@@ -38,6 +38,7 @@ export interface RecModule {
 
 export function createRecognizer(mod: RecModule | null) {
   let cancelActive: (() => void) | null = null;
+  let seq = 0; // numéro de la demande d'écoute la plus récente (une demande plus ancienne, encore en attente de permission, s'efface)
 
   const isAvailable = (): boolean => {
     try { return !!mod && mod.isRecognitionAvailable(); } catch { return false; }
@@ -118,6 +119,7 @@ export function createRecognizer(mod: RecModule | null) {
   async function listenOnce(options: ListenOptions = {}): Promise<ListenResult> {
     if (!mod || !isAvailable()) return { ok: false, reason: 'unavailable' };
     cancelActive?.(); // une seule écoute à la fois
+    const mine = ++seq;
 
     let perm: Perm;
     try {
@@ -129,6 +131,7 @@ export function createRecognizer(mod: RecModule | null) {
     } catch {
       return { ok: false, reason: 'error' };
     }
+    if (mine !== seq) return { ok: false, reason: 'cancelled' }; // une demande plus récente a pris la place pendant la question de permission
     if (!perm.granted) return { ok: false, reason: perm.canAskAgain === false ? 'permission-blocked' : 'permission' };
 
     const o = { lang: options.lang ?? 'en-US', patienceMs: options.patienceMs ?? 2200, maxMs: options.maxMs ?? 20_000, onPartial: options.onPartial };
@@ -140,7 +143,7 @@ export function createRecognizer(mod: RecModule | null) {
     return first;
   }
 
-  return { isAvailable, listenOnce, cancel: () => cancelActive?.() };
+  return { isAvailable, listenOnce, cancel: () => { seq++; cancelActive?.(); } };
 }
 
 // ---------- Instance réelle (chargée à la demande) ----------

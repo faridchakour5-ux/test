@@ -128,6 +128,33 @@ describe('createRecognizer', () => {
     await expect(second).resolves.toEqual({ ok: true, transcript: 'second' });
   });
 
+  it('deux demandes pendant la question de permission: une seule écoute démarre', async () => {
+    const releases: ((v: { granted: boolean }) => void)[] = [];
+    const { mod, started, emit } = fakeModule({ getPermissionsAsync: () => new Promise((res) => { releases.push(res); }) });
+    const r = createRecognizer(mod);
+    const first = r.listenOnce();
+    const second = r.listenOnce();
+    releases.forEach((rel) => rel({ granted: true }));
+    await expect(first).resolves.toEqual({ ok: false, reason: 'cancelled' });
+    await flush();
+    expect(started).toHaveLength(1);
+    emit('result', { results: [{ transcript: 'ok' }] });
+    emit('end');
+    await expect(second).resolves.toEqual({ ok: true, transcript: 'ok' });
+  });
+
+  it('cancel() pendant la question de permission: aucune écoute ne démarre', async () => {
+    let release: (v: { granted: boolean }) => void = () => {};
+    const { mod, started } = fakeModule({ getPermissionsAsync: () => new Promise((res) => { release = res; }) });
+    const r = createRecognizer(mod);
+    const p = r.listenOnce();
+    r.cancel();
+    release({ granted: true });
+    await expect(p).resolves.toEqual({ ok: false, reason: 'cancelled' });
+    await flush();
+    expect(started).toHaveLength(0);
+  });
+
   it('arrête proprement après la durée maximale et récupère le texte', async () => {
     jest.useFakeTimers();
     const { mod, emit } = fakeModule();

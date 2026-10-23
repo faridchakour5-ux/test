@@ -4,8 +4,10 @@ Tout se fait depuis VOTRE ordinateur: les identifiants Google/Apple ne doivent j
 
 ## 1. Backend (obligatoire avant le test réel)
 1. Créez une clé API sur console.anthropic.com.
-2. Déployez `backend/` (Render, Railway, Fly.io…) avec la variable `ANTHROPIC_API_KEY`.
-3. Définissez `ALLOWED_ORIGIN` et testez `GET /health`.
+2. Déployez `backend/` : le plus simple est Render > New > Blueprint (le fichier `render.yaml` est prêt). Saisissez `ANTHROPIC_API_KEY` dans le tableau de bord, jamais dans le dépôt.
+3. Variables utiles : `TRUST_PROXY=1` derrière un hébergeur (sinon tous les utilisateurs partagent une limite), `DAILY_REQUEST_LIMIT` pour plafonner la facture de l'API par jour.
+4. Testez `GET https://votre-serveur/health` : la réponse doit contenir `"configured":true`.
+5. Mettez cette URL dans `EXPO_PUBLIC_API_URL` avant de construire l'app (HTTPS obligatoire).
 
 ## 2. Build Android (.aab)
 ```

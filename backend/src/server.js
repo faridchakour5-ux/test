@@ -11,6 +11,10 @@ const app = createApp({
   client,
   model: process.env.KALAM_MODEL ?? 'claude-sonnet-5-5',
   allowedOrigin: process.env.ALLOWED_ORIGIN ?? '*',
+  // TRUST_PROXY=1 derrière Render/Fly/Railway: sinon tous les utilisateurs partagent l'adresse du proxy.
+  trustProxy: process.env.TRUST_PROXY === '1',
+  // Plafond de requêtes par jour (UTC) pour borner la facture de l'API. 0 = illimité.
+  dailyBudget: Number(process.env.DAILY_REQUEST_LIMIT ?? 20_000),
 });
 
 app.listen(PORT, () => console.log(`Kalam backend on :${PORT} (${client ? 'configured' : 'NOT configured: set ANTHROPIC_API_KEY'})`));

@@ -1,0 +1,18 @@
+# Déploiement en un clic sur Render (https://render.com): "New > Blueprint" puis choisir ce dépôt.
+services:
+  - type: web
+    name: kalam-backend
+    runtime: docker
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false   # à saisir dans le tableau de bord Render, jamais dans le dépôt
+      - key: TRUST_PROXY
+        value: "1"
+      - key: DAILY_REQUEST_LIMIT
+        value: "5000"
+      - key: KALAM_MODEL
+        value: claude-sonnet-5-5

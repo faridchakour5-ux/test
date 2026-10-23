@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { buildSystemPrompt } from './prompt.js';
 import { sanitizeMessages } from './pii.js';
-import { createRateLimiter } from './rateLimit.js';
+import { clientKey, createDailyBudget, createRateLimiter } from './rateLimit.js';
 import { validateChat } from './validate.js';
 
 // Consigne interne envoyée à la place d'un message de l'apprenant quand le professeur ouvre la scène.
@@ -10,8 +10,9 @@ export const OPENING_PROMPT = '(Start the role-play now. Greet me briefly in cha
 const MAX_BODY = 20_000;
 
 // Crée le serveur HTTP. `client` est le client Anthropic (ou un faux dans les tests): aucune clé ici.
-export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin = '*', rate = { max: 30, windowMs: 60_000 }, log = console }) {
+export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin = '*', rate = { max: 30, windowMs: 60_000 }, trustProxy = false, dailyBudget = 0, log = console }) {
   const allow = createRateLimiter(rate);
+  const takeBudget = createDailyBudget(dailyBudget);
 
   function send(res, status, payload) {
     res.writeHead(status, {
@@ -44,8 +45,9 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
       if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, configured: !!client });
       if (req.method !== 'POST' || req.url !== '/chat') return send(res, 404, { error: 'not found' });
 
-      if (!allow(req.socket.remoteAddress ?? 'unknown')) return send(res, 429, { error: 'too many requests' });
+      if (!allow(clientKey(req, trustProxy))) return send(res, 429, { error: 'too many requests' });
       if (!client) return send(res, 503, { error: 'server not configured' });
+      if (!takeBudget()) return send(res, 503, { error: 'daily budget reached' });
 
       let body;
       try { body = JSON.parse(await readBody(req)); }

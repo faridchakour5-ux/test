@@ -22,6 +22,7 @@ export function DuoSetupScreen({ lang, onStart, onBack }: Props) {
 
   const input = (value: string, set: (v: string) => void, label: string) => (
     <TextInput
+          maxFontSizeMultiplier={profile.maxSystemFontScale}
       value={value}
       onChangeText={set}
       placeholder={label}

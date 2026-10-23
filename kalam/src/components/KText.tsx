@@ -9,9 +9,10 @@ interface Props extends TextProps {
 }
 
 export function KText({ size = 16, muted, weight = '400', style, ...rest }: Props) {
-  const { colors, font } = useTheme();
+  const { colors, font, profile } = useTheme();
   return (
     <Text
+      maxFontSizeMultiplier={profile.maxSystemFontScale}
       {...rest}
       style={[{ fontSize: font(size), color: muted ? colors.textMuted : colors.text, fontWeight: weight }, style]}
     />

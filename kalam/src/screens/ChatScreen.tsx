@@ -350,6 +350,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
           </>
         )}
         <TextInput
+          maxFontSizeMultiplier={profile.maxSystemFontScale}
           value={input}
           onChangeText={setInput}
           placeholder={t(lang, 'typeHere')}

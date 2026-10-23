@@ -135,4 +135,6 @@ export const zh: Record<StringKey, string> = {
   duoTurn: '轮到',
   anyTopic: '任意话题',
   learnLang: '学习的语言',
+  settings: '设置',
+  continueLesson: '继续',
 };

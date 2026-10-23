@@ -135,4 +135,6 @@ export const ar: Record<StringKey, string> = {
   duoTurn: 'الدور على',
   anyTopic: 'أي موضوع',
   learnLang: 'اللغة التي تتعلمها',
+  settings: 'الإعدادات',
+  continueLesson: 'متابعة',
 };

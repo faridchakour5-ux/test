@@ -98,6 +98,66 @@ describe('App: changer de langue apprise', () => {
   });
 });
 
+describe('App: accueil et réglages', () => {
+  const adult = async () => {
+    mockStore.set('kalam:state:v1', JSON.stringify({ profile: 'adult', levels: { en: 'A1' }, uiLang: 'fr' }));
+    await boot();
+    await screen.findByText(/Kalam · A1/);
+  };
+
+  it('le gros bouton « Continuer » ouvre la prochaine leçon', async () => {
+    await adult();
+    await fireEvent.press(screen.getByText(/▶ Continuer: /));
+    expect(await screen.findByText('Terminer la leçon')).toBeTruthy();
+  });
+
+  it('les réglages s\'ouvrent depuis l\'accueil et on en revient', async () => {
+    await adult();
+    await fireEvent.press(screen.getByLabelText('Réglages'));
+    expect(await screen.findByText('Exporter mes données')).toBeTruthy();
+    await fireEvent.press(screen.getByText(/Retour/));
+    expect(await screen.findByText(/▶ Continuer: /)).toBeTruthy();
+  });
+
+  it('changer la langue de l\'interface dans les réglages est appliqué partout et sauvegardé', async () => {
+    await adult();
+    await fireEvent.press(screen.getByLabelText('Réglages'));
+    await fireEvent.press(await screen.findByLabelText('English'));
+    expect(await screen.findByText('Export my data')).toBeTruthy();
+    await fireEvent.press(screen.getByText(/Back/));
+    expect(await screen.findByText(/▶ Continue: /)).toBeTruthy();
+    await waitFor(() => expect(saved().uiLang).toBe('en'));
+  });
+
+  it('changer l\'objectif quotidien et la palette est sauvegardé', async () => {
+    await adult();
+    await fireEvent.press(screen.getByLabelText('Réglages'));
+    await fireEvent.press(await screen.findByLabelText('20 min'));
+    await fireEvent.press(screen.getByLabelText('Océan'));
+    await waitFor(() => expect(saved()).toMatchObject({ palette: 'ocean', progress: { dailyGoalMinutes: 20 } }));
+  });
+
+  it('« Changer de profil » depuis les réglages ramène au choix du profil', async () => {
+    await adult();
+    await fireEvent.press(screen.getByLabelText('Réglages'));
+    await fireEvent.press(await screen.findByText('Changer de profil'));
+    expect(await screen.findByText('Qui va apprendre ?')).toBeTruthy();
+  });
+
+  it('l\'effacement des données (après confirmation) ramène à l\'état initial', async () => {
+    const { Alert } = require('react-native'); // eslint-disable-line @typescript-eslint/no-require-imports
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    await adult();
+    mockStore.set('kalam:conv:v1:restaurant', JSON.stringify([{ role: 'user', content: 'secret' }]));
+    await fireEvent.press(screen.getByLabelText('Réglages'));
+    await fireEvent.press(await screen.findByText('Effacer mes données'));
+    (alert.mock.calls[0][2] as { onPress?: () => void }[])[1].onPress?.();
+    expect(await screen.findByText('Qui va apprendre ?')).toBeTruthy();
+    await waitFor(() => expect([...mockStore.keys()].filter((k) => k.startsWith('kalam:conv:'))).toEqual([])); // conversations effacées aussi
+    alert.mockRestore();
+  });
+});
+
 describe('App: mode enfant', () => {
   it('enfant: pas de test de niveau, accueil enfant, langue forcée à l\'anglais', async () => {
     await boot();

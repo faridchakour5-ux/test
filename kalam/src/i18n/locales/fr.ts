@@ -133,6 +133,8 @@ export const fr = {
   duoTurn: 'Au tour de',
   anyTopic: 'Au choix',
   learnLang: 'Langue à apprendre',
+  settings: 'Réglages',
+  continueLesson: 'Continuer',
 } as const;
 
 export type StringKey = keyof typeof fr;

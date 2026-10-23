@@ -20,6 +20,7 @@ import { PlayScreen } from './src/screens/PlayScreen';
 import { ProfilePickerScreen } from './src/screens/ProfilePickerScreen';
 import { ReviewScreen } from './src/screens/ReviewScreen';
 import { StickersScreen } from './src/screens/StickersScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
 import { StoryScreen } from './src/screens/StoryScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { AppStateProvider, useApp } from './src/state/AppState';
@@ -30,6 +31,7 @@ type Route =
   | { name: 'home' }
   | { name: 'lesson'; id: string }
   | { name: 'review'; session: Card[] }
+  | { name: 'settings' }
   | { name: 'duo-setup' }
   | { name: 'duo'; names: [string, string]; topic: FreeTopic | null }
   | { name: 'story' }
@@ -85,6 +87,11 @@ function Root() {
         onStories={() => setRoute({ name: 'story' })} onPlay={() => setRoute({ name: 'play' })}
         onStickers={() => setRoute({ name: 'stickers' })} onParents={() => setRoute({ name: 'parents' })} />;
     }
+  } else if (route.name === 'settings') {
+    screen = <SettingsScreen lang={app.uiLang} dailyGoal={app.progress.dailyGoalMinutes} onGoal={app.setGoal}
+      palette={app.palette} onPalette={app.setPalette} onLang={app.setUiLang}
+      onSwitchProfile={() => { app.resetProfile(); home(); }} onExport={app.exportData}
+      onErase={() => { app.eraseAll(); home(); }} onBack={home} />;
   } else if (route.name === 'duo-setup') {
     screen = <DuoSetupScreen lang={app.uiLang} onBack={home}
       onStart={(names, topic) => { void clearConversation(DUO_LESSON_ID).then(() => setRoute({ name: 'duo', names, topic })); }} />;
@@ -99,11 +106,11 @@ function Root() {
       onBack={home} onFinish={(m) => { app.logSession(m, route.id); home(); }} />;
   } else {
     screen = <HomeScreen lang={app.uiLang} level={app.level} progress={app.progress}
-      onOpenLesson={(id) => setRoute({ name: 'lesson', id })} onGoal={app.setGoal}
+      onOpenLesson={(id) => setRoute({ name: 'lesson', id })}
       dueCount={buildReviewSession(app.cards, now, 999, app.targetLang).length}
       onReview={() => setRoute({ name: 'review', session: buildReviewSession(app.cards, now, 10, app.targetLang) })}
-      onSwitchProfile={() => { app.resetProfile(); home(); }} palette={app.palette} onPalette={app.setPalette}
-      onLang={app.setUiLang} onErase={() => { app.eraseAll(); home(); }} onExport={app.exportData} onDuo={() => setRoute({ name: 'duo-setup' })} target={app.targetLang} onTarget={app.setTargetLang} today={localDay(new Date(now))} />;
+      onDuo={() => setRoute({ name: 'duo-setup' })} onSettings={() => setRoute({ name: 'settings' })}
+      target={app.targetLang} onTarget={app.setTargetLang} today={localDay(new Date(now))} />;
   }
 
   return (

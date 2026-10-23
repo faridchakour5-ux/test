@@ -1,19 +1,16 @@
 import React from 'react';
-import { Alert, Pressable, ScrollView, Share, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { Card } from '../components/Card';
+import { ChallengeCard } from '../components/ChallengeCard';
 import { KButton } from '../components/KButton';
-import { Mascot } from '../components/Mascot';
-import { LanguagePicker } from '../components/LanguagePicker';
-import { TargetPicker } from '../components/TargetPicker';
-import { DEFAULT_TARGET, TargetLang, lessonKey } from '../domain/targets';
-import { PalettePicker } from '../components/PalettePicker';
-import { PaletteId } from '../theme/palettes';
 import { KText } from '../components/KText';
+import { LevelBadge } from '../components/LevelBadge';
+import { Mascot } from '../components/Mascot';
+import { TargetPicker } from '../components/TargetPicker';
+import { WeekChart } from '../components/WeekChart';
 import { LESSONS, Level, recommendLessons } from '../domain/lessons';
 import { Progress, goalReached, lastDays, rollDay } from '../domain/progress';
-import { ChallengeCard } from '../components/ChallengeCard';
-import { LevelBadge } from '../components/LevelBadge';
-import { WeekChart } from '../components/WeekChart';
+import { DEFAULT_TARGET, TargetLang, lessonKey } from '../domain/targets';
 import { UiLang, isRtl, t } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
 
@@ -22,74 +19,62 @@ interface Props {
   level: Level;
   progress: Progress;
   onOpenLesson: (id: string) => void;
-  onGoal: (g: 5 | 10 | 20) => void;
   dueCount: number;
   onReview: () => void;
-  onSwitchProfile: () => void;
-  palette: PaletteId;
-  onPalette: (p: PaletteId) => void;
-  onLang: (l: UiLang) => void;
-  onErase: () => void;
-  onExport: () => Promise<string>;
   onDuo: () => void;
+  onSettings: () => void;
   target?: TargetLang; // langue apprise
   onTarget: (t: TargetLang) => void;
   today: string; // jour local courant (YYYY-MM-DD)
 }
 
-export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson, onGoal, dueCount, onReview, onSwitchProfile, palette, onPalette, onLang, onErase, onExport, onDuo, today, target = DEFAULT_TARGET, onTarget }: Props) {
+// Accueil: un seul geste évident (« Continuer »), l'essentiel de la progression, puis les leçons.
+// Les réglages vivent dans leur propre écran.
+export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson, dueCount, onReview, onDuo, onSettings, today, target = DEFAULT_TARGET, onTarget }: Props) {
   // La progression sauvegardée peut dater d'hier: on l'aligne sur le jour courant pour l'affichage.
   const progress = rollDay(storedProgress, today);
   const { colors, profile } = useTheme();
   const rtl = isRtl(lang);
-  const row = { flexDirection: rtl ? ('row-reverse' as const) : ('row' as const), gap: 8 };
+  const recommended = recommendLessons(level, progress.completedLessons, 3, target);
+  // La prochaine leçon conseillée; à défaut (tout est fait), la conversation libre.
+  const next = recommended[0] ?? LESSONS.find((l) => l.id === 'free');
 
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: 24, paddingTop: 72, gap: 16 }}>
+    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: 24, paddingTop: 64, gap: 16 }}>
       <View style={{ flexDirection: rtl ? 'row-reverse' : 'row', alignItems: 'center', gap: 16 }}>
-        <Mascot mood={goalReached(progress) ? 'cheer' : 'happy'} size={profile.id === 'kids' ? 120 : 80} />
+        <Mascot mood={goalReached(progress) ? 'cheer' : 'happy'} size={profile.id === 'kids' ? 120 : 72} />
         <View style={{ flex: 1 }}>
-          <KText size={30} weight="800" accessibilityRole="header">Kalam · {level}</KText>
+          <KText size={28} weight="800" accessibilityRole="header">Kalam · {level}</KText>
           <KText muted>{t(lang, 'hello')}</KText>
         </View>
+        <Pressable accessibilityRole="button" accessibilityLabel={t(lang, 'settings')} onPress={onSettings}
+          style={{ minHeight: Math.max(profile.minTouchSize, 48), minWidth: Math.max(profile.minTouchSize, 48), alignItems: 'center', justifyContent: 'center' }}>
+          <KText size={26}>⚙️</KText>
+        </Pressable>
       </View>
-      <TargetPicker lang={lang} value={target} onChange={onTarget} />
-      <KButton label={`👥 ${t(lang, 'duoTitle')}`} onPress={onDuo} />
-      <KButton label={dueCount > 0 ? `${t(lang, 'review')} (${dueCount} ${t(lang, 'reviewDue')})` : t(lang, 'review')} onPress={onReview} />
 
-      <Card style={{ gap: 8 }}>
+      {next && <KButton label={`▶ ${t(lang, 'continueLesson')}: ${next.title[lang]}`} onPress={() => onOpenLesson(next.id)} />}
+
+      <View style={{ flexDirection: rtl ? 'row-reverse' : 'row', gap: 12 }}>
+        <View style={{ flex: 1 }}><KButton label={dueCount > 0 ? `${t(lang, 'review')} (${dueCount})` : t(lang, 'review')} onPress={onReview} hint={dueCount > 0 ? `${dueCount} ${t(lang, 'reviewDue')}` : undefined} /></View>
+        <View style={{ flex: 1 }}><KButton label={`👥 ${t(lang, 'duoTitle')}`} onPress={onDuo} /></View>
+      </View>
+
+      <Card style={{ gap: 10 }}>
+        <LevelBadge lang={lang} xp={progress.xp} />
         <KText weight="600">{t(lang, 'goal')}: {progress.minutesToday}/{progress.dailyGoalMinutes} {t(lang, 'minutes')}</KText>
         {goalReached(progress) && <KText>{t(lang, 'goalReached')}</KText>}
         <KText muted>{t(lang, 'streak')}: {progress.streak}</KText>
-        <View style={row}>
-          {([5, 10, 20] as const).map((g) => (
-            <Pressable
-              key={g}
-              accessibilityRole="button"
-              accessibilityState={{ selected: progress.dailyGoalMinutes === g }}
-              onPress={() => onGoal(g)}
-              style={{ minHeight: profile.minTouchSize, minWidth: profile.minTouchSize, borderRadius: profile.radius, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 12,
-                backgroundColor: progress.dailyGoalMinutes === g ? colors.primary : 'transparent', borderWidth: 1, borderColor: colors.border }}
-            >
-              <KText weight="600" style={{ color: progress.dailyGoalMinutes === g ? colors.onPrimary : colors.text }}>{g}</KText>
-            </Pressable>
-          ))}
-        </View>
       </Card>
-
-      <Card><LevelBadge lang={lang} xp={progress.xp} /></Card>
 
       <ChallengeCard lang={lang} progress={progress} today={today} />
 
-      <Card style={{ gap: 8 }}>
-        <KText weight="800" accessibilityRole="header">📊 {t(lang, 'thisWeek')}</KText>
-        <WeekChart lang={lang} bars={lastDays(progress, today)} goal={progress.dailyGoalMinutes} lessonsDone={progress.completedLessons.length} />
-      </Card>
+      <TargetPicker lang={lang} value={target} onChange={onTarget} />
 
-      {recommendLessons(level, progress.completedLessons, 3, target).length > 0 && (
+      {recommended.length > 1 && (
         <>
           <KText size={22} weight="600" accessibilityRole="header">⭐ {t(lang, 'recommended')}</KText>
-          {recommendLessons(level, progress.completedLessons, 3, target).map((l) => (
+          {recommended.slice(1).map((l) => (
             <Pressable key={`rec-${l.id}`} accessibilityRole="button" accessibilityLabel={l.title[lang]} onPress={() => onOpenLesson(l.id)}>
               <Card style={{ flexDirection: rtl ? 'row-reverse' : 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: profile.minTouchSize, borderColor: colors.primary, borderWidth: 2 }}>
                 <KText weight="600">{l.title[lang]}</KText>
@@ -100,6 +85,11 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
         </>
       )}
 
+      <Card style={{ gap: 8 }}>
+        <KText weight="800" accessibilityRole="header">📊 {t(lang, 'thisWeek')}</KText>
+        <WeekChart lang={lang} bars={lastDays(progress, today)} goal={progress.dailyGoalMinutes} lessonsDone={progress.completedLessons.length} />
+      </Card>
+
       <KText size={22} weight="600" accessibilityRole="header">{t(lang, 'allLessons')}</KText>
       {LESSONS.map((l) => (
         <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={l.title[lang]} onPress={() => onOpenLesson(l.id)}>
@@ -109,21 +99,6 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
           </Card>
         </Pressable>
       ))}
-      <LanguagePicker value={lang} onChange={onLang} />
-      <PalettePicker lang={lang} value={palette} onChange={onPalette} />
-      <KButton label={t(lang, 'switchProfile')} onPress={onSwitchProfile} />
-      <Pressable accessibilityRole="button" onPress={async () => {
-        try { await Share.share({ title: t(lang, 'exportTitle'), message: await onExport() }); }
-        catch { Alert.alert(t(lang, 'exportFailed')); }
-      }} style={{ minHeight: profile.minTouchSize, alignItems: 'center', justifyContent: 'center' }}>
-        <KText muted weight="600">{t(lang, 'exportMine')}</KText>
-      </Pressable>
-      <Pressable accessibilityRole="button" onPress={() => Alert.alert(t(lang, 'eraseMine'), t(lang, 'eraseMineBody'), [
-        { text: t(lang, 'cancel'), style: 'cancel' },
-        { text: t(lang, 'eraseConfirm'), style: 'destructive', onPress: onErase },
-      ])} style={{ minHeight: profile.minTouchSize, alignItems: 'center', justifyContent: 'center' }}>
-        <KText muted weight="600">{t(lang, 'eraseMine')}</KText>
-      </Pressable>
     </ScrollView>
   );
 }

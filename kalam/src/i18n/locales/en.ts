@@ -135,4 +135,6 @@ export const en: Record<StringKey, string> = {
   duoTurn: 'Now speaking',
   anyTopic: 'Anything',
   learnLang: 'Language to learn',
+  settings: 'Settings',
+  continueLesson: 'Continue',
 };

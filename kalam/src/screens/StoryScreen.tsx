@@ -1,4 +1,4 @@
-import * as Speech from 'expo-speech';
+import { tts } from '../speech/tts';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, Pressable, View } from 'react-native';
 import { BackButton } from '../components/BackButton';
@@ -23,8 +23,8 @@ export function StoryScreen({ lang, onFinish, onExit }: Props) {
   const [started] = useState(Date.now());
   const minutes = () => Math.max(1, Math.round((Date.now() - started) / 60_000));
 
-  const speak = (text: string) => { Speech.stop(); Speech.speak(text, { language: 'en-US', rate: profile.speechRate }); };
-  useEffect(() => () => { Speech.stop(); }, []);
+  const speak = (text: string) => { void tts.speak(text, { lang: 'en-US', rate: profile.speechRate }); };
+  useEffect(() => () => { void tts.stop(); }, []);
   useEffect(() => { if (story && !done) speak(story.sentences[index].en); }, [story, index, done]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!story) {

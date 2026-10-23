@@ -1,4 +1,4 @@
-import * as Speech from 'expo-speech';
+import { tts } from '../speech/tts';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Card } from '../components/Card';
@@ -36,7 +36,7 @@ export function ReviewScreen({ lang, session, onAnswer, onExit }: Props) {
     setIndex(index + 1);
   };
 
-  const speak = (text: string) => { Speech.stop(); Speech.speak(text, { language: 'en-US', rate: profile.speechRate }); };
+  const speak = (text: string) => { void tts.speak(text, { lang: 'en-US', rate: profile.speechRate }); };
 
   const answers: { id: Answer; key: 'again' | 'hard' | 'good' | 'easy' }[] = [
     { id: 'again', key: 'again' }, { id: 'hard', key: 'hard' }, { id: 'good', key: 'good' }, { id: 'easy', key: 'easy' },

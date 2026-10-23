@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Linking, Pressable, View } from 'react-native';
 import { PronunciationResult, WordStatus, evaluatePronunciation } from '../domain/pronunciation';
 import { UiLang, StringKey, t } from '../i18n/strings';
+import { PROBLEM_TEXT, problemFromListen } from '../speech/problems';
 import { cancelListening, isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
+import { tts } from '../speech/tts';
 import { useTheme } from '../theme/ThemeProvider';
 import { KText } from './KText';
 import { Mascot } from './Mascot';
@@ -21,6 +23,8 @@ export function PronunciationPractice({ lang, expected, onResult }: Props) {
   const [listening, setListening] = useState(false);
   const [result, setResult] = useState<PronunciationResult | null>(null);
   const [message, setMessage] = useState<StringKey | null>(null);
+  const [blocked, setBlocked] = useState(false);
+  const [heardLive, setHeardLive] = useState('');
   const available = isSpeechInputAvailable();
   const COLOR: Record<WordStatus, string> = { correct: colors.success, close: colors.warning, wrong: colors.danger, missing: colors.textMuted };
 
@@ -32,11 +36,16 @@ export function PronunciationPractice({ lang, expected, onResult }: Props) {
   }
 
   const start = async () => {
-    setListening(true); setResult(null); setMessage(null);
-    const r = await listenOnce('en-US');
+    setListening(true); setResult(null); setMessage(null); setBlocked(false); setHeardLive('');
+    await tts.stop(); // le micro ne doit pas capter la voix de l'application
+    const r = await listenOnce({ lang: 'en-US', patienceMs: profile.speechPatienceMs, maxMs: 10_000, onPartial: setHeardLive });
     setListening(false);
+    setHeardLive('');
     if (!r.ok) {
-      setMessage(r.reason === 'permission' ? 'micPermission' : 'noSpeech');
+      if (r.reason === 'cancelled') return;
+      const problem = problemFromListen(r.reason);
+      setBlocked(problem === 'permission-blocked');
+      setMessage(PROBLEM_TEXT[problem]);
       return;
     }
     const evaluated = evaluatePronunciation(expected, r.transcript);
@@ -62,7 +71,13 @@ export function PronunciationPractice({ lang, expected, onResult }: Props) {
         </KText>
       </Pressable>
 
-      {message && <KText accessibilityLiveRegion="polite" muted>{t(lang, message)}</KText>}
+      {listening && !!heardLive && <KText muted accessibilityLiveRegion="polite">“{heardLive}”</KText>}
+      {message && <KText accessibilityLiveRegion="polite" style={{ color: colors.danger }}>{t(lang, message)}</KText>}
+      {blocked && (
+        <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={{ minHeight: 48, justifyContent: 'center' }}>
+          <KText weight="600" style={{ color: colors.primary }}>{t(lang, 'openSettings')}</KText>
+        </Pressable>
+      )}
 
       {result && (
         <View accessibilityLiveRegion="polite" style={{ gap: 8, alignItems: 'center' }}>

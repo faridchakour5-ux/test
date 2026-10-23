@@ -18,14 +18,63 @@ export interface TeacherRequest {
   messages: ChatMessage[];
 }
 
-export async function askTeacher(req: TeacherRequest, fetchImpl: typeof fetch = fetch): Promise<string> {
-  const res = await fetchImpl(`${API_URL}/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(req),
-  });
-  if (!res.ok) throw new Error(`teacher error ${res.status}`);
-  const data = (await res.json()) as { reply?: string };
-  if (!data.reply) throw new Error('empty reply');
+export type TeacherErrorKind = 'offline' | 'timeout' | 'rate' | 'server' | 'invalid';
+
+export class TeacherError extends Error {
+  constructor(public kind: TeacherErrorKind, public retryable: boolean, message?: string) {
+    super(message ?? kind);
+    this.name = 'TeacherError';
+  }
+}
+
+export interface AskOptions {
+  fetchImpl?: typeof fetch;
+  timeoutMs?: number; // délai par tentative
+  retries?: number; // nombre de nouvelles tentatives (en plus de la première)
+  sleep?: (ms: number) => Promise<void>;
+}
+
+const defaultSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+async function once(req: TeacherRequest, fetchImpl: typeof fetch, timeoutMs: number): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let res: Response;
+  try {
+    res = await fetchImpl(`${API_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req),
+      signal: controller.signal,
+    });
+  } catch (e) {
+    const aborted = (e as { name?: string })?.name === 'AbortError';
+    throw new TeacherError(aborted ? 'timeout' : 'offline', true);
+  } finally {
+    clearTimeout(timer);
+  }
+  if (res.status === 429) throw new TeacherError('rate', true);
+  if (res.status >= 500) throw new TeacherError('server', true, `teacher error ${res.status}`);
+  if (!res.ok) throw new TeacherError('invalid', false, `teacher error ${res.status}`);
+  let data: { reply?: string };
+  try { data = (await res.json()) as { reply?: string }; } catch { throw new TeacherError('server', true, 'bad json'); }
+  if (!data.reply) throw new TeacherError('server', true, 'empty reply');
   return data.reply;
+}
+
+// Demande une réponse au professeur. Réessaie (réseau, délai, 429, 5xx) avec une attente croissante;
+// n'insiste jamais sur une requête invalide (4xx).
+export async function askTeacher(req: TeacherRequest, opts: AskOptions = {}): Promise<string> {
+  const { fetchImpl = fetch, timeoutMs = 20_000, retries = 2, sleep = defaultSleep } = opts;
+  let last: TeacherError | null = null;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await once(req, fetchImpl, timeoutMs);
+    } catch (e) {
+      last = e instanceof TeacherError ? e : new TeacherError('server', true);
+      if (!last.retryable || attempt === retries) break;
+      await sleep(600 * 2 ** attempt + Math.floor(Math.random() * 200));
+    }
+  }
+  throw last ?? new TeacherError('server', true);
 }

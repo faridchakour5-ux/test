@@ -12,7 +12,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#EDE9FF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -26,12 +26,25 @@
     "scheme": "kalam",
     "plugins": [
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "backgroundColor": "#EDE9FF",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#12111F"
+          }
+        }
+      ],
+      [
         "expo-speech-recognition",
         {
           "microphonePermission": "Kalam utilise le micro pour que vous pratiquiez la prononciation.",
           "speechRecognitionPermission": "Kalam utilise la reconnaissance vocale pour évaluer votre prononciation."
         }
       ]
-    ]
+    ],
+    "description": "Apprends les langues en parlant."
   }
 }

@@ -7,6 +7,7 @@ import { Progress, addMinutes, completeLesson, initialProgress } from '../domain
 import { UiLang } from '../i18n/strings';
 import { DEFAULT_PALETTE, PaletteId } from '../theme/palettes';
 import { AgeProfileId } from '../theme/profiles';
+import { clearAllKalamData } from './conversations';
 import { load, save } from './storage';
 
 interface Persisted {
@@ -83,7 +84,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setMicConsent: (on) => update((s) => ({ ...s, kids: { ...s.kids, consent: on ? grantMic(s.kids.consent, Date.now()) : revokeMic(s.kids.consent) } })),
     setKidsLimit: (dailyLimit) => update((s) => ({ ...s, kids: { ...s.kids, dailyLimit } })),
     // Droit à l'effacement (RGPD): on remet tout à zéro, y compris le consentement.
-    eraseAll: () => update(() => initial()),
+    eraseAll: () => { void clearAllKalamData(); setState(initial()); },
     reviewCard: (key, quality) => update((s) => ({
       ...s,
       cards: s.cards.map((c) => (c.key === key ? review(c, quality, Date.now()) : c)),

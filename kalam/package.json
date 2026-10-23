@@ -7,6 +7,7 @@
     "expo": "~58.0.17",
     "expo-speech": "^58.0.3",
     "expo-speech-recognition": "^58.0.0",
+    "expo-splash-screen": "^58.0.11",
     "expo-status-bar": "~58.0.4",
     "expo-system-ui": "^58.0.6",
     "react": "19.3.0",
@@ -14,10 +15,12 @@
     "react-native-svg": "^15.16.0"
   },
   "devDependencies": {
+    "@testing-library/react-native": "^14.1.0",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.3.0",
     "jest": "^30.5.2",
     "jest-expo": "^58.0.12",
+    "react-test-renderer": "^19.3.0",
     "typescript": "~6.0.3"
   },
   "scripts": {

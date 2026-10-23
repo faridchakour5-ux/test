@@ -1,4 +1,4 @@
-import * as Speech from 'expo-speech';
+import { tts } from '../speech/tts';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { BackButton } from '../components/BackButton';
@@ -30,8 +30,8 @@ export function PlayScreen({ lang, stars, micAllowed, onCorrect, onExit }: Props
   const advance = useRef<ReturnType<typeof setTimeout> | null>(null);
   const minutes = () => Math.max(1, Math.round((Date.now() - started.current) / 60_000));
 
-  const speak = (text: string) => { Speech.stop(); Speech.speak(text, { language: 'en-US', rate: profile.speechRate }); };
-  useEffect(() => () => { Speech.stop(); if (advance.current) clearTimeout(advance.current); }, []);
+  const speak = (text: string) => { void tts.speak(text, { lang: 'en-US', rate: profile.speechRate }); };
+  useEffect(() => () => { void tts.stop(); if (advance.current) clearTimeout(advance.current); }, []);
 
   const round = rounds?.[index];
   useEffect(() => { if (round && !solved) speak(round.target.en); }, [round]); // eslint-disable-line react-hooks/exhaustive-deps

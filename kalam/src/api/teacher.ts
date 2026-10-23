@@ -16,6 +16,7 @@ export interface TeacherRequest {
   scenario: string;
   uiLang: UiLang;
   messages: ChatMessage[];
+  start?: boolean; // le professeur ouvre la conversation (messages vide)
 }
 
 export type TeacherErrorKind = 'offline' | 'timeout' | 'rate' | 'server' | 'invalid';

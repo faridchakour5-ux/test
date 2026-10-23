@@ -67,7 +67,8 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   const requestReply = useCallback(async (history: ChatMessage[]) => {
     const myToken = ++token.current;
     try {
-      const reply = await askTeacher({ ageProfile, level, scenario: lesson.scenario, uiLang: lang, messages: history.slice(-20) });
+      const opening = history.length === 0; // aucun message: le professeur ouvre la scène
+      const reply = await askTeacher({ ageProfile, level, scenario: lesson.scenario, uiLang: lang, messages: history.slice(-20), ...(opening ? { start: true } : {}) });
       if (!mounted.current || myToken !== token.current) return;
       setMessages((m) => [...m, { role: 'assistant', content: reply }]);
       dispatch({ type: 'REPLY' });
@@ -78,6 +79,15 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
       dispatch({ type: 'SEND_FAIL', problem: problemFromTeacher(e instanceof TeacherError ? e.kind : 'server') });
     }
   }, [ageProfile, level, lesson.scenario, lang, speak]);
+
+  // Conversation vide: c'est le professeur qui prend la parole en premier, comme dans un vrai jeu de rôle.
+  const opened = useRef(false);
+  useEffect(() => {
+    if (!loaded || opened.current || messagesRef.current.length > 0) return;
+    opened.current = true;
+    dispatch({ type: 'SEND' });
+    void requestReply([]);
+  }, [loaded, requestReply]);
 
   const submit = useCallback((text: string, fromVoice: boolean) => {
     const clean = text.trim().slice(0, 500);
@@ -118,15 +128,18 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
 
   const retrySend = () => {
     const last = messagesRef.current;
-    if (!last.length || last[last.length - 1].role !== 'user') return;
+    if (last.length && last[last.length - 1].role !== 'user') return;
     dispatch({ type: 'SEND' });
-    void requestReply(last);
+    void requestReply(last); // liste vide = nouvelle tentative d'ouverture par le professeur
   };
 
   const newConversation = async () => {
     stopAll();
     setMessages([]);
+    messagesRef.current = [];
     await clearConversation(lesson.id);
+    dispatch({ type: 'SEND' });
+    void requestReply([]);
   };
 
   const sendTyped = () => { if (!input.trim() || turn.phase === 'sending') return; const text = input; setInput(''); submit(text, false); };
@@ -176,7 +189,7 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
         <View accessibilityLiveRegion="assertive" style={{ paddingHorizontal: 24, paddingBottom: 8, gap: 8 }}>
           <KText size={14} style={{ color: colors.danger }}>{t(lang, PROBLEM_TEXT[turn.problem])}</KText>
           {turn.problem === 'permission-blocked' && <KButton label={t(lang, 'openSettings')} onPress={() => { void Linking.openSettings(); }} />}
-          {RETRYABLE_SEND.includes(turn.problem) && lastIsUser && <KButton label={t(lang, 'retry')} onPress={retrySend} />}
+          {RETRYABLE_SEND.includes(turn.problem) && (lastIsUser || messages.length === 0) && <KButton label={t(lang, 'retry')} onPress={retrySend} />}
         </View>
       )}
 

@@ -7,12 +7,19 @@ export const MAX_CHARS = 500;
 
 export function validateChat(body) {
   if (!body || typeof body !== 'object') return { error: 'invalid body' };
-  const { ageProfile, level, scenario, uiLang, messages } = body;
+  const { ageProfile, level, scenario, uiLang, messages, start } = body;
   if (!PROFILES.includes(ageProfile)) return { error: 'invalid ageProfile' };
   if (!LEVELS.includes(level)) return { error: 'invalid level' };
   if (uiLang !== undefined && !LANGS.includes(uiLang)) return { error: 'invalid uiLang' };
   if (scenario !== undefined && (typeof scenario !== 'string' || scenario.length > 300)) return { error: 'invalid scenario' };
-  if (!Array.isArray(messages) || messages.length === 0 || messages.length > MAX_MESSAGES) return { error: 'invalid messages' };
+  if (start !== undefined && typeof start !== 'boolean') return { error: 'invalid start' };
+  if (!Array.isArray(messages) || messages.length > MAX_MESSAGES) return { error: 'invalid messages' };
+  // `start: true` = le professeur ouvre la conversation: aucun message de l'apprenant n'existe encore.
+  if (start === true) {
+    if (messages.length !== 0) return { error: 'start requires empty messages' };
+    return { value: { ageProfile, level, scenario, uiLang, start: true, messages: [] } };
+  }
+  if (messages.length === 0) return { error: 'invalid messages' };
   for (const m of messages) {
     if (!m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > MAX_CHARS) {
       return { error: 'invalid message' };

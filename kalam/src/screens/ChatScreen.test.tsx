@@ -55,7 +55,8 @@ beforeEach(() => {
   mockSpeak.mockResolvedValue('done');
   mockStop.mockResolvedValue(undefined);
   mockAsk.mockResolvedValue('Of course! What would you like?');
-  (loadConversation as jest.Mock).mockResolvedValue([]);
+  // Par défaut la conversation existe déjà (le professeur a déjà ouvert la scène).
+  (loadConversation as jest.Mock).mockResolvedValue([{ role: 'assistant', content: 'Welcome! What would you like?' }]);
 });
 
 describe('ChatScreen: saisie au clavier', () => {
@@ -64,7 +65,7 @@ describe('ChatScreen: saisie au clavier', () => {
     await type('I would like water');
     await waitFor(() => expect(screen.getByText('Of course! What would you like?')).toBeTruthy());
     expect(screen.getByText('I would like water')).toBeTruthy();
-    expect(mockAsk.mock.calls[0][0].messages).toEqual([{ role: 'user', content: 'I would like water' }]);
+    expect(mockAsk.mock.calls[0][0].messages.at(-1)).toEqual({ role: 'user', content: 'I would like water' });
     expect(mockAsk.mock.calls[0][0].scenario).toBe(lesson.scenario);
     expect(mockSpeak).toHaveBeenCalledWith('Of course! What would you like?', expect.objectContaining({ lang: 'en-US' }));
   });
@@ -164,7 +165,7 @@ describe('ChatScreen: pannes réseau', () => {
     await fireEvent.press(screen.getByText('Réessayer'));
     await waitFor(() => expect(screen.getByText('Back online!')).toBeTruthy());
     expect(mockAsk).toHaveBeenCalledTimes(2);
-    expect(mockAsk.mock.calls[1][0].messages).toEqual([{ role: 'user', content: 'Hello teacher' }]);
+    expect(mockAsk.mock.calls[1][0].messages.at(-1)).toEqual({ role: 'user', content: 'Hello teacher' });
   });
 
   it('une panne de la voix ne bloque pas la conversation', async () => {
@@ -174,6 +175,43 @@ describe('ChatScreen: pannes réseau', () => {
     await fireEvent.press(screen.getByText('🎤 Parler'));
     await waitFor(() => expect(screen.getByText('Of course! What would you like?')).toBeTruthy());
     await waitFor(() => expect(screen.getByText('🎤 Parler')).toBeTruthy());
+  });
+});
+
+describe('ChatScreen: ouverture par le professeur', () => {
+  it('le professeur ouvre une conversation vide et sa phrase est lue', async () => {
+    (loadConversation as jest.Mock).mockResolvedValue([]);
+    mockAsk.mockResolvedValue('Hello! Welcome to our restaurant. What would you like?');
+    await setup();
+    await waitFor(() => expect(screen.getByText(/Welcome to our restaurant/)).toBeTruthy());
+    expect(mockAsk).toHaveBeenCalledTimes(1);
+    expect(mockAsk.mock.calls[0][0]).toMatchObject({ start: true, messages: [] });
+    expect(mockSpeak).toHaveBeenCalledWith(expect.stringContaining('Welcome to our restaurant'), expect.anything());
+  });
+
+  it('ne rouvre pas une conversation déjà commencée', async () => {
+    await setup();
+    await act(async () => {});
+    expect(mockAsk).not.toHaveBeenCalled();
+  });
+
+  it('si l\'ouverture échoue, on peut réessayer', async () => {
+    (loadConversation as jest.Mock).mockResolvedValue([]);
+    mockAsk.mockRejectedValueOnce(new TeacherError('offline', true)).mockResolvedValueOnce('Hi there!');
+    await setup();
+    await waitFor(() => expect(screen.getByText(/Pas de connexion/)).toBeTruthy());
+    await fireEvent.press(screen.getByText('Réessayer'));
+    await waitFor(() => expect(screen.getByText('Hi there!')).toBeTruthy());
+    expect(mockAsk).toHaveBeenCalledTimes(2);
+  });
+
+  it('« Nouvelle conversation » efface l\'historique et le professeur rouvre', async () => {
+    mockAsk.mockResolvedValue('Fresh start! Hello!');
+    await setup();
+    await fireEvent.press(screen.getByText('Nouvelle conversation'));
+    await waitFor(() => expect(screen.getByText('Fresh start! Hello!')).toBeTruthy());
+    expect(screen.queryByText('Welcome! What would you like?')).toBeNull();
+    expect(mockAsk.mock.calls[0][0]).toMatchObject({ start: true, messages: [] });
   });
 });
 

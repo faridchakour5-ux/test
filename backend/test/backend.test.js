@@ -34,3 +34,10 @@ test('le prompt nomme la langue de l\'apprenant', () => {
   assert.match(buildSystemPrompt({ ageProfile: 'adult', level: 'A1', uiLang: 'zh' }), /Simplified Chinese/);
   assert.match(buildSystemPrompt({ ageProfile: 'adult', level: 'A1', uiLang: 'es' }), /Spanish/);
 });
+
+test('start: accepté sans messages, refusé avec des messages', () => {
+  assert.ok(validateChat({ ageProfile: 'adult', level: 'A1', start: true, messages: [] }).value.start);
+  assert.ok(validateChat({ ageProfile: 'adult', level: 'A1', start: true, messages: [{ role: 'user', content: 'Hi' }] }).error);
+  assert.ok(validateChat({ ageProfile: 'adult', level: 'A1', start: 'yes', messages: [] }).error);
+  assert.ok(validateChat({ ageProfile: 'adult', level: 'A1', messages: [] }).error);
+});

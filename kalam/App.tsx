@@ -16,6 +16,7 @@ import { ProfilePickerScreen } from './src/screens/ProfilePickerScreen';
 import { ReviewScreen } from './src/screens/ReviewScreen';
 import { StickersScreen } from './src/screens/StickersScreen';
 import { StoryScreen } from './src/screens/StoryScreen';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { AppStateProvider, useApp } from './src/state/AppState';
 import { AgeProfileId } from './src/theme/profiles';
 import { ThemeProvider } from './src/theme/ThemeProvider';
@@ -99,8 +100,10 @@ function Root() {
 
 export default function App() {
   return (
-    <AppStateProvider>
-      <Root />
-    </AppStateProvider>
+    <ErrorBoundary>
+      <AppStateProvider>
+        <Root />
+      </AppStateProvider>
+    </ErrorBoundary>
   );
 }

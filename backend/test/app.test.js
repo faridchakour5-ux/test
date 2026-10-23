@@ -85,3 +85,15 @@ test('enfant: réponses plus courtes', async () => {
 test('404 sur une route inconnue', async () => {
   await withServer({ client: okClient() }, async (base) => assert.equal((await fetch(`${base}/nope`)).status, 404));
 });
+
+test('le professeur ouvre la conversation (start) avec une consigne interne', async () => {
+  const client = okClient('Welcome! What would you like to eat?');
+  await withServer({ client }, async (base) => {
+    const r = await post(base, { ageProfile: 'adult', level: 'A1', scenario: 'Restaurant', start: true, messages: [] });
+    assert.equal(r.status, 200);
+    assert.equal((await r.json()).reply, 'Welcome! What would you like to eat?');
+    assert.equal(client.calls[0].messages.length, 1);
+    assert.equal(client.calls[0].messages[0].role, 'user');
+    assert.match(client.calls[0].messages[0].content, /Start the role-play/);
+  });
+});

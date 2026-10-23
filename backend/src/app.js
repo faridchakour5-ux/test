@@ -4,6 +4,9 @@ import { sanitizeMessages } from './pii.js';
 import { createRateLimiter } from './rateLimit.js';
 import { validateChat } from './validate.js';
 
+// Consigne interne envoyée à la place d'un message de l'apprenant quand le professeur ouvre la scène.
+export const OPENING_PROMPT = '(Start the role-play now. Greet me briefly in character and ask your first simple question.)';
+
 const MAX_BODY = 20_000;
 
 // Crée le serveur HTTP. `client` est le client Anthropic (ou un faux dans les tests): aucune clé ici.
@@ -50,7 +53,8 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
 
       const { value, error } = validateChat(body);
       if (error) return send(res, 400, { error });
-      const clean = sanitizeMessages(value.messages, value.ageProfile);
+      const incoming = value.start ? [{ role: 'user', content: OPENING_PROMPT }] : value.messages;
+      const clean = sanitizeMessages(incoming, value.ageProfile);
       if (clean.error) return send(res, 400, { error: clean.error });
 
       try {

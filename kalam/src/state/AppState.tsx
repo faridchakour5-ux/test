@@ -108,7 +108,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return { ...s, progress, cards: lessonId ? cardsForLesson(lessonId, s.cards, Date.now(), s.targetLang) : s.cards };
     }),
     setPalette: (palette) => update((s) => ({ ...s, palette })),
-    resetProfile: () => update((s) => ({ ...s, profile: null, levels: {} })),
+    // Changer de profil ne change QUE le profil: niveaux et langue apprise sont conservés.
+    resetProfile: () => update((s) => ({ ...s, profile: null })),
     addStars: (n) => update((s) => ({ ...s, kids: { ...s.kids, stars: s.kids.stars + n } })),
     markStoryRead: (id) => update((s) => ({ ...s, kids: { ...s.kids, storiesRead: s.kids.storiesRead.includes(id) ? s.kids.storiesRead : [...s.kids.storiesRead, id] } })),
     setMicConsent: (on) => update((s) => ({ ...s, kids: { ...s.kids, consent: on ? grantMic(s.kids.consent, Date.now()) : revokeMic(s.kids.consent) } })),

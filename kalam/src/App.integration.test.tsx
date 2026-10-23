@@ -158,14 +158,55 @@ describe('App: accueil et réglages', () => {
   });
 });
 
+describe('App: changer de profil ne détruit pas les réglages', () => {
+  const adultFr = () => mockStore.set('kalam:state:v1', JSON.stringify({ profile: 'adult', targetLang: 'fr', levels: { en: 'B1', fr: 'A2' }, uiLang: 'fr' }));
+
+  it('« Changer de profil » garde les niveaux de toutes les langues', async () => {
+    adultFr();
+    await boot();
+    await fireEvent.press(await screen.findByLabelText('Réglages'));
+    await fireEvent.press(await screen.findByText('Changer de profil'));
+    expect(await screen.findByText('Qui va apprendre ?')).toBeTruthy();
+    await waitFor(() => expect(saved()).toMatchObject({ profile: null, targetLang: 'fr', levels: { en: 'B1', fr: 'A2' } }));
+  });
+
+  it('passer au profil adulte après un changement revient à l\'accueil SANS refaire le test de niveau', async () => {
+    adultFr();
+    await boot();
+    await fireEvent.press(await screen.findByLabelText('Réglages'));
+    await fireEvent.press(await screen.findByText('Changer de profil'));
+    await fireEvent.press(await screen.findByText('Ado / Adulte'));
+    expect(await screen.findByText(/Kalam · A2/)).toBeTruthy(); // niveau de français conservé
+    expect(screen.queryByText('Test de niveau')).toBeNull();
+  });
+
+  it('choisir le profil Enfant n\'écrase ni le niveau, ni la langue apprise de l\'adulte', async () => {
+    adultFr();
+    await boot();
+    await fireEvent.press(await screen.findByLabelText('Réglages'));
+    await fireEvent.press(await screen.findByText('Changer de profil'));
+    await fireEvent.press(await screen.findByText('Enfant (4-8 ans)'));
+    expect(await screen.findByText('Histoires')).toBeTruthy();
+    await waitFor(() => expect(saved()).toMatchObject({ profile: 'kids', targetLang: 'fr', levels: { en: 'B1', fr: 'A2' } }));
+  });
+
+  it('un nouvel utilisateur qui choisit Enfant n\'a aucun niveau enregistré (le mode enfant n\'en a pas besoin)', async () => {
+    await boot();
+    await fireEvent.press(await screen.findByText('Enfant (4-8 ans)'));
+    expect(await screen.findByText('Histoires')).toBeTruthy();
+    expect(screen.queryByText('Test de niveau')).toBeNull();
+    await waitFor(() => expect(saved()).toMatchObject({ profile: 'kids', levels: {} }));
+  });
+});
+
 describe('App: mode enfant', () => {
-  it('enfant: pas de test de niveau, accueil enfant, langue forcée à l\'anglais', async () => {
+  it('enfant: pas de test de niveau, accueil enfant; la langue apprise choisie n\'est pas modifiée (le contenu enfant est en anglais)', async () => {
     await boot();
     await fireEvent.press(await screen.findByLabelText('Langue à apprendre: Français'));
     await fireEvent.press(screen.getByText('Enfant (4-8 ans)'));
     expect(await screen.findByText('Histoires')).toBeTruthy();
     expect(screen.queryByText('Test de niveau')).toBeNull();
-    await waitFor(() => expect(saved()).toMatchObject({ profile: 'kids', targetLang: 'en', levels: { en: 'A1' } }));
+    await waitFor(() => expect(saved()).toMatchObject({ profile: 'kids', targetLang: 'fr', levels: {} }));
   });
 
   describe('espace parents (question d\'adulte déterministe: Math.random figé -> 6 × 6 = 36)', () => {

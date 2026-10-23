@@ -54,9 +54,9 @@ function Root() {
   if (!app.ready) return <View style={{ flex: 1, justifyContent: 'center' }}><ActivityIndicator /></View>;
 
   const pickProfile = (p: AgeProfileId) => {
+    // Choisir un profil ne change que le profil. Le mode enfant n'a pas besoin de niveau ni de langue apprise
+    // (tout est guidé, en anglais): on n'écrase donc jamais ceux d'un adulte qui prête son téléphone.
     app.setProfile(p);
-    // Le mode enfant n'a pas de test de niveau: tout est guidé.
-    if (p === 'kids') { app.setTargetLang('en'); app.setLevel('A1'); } // le contenu enfant est en anglais
     home();
   };
 
@@ -65,8 +65,6 @@ function Root() {
   let screen: React.ReactNode;
   if (!app.profile) {
     screen = <ProfilePickerScreen lang={app.uiLang} onPick={pickProfile} onLang={app.setUiLang} target={app.targetLang} onTarget={app.setTargetLang} />;
-  } else if (!app.level) {
-    screen = <LevelTestScreen lang={app.uiLang} target={app.targetLang} onDone={app.setLevel} />;
   } else if (app.profile === 'kids') {
     // Mode enfant: aucune route vers le chat libre avec l'IA ni vers les leçons adultes.
     if (route.name === 'story' && !timeUp) {
@@ -87,6 +85,8 @@ function Root() {
         onStories={() => setRoute({ name: 'story' })} onPlay={() => setRoute({ name: 'play' })}
         onStickers={() => setRoute({ name: 'stickers' })} onParents={() => setRoute({ name: 'parents' })} />;
     }
+  } else if (!app.level) {
+    screen = <LevelTestScreen lang={app.uiLang} target={app.targetLang} onDone={app.setLevel} />;
   } else if (route.name === 'settings') {
     screen = <SettingsScreen lang={app.uiLang} dailyGoal={app.progress.dailyGoalMinutes} onGoal={app.setGoal}
       palette={app.palette} onPalette={app.setPalette} onLang={app.setUiLang}

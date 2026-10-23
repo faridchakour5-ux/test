@@ -21,6 +21,9 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test -- --ci
+      # Les jours, séries et objectifs dépendent du fuseau horaire: on rejoue la logique dans deux fuseaux extrêmes.
+      - run: TZ=Pacific/Kiritimati npx jest --ci src/domain src/state
+      - run: TZ=America/Los_Angeles npx jest --ci src/domain src/state
 
   backend:
     runs-on: ubuntu-latest

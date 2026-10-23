@@ -15,12 +15,14 @@ cd backend && npm install && ANTHROPIC_API_KEY=sk-... npm start
 cd kalam && npm install && EXPO_PUBLIC_API_URL=http://<IP-de-votre-PC>:8787 npx expo start
 ```
 Sur téléphone, `localhost` ne marche pas: utilisez l'IP de votre ordinateur sur le réseau.
+Le micro (reconnaissance vocale) ne fonctionne pas dans Expo Go : il faut un build de développement (voir `PUBLISHING.md`, section 6).
 
 Tests: `npm test` dans chaque dossier. Publication: voir `PUBLISHING.md`.
 
 ## Qualité
-- `npm test` dans `kalam/` (294 tests dont l'écran de conversation, le mode flux et un audit d'accessibilité) et dans `backend/` (44 tests).
-- Icônes et visuel Play Store : `node scripts/make-assets.mjs` (Playwright requis).
+- Tests : `npm test` dans `kalam/` (application : logique, écrans, accessibilité, application complète, contrat avec le serveur) et dans `backend/` (serveur). Vérifications en plus : `npm run lint` et `npm run typecheck` dans `kalam/`.
+- Tout est relancé automatiquement à chaque envoi de code (`.github/workflows/ci.yml`).
+- Icônes et visuel Play Store : `cd kalam && node scripts/make-assets.mjs` (Playwright requis).
 - Fiche Play Store dans 5 langues : `kalam/store/listing.md`.
 
 ## Langues

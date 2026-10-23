@@ -34,3 +34,32 @@ describe('documentation', () => {
     }
   });
 });
+
+// ---------- Les chiffres et les commandes écrits dans la documentation doivent rester vrais ----------
+const readme = (rel: string) => fs.readFileSync(path.join(root, rel), 'utf8');
+const scripts = (pkg: string) => Object.keys(JSON.parse(fs.readFileSync(path.join(root, pkg, 'package.json'), 'utf8')).scripts ?? {});
+
+describe('documentation: pas de chiffres périmés, commandes réelles', () => {
+  const written = ['README.md', 'kalam/README.md', 'docs/ARCHITECTURE.md', 'docs/APPRENDRE.md', 'PUBLISHING.md'].filter((d) => fs.existsSync(path.join(root, d)));
+
+  it.each(written)('%s ne recopie pas un nombre de tests (il vieillirait à chaque ajout)', (doc) => {
+    expect(readme(doc)).not.toMatch(/\b\d{2,4}\s+tests\b/i);
+  });
+
+  it.each(written)('%s: chaque « npm run <script> » existe dans kalam/ ou backend/', (doc) => {
+    const known = new Set([...scripts('kalam'), ...scripts('backend')]);
+    const used = [...readme(doc).matchAll(/npm run ([a-z][a-z:-]*)/g)].map((m) => m[1]);
+    expect(used.filter((s) => !known.has(s))).toEqual([]);
+  });
+
+  it('les scripts cités comme « node scripts/… » existent à l\'endroit indiqué', () => {
+    expect(fs.existsSync(path.join(root, 'kalam/scripts/make-assets.mjs'))).toBe(true);
+    expect(readme('README.md')).toContain('cd kalam && node scripts/make-assets.mjs');
+  });
+
+  it('kalam/README.md ne dit plus que le serveur « passera » (il existe) et compte 5 langues d\'interface', () => {
+    const text = readme('kalam/README.md');
+    expect(text).not.toMatch(/passera/);
+    expect(text).toMatch(/5 langues/);
+  });
+});

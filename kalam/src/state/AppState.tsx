@@ -3,7 +3,7 @@ import { cardsForLesson } from '../domain/deck';
 import { Level } from '../domain/lessons';
 import { Card, review } from '../domain/srs';
 import { Consent, DailyLimit, grantMic, noConsent, revokeMic } from '../domain/parental';
-import { Progress, addMinutes, completeLesson, initialProgress, normalizeProgress } from '../domain/progress';
+import { Progress, XP_PER_REVIEW, addMinutes, addXp, completeLesson, initialProgress, normalizeProgress } from '../domain/progress';
 import { UiLang } from '../i18n/strings';
 import { DEFAULT_PALETTE, PaletteId } from '../theme/palettes';
 import { AgeProfileId } from '../theme/profiles';
@@ -88,6 +88,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     reviewCard: (key, quality) => update((s) => ({
       ...s,
       cards: s.cards.map((c) => (c.key === key ? review(c, quality, Date.now()) : c)),
+      progress: addXp(s.progress, XP_PER_REVIEW), // chaque carte révisée compte, même ratée: on récompense l'effort
     })),
   };
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;

@@ -114,6 +114,8 @@ export const fr = {
   totalMinutes: 'minutes au total',
   lessonsDone: 'leçons terminées',
   weekChartLabel: '7 derniers jours',
+  level: 'Niveau',
+  xpPoints: 'points',
 } as const;
 
 export type StringKey = keyof typeof fr;

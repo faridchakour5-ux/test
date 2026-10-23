@@ -116,4 +116,6 @@ export const en: Record<StringKey, string> = {
   totalMinutes: 'minutes in total',
   lessonsDone: 'lessons completed',
   weekChartLabel: 'Last 7 days',
+  level: 'Level',
+  xpPoints: 'points',
 };

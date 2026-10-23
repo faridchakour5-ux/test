@@ -116,4 +116,6 @@ export const zh: Record<StringKey, string> = {
   totalMinutes: '分钟（合计）',
   lessonsDone: '节课已完成',
   weekChartLabel: '最近 7 天',
+  level: '等级',
+  xpPoints: '分',
 };

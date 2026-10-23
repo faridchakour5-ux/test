@@ -1,6 +1,6 @@
 import { LESSONS, meaning, recommendLessons } from './lessons';
 import { PLACEMENT, scorePlacement } from './level';
-import { addMinutes, completeLesson, goalReached, initialProgress, lastDays, normalizeProgress, shiftDay, totalMinutes } from './progress';
+import { addMinutes, addXp, completeLesson, goalReached, initialProgress, lastDays, levelFromXp, normalizeProgress, shiftDay, totalMinutes, xpForLevel } from './progress';
 import { newCard, review } from './srs';
 
 describe('lessons', () => {
@@ -161,5 +161,51 @@ describe('historique de progression', () => {
     expect(n.history).toEqual({ '2026-03-09': 12 });
     expect(normalizeProgress(null, '2026-03-10').history).toEqual({});
     expect(normalizeProgress('oops' as never, '2026-03-10').streak).toBe(0);
+  });
+});
+
+describe('niveau d\'expérience (xp)', () => {
+  it('1 point par minute, 10 points à la première réussite d\'une leçon seulement', () => {
+    let p = addMinutes(initialProgress('2026-03-10'), 5, '2026-03-10');
+    expect(p.xp).toBe(5);
+    p = completeLesson(p, 'family');
+    expect(p.xp).toBe(15);
+    p = completeLesson(p, 'family'); // refaire la même leçon ne rapporte rien (pas de farm)
+    expect(p.xp).toBe(15);
+  });
+  it('addXp ajoute, ignore le négatif et les décimales', () => {
+    const p = initialProgress('2026-03-10');
+    expect(addXp(p, 3).xp).toBe(3);
+    expect(addXp(p, -50).xp).toBe(0);
+    expect(addXp(p, 2.9).xp).toBe(2);
+  });
+  it('les points ne baissent jamais, même après plusieurs jours sans activité', () => {
+    let p = addMinutes(initialProgress('2026-03-10'), 8, '2026-03-10');
+    const before = p.xp;
+    p = addMinutes(p, 0, '2026-04-30'); // longue absence
+    expect(p.xp).toBeGreaterThanOrEqual(before);
+  });
+  it('levelFromXp: niveau 1 au départ, progression et seuils', () => {
+    expect(levelFromXp(0)).toMatchObject({ level: 1, levelStart: 0, nextAt: 25, fraction: 0 });
+    expect(levelFromXp(24).level).toBe(1);
+    expect(levelFromXp(25).level).toBe(2);
+    expect(levelFromXp(99).level).toBe(2); // le niveau 3 commence à 25 × 2² = 100
+    expect(levelFromXp(100).level).toBe(3);
+    expect(levelFromXp(224).level).toBe(3);
+    expect(levelFromXp(225).level).toBe(4); // 25 × 3²
+    expect(levelFromXp(37).fraction).toBeCloseTo((37 - 25) / (100 - 25));
+  });
+  it('levelFromXp résiste aux valeurs absurdes', () => {
+    for (const bad of [NaN, -5, Infinity as number]) expect(levelFromXp(bad).level).toBeGreaterThanOrEqual(1);
+    expect(levelFromXp(-5)).toMatchObject({ level: 1, xp: 0 });
+    expect(levelFromXp(1_000_000).level).toBeGreaterThan(100);
+  });
+  it('les seuils de niveau croissent strictement', () => {
+    for (let l = 1; l < 50; l++) expect(xpForLevel(l + 1)).toBeGreaterThan(xpForLevel(l));
+  });
+  it('normalizeProgress migre xp (absent, négatif ou décimal)', () => {
+    expect(normalizeProgress({} as never, '2026-03-10').xp).toBe(0);
+    expect(normalizeProgress({ xp: -4 } as never, '2026-03-10').xp).toBe(0);
+    expect(normalizeProgress({ xp: 41.7 } as never, '2026-03-10').xp).toBe(41);
   });
 });

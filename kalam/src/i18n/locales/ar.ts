@@ -116,4 +116,6 @@ export const ar: Record<StringKey, string> = {
   totalMinutes: 'دقيقة في المجموع',
   lessonsDone: 'دروس مكتملة',
   weekChartLabel: 'آخر ٧ أيام',
+  level: 'المستوى',
+  xpPoints: 'نقطة',
 };

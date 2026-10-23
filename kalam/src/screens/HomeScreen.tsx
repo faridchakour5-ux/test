@@ -9,6 +9,7 @@ import { PaletteId } from '../theme/palettes';
 import { KText } from '../components/KText';
 import { LESSONS, Level, recommendLessons } from '../domain/lessons';
 import { Progress, goalReached, lastDays } from '../domain/progress';
+import { LevelBadge } from '../components/LevelBadge';
 import { WeekChart } from '../components/WeekChart';
 import { UiLang, isRtl, t } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
@@ -63,6 +64,8 @@ export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal, dueCou
           ))}
         </View>
       </Card>
+
+      <Card><LevelBadge lang={lang} xp={progress.xp} /></Card>
 
       <Card style={{ gap: 8 }}>
         <KText weight="800" accessibilityRole="header">📊 {t(lang, 'thisWeek')}</KText>

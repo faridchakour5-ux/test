@@ -7,10 +7,11 @@ export interface Progress {
   lastActiveDay: string | null;
   completedLessons: string[];
   history: Record<string, number>; // minutes par jour (YYYY-MM-DD), 60 derniers jours
+  xp: number; // points d'expérience: ne baissent JAMAIS (pas de punition)
 }
 
 export const initialProgress = (today: string): Progress => ({
-  dailyGoalMinutes: 10, minutesToday: 0, today, streak: 0, lastActiveDay: null, completedLessons: [], history: {},
+  dailyGoalMinutes: 10, minutesToday: 0, today, streak: 0, lastActiveDay: null, completedLessons: [], history: {}, xp: 0,
 });
 
 const dayDiff = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
@@ -25,7 +26,7 @@ export function addMinutes(p: Progress, minutes: number, today: string): Progres
   let streak = rolled.streak;
   if (first) streak = rolled.lastActiveDay && dayDiff(rolled.lastActiveDay, today) === 1 ? streak + 1 : 1;
   const history = pruneHistory({ ...(rolled.history ?? {}), [today]: (rolled.history?.[today] ?? 0) + minutes }, today);
-  return { ...rolled, minutesToday: rolled.minutesToday + minutes, streak, lastActiveDay: today, history };
+  return { ...rolled, minutesToday: rolled.minutesToday + minutes, streak, lastActiveDay: today, history, xp: (rolled.xp ?? 0) + Math.max(0, minutes) * XP_PER_MINUTE };
 }
 
 export const HISTORY_DAYS = 60;
@@ -74,11 +75,33 @@ export function normalizeProgress(raw: Partial<Progress> | null | undefined, tod
     lastActiveDay: typeof raw.lastActiveDay === 'string' ? raw.lastActiveDay : null,
     completedLessons: Array.isArray(raw.completedLessons) ? raw.completedLessons.filter((x): x is string => typeof x === 'string') : [],
     history: pruneHistory(history, today),
+    xp: Math.floor(num(raw.xp, 0)),
   };
 }
 
 export const goalReached = (p: Progress) => p.minutesToday >= p.dailyGoalMinutes;
 
+export const XP_PER_MINUTE = 1;
+export const XP_PER_NEW_LESSON = 10;
+export const XP_PER_REVIEW = 1;
+
 export function completeLesson(p: Progress, id: string): Progress {
-  return p.completedLessons.includes(id) ? p : { ...p, completedLessons: [...p.completedLessons, id] };
+  // Les points ne sont donnés qu'à la première réussite d'une leçon (pas de farm en la refaisant).
+  return p.completedLessons.includes(id) ? p : { ...p, completedLessons: [...p.completedLessons, id], xp: (p.xp ?? 0) + XP_PER_NEW_LESSON };
+}
+
+export const addXp = (p: Progress, amount: number): Progress => ({ ...p, xp: (p.xp ?? 0) + Math.max(0, Math.floor(amount)) });
+
+// Niveau n demande 25 * (n-1)^2 points: rapide au début (encourageant), plus long ensuite.
+export const xpForLevel = (level: number) => 25 * (level - 1) * (level - 1);
+
+export interface LevelInfo { level: number; xp: number; levelStart: number; nextAt: number; fraction: number }
+
+export function levelFromXp(xpRaw: number): LevelInfo {
+  const xp = Number.isFinite(xpRaw) && xpRaw > 0 ? Math.floor(xpRaw) : 0;
+  let level = 1;
+  while (xp >= xpForLevel(level + 1)) level++;
+  const levelStart = xpForLevel(level);
+  const nextAt = xpForLevel(level + 1);
+  return { level, xp, levelStart, nextAt, fraction: (xp - levelStart) / (nextAt - levelStart) };
 }

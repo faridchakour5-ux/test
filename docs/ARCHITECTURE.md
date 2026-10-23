@@ -65,6 +65,7 @@ Exemples : `kalam/src/domain/srs.ts` (révision espacée), `kalam/src/domain/lev
 4. **Serveur** : `backend/src/app.js` valide la requête, masque les données personnelles, applique les limites, puis interroge l'IA avec les consignes de `backend/src/prompt.js` (langue enseignée, niveau, âge, scénario).
 5. **Réponse en flux** (si activée) : le texte arrive par morceaux ; `kalam/src/speech/sentences.ts` coupe en phrases ; `kalam/src/speech/tts.ts` les lit l'une après l'autre.
 6. **Sauvegarde** : `kalam/src/state/conversations.ts` garde la conversation sur l'appareil (regroupée toutes les 500 ms).
+7. **Relecture de la sauvegarde** : `kalam/src/state/normalize.ts` vérifie chaque champ au démarrage; une valeur abîmée est remplacée par une valeur sûre (le consentement micro des enfants vaut « refusé » au moindre doute).
 
 ## 5. Décisions importantes et leurs raisons
 

@@ -7,12 +7,13 @@ const enc = new TextEncoder();
 const sse = (...events: object[]) => events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join('');
 
 // Réponse HTTP simulée dont le corps arrive par morceaux, comme sur le réseau.
-function streamResponse(chunks: string[], { failAfter, status = 200 }: { failAfter?: number; status?: number } = {}) {
+function streamResponse(chunks: string[], { failAfter, status = 200, onCancel }: { failAfter?: number; status?: number; onCancel?: () => void } = {}) {
   let i = 0;
   return {
     ok: status < 400, status,
     body: {
       getReader: () => ({
+        cancel: async () => { onCancel?.(); },
         read: async () => {
           if (failAfter !== undefined && i === failAfter) throw new TypeError('Network connection lost');
           if (i >= chunks.length) return { done: true, value: undefined };
@@ -28,6 +29,22 @@ const as = (f: jest.Mock) => f as unknown as typeof fetch;
 beforeEach(() => sleep.mockClear());
 
 describe('askTeacherStream', () => {
+  it('libère la connexion une fois la réponse terminée (le lecteur est fermé)', async () => {
+    const onCancel = jest.fn();
+    const f = jest.fn().mockResolvedValue(streamResponse([sse({ delta: 'Hi' }), sse({ done: true }), sse({ delta: 'ignoré' })], { onCancel }));
+    const r = await askTeacherStream(R(), { fetchImpl: as(f), sleep, onDelta: () => {} });
+    expect(r.text).toBe('Hi');
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('une fermeture du lecteur qui échoue ne casse pas la réponse', async () => {
+    const res = streamResponse([sse({ delta: 'Hi' }), sse({ done: true })]);
+    const original = res.body.getReader;
+    res.body.getReader = () => ({ ...original(), cancel: async () => { throw new Error('déjà fermé'); } });
+    const r = await askTeacherStream(R(), { fetchImpl: as(jest.fn().mockResolvedValue(res)), sleep, onDelta: () => {} });
+    expect(r).toEqual({ text: 'Hi', partial: false });
+  });
+
   it('transmet chaque morceau dès qu\'il arrive puis renvoie le texte complet', async () => {
     const f = jest.fn().mockResolvedValue(streamResponse([sse({ delta: 'Hello' }), sse({ delta: ' there!' }), sse({ done: true })]));
     const parts: string[] = [];

@@ -162,12 +162,17 @@ async function streamOnce(req: TeacherRequest, o: Required<Pick<StreamOptions, '
     const reader = res.body?.getReader?.();
     if (reader && typeof TextDecoder !== 'undefined') {
       const decoder = new TextDecoder();
-      for (;;) {
-        const { value, done: finished } = await reader.read();
-        if (finished) break;
-        arm(o.idleMs);
-        parser.feed(decoder.decode(value, { stream: true }));
-        if (done || serverError) break;
+      try {
+        for (;;) {
+          const { value, done: finished } = await reader.read();
+          if (finished) break;
+          arm(o.idleMs);
+          parser.feed(decoder.decode(value, { stream: true }));
+          if (done || serverError) break;
+        }
+      } finally {
+        // On a fini (ou échoué): on libère la connexion tout de suite au lieu d'attendre que le serveur la ferme.
+        try { void Promise.resolve(reader.cancel?.()).catch(() => {}); } catch { /* déjà fermée */ }
       }
     } else {
       // Pas de lecture au fil de l'eau sur cet appareil: on lit tout, puis on rejoue les évènements.

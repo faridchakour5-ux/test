@@ -32,6 +32,14 @@ export function LevelTestScreen({ lang, target = DEFAULT_TARGET, onDone }: Props
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: 24, paddingTop: 72, gap: 16 }}>
       <KText size={28} weight="800" accessibilityRole="header">{t(lang, 'levelTest')}</KText>
       <KText muted>{t(lang, 'levelTestIntro')} ({index + 1}/{questions.length})</KText>
+      <View
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityValue={{ min: 0, max: questions.length, now: index }}
+        style={{ height: 10, borderRadius: 5, backgroundColor: colors.border, overflow: 'hidden' }}
+      >
+        <View style={{ height: 10, width: `${(index / questions.length) * 100}%`, backgroundColor: colors.primary }} />
+      </View>
       <Card style={{ gap: 12 }}>
         <KText size={22} weight="600">{q.prompt}</KText>
         <View style={{ gap: 10 }}>
@@ -48,7 +56,7 @@ export function LevelTestScreen({ lang, target = DEFAULT_TARGET, onDone }: Props
           ))}
         </View>
       </Card>
-      <KButton label={t(lang, 'skipTest')} onPress={() => onDone('A1')} />
+      <KButton variant="secondary" label={t(lang, 'skipTest')} onPress={() => onDone('A1')} />
     </ScrollView>
   );
 }

@@ -7,10 +7,12 @@ interface Props {
   label: string;
   onPress: () => void;
   hint?: string;
+  variant?: 'primary' | 'secondary'; // secondaire: action moins importante (bordure, sans fond plein)
 }
 
-export function KButton({ label, onPress, hint }: Props) {
+export function KButton({ label, onPress, hint, variant = 'primary' }: Props) {
   const { colors, profile } = useTheme();
+  const secondary = variant === 'secondary';
   return (
     <Pressable
       accessibilityRole="button"
@@ -20,14 +22,16 @@ export function KButton({ label, onPress, hint }: Props) {
       style={({ pressed }) => ({
         minHeight: profile.minTouchSize,
         borderRadius: profile.radius,
-        backgroundColor: colors.primary,
+        backgroundColor: secondary ? 'transparent' : colors.primary,
+        borderWidth: secondary ? 2 : 0,
+        borderColor: colors.primary,
         opacity: pressed ? 0.85 : 1,
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: 24,
       })}
     >
-      <KText weight="600" size={17} style={{ color: colors.onPrimary }}>{label}</KText>
+      <KText weight="600" size={17} style={{ color: secondary ? colors.text : colors.onPrimary }}>{label}</KText>
     </Pressable>
   );
 }

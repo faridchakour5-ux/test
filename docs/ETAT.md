@@ -10,6 +10,7 @@ Ce fichier dit, en mots simples, ce qui est fait, ce qui ne l'est pas, et ce que
 - Chaque envoi de code relance les tests, le lint et la vérification des types (`.github/workflows/ci.yml`).
 
 ## Ce qui n'a jamais été essayé (il faut un vrai téléphone)
+L'application a été regardée à l'écran dans un navigateur (rendu web, 390 px de large) pour juger la mise en page; le micro et la voix, eux, n'existent pas dans ce rendu.
 Le micro, la voix et la réponse en flux ne sont testés qu'avec des modules simulés. Sur un téléphone Android:
 1. Construisez le build de développement (`PUBLISHING.md`, section 6).
 2. Essayez une conversation vocale complète, une prononciation, et couper l'application en pleine écoute.

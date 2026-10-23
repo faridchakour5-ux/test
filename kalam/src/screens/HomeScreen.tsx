@@ -55,9 +55,10 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
 
       {next && <KButton label={`▶ ${t(lang, 'continueLesson')}: ${next.title[lang]}`} onPress={() => onOpenLesson(next.id)} />}
 
-      <View style={{ flexDirection: rtl ? 'row-reverse' : 'row', gap: 12 }}>
-        <View style={{ flex: 1 }}><KButton label={dueCount > 0 ? `${t(lang, 'review')} (${dueCount})` : t(lang, 'review')} onPress={onReview} hint={dueCount > 0 ? `${dueCount} ${t(lang, 'reviewDue')}` : undefined} /></View>
-        <View style={{ flex: 1 }}><KButton label={`👥 ${t(lang, 'duoTitle')}`} onPress={onDuo} /></View>
+      {/* Boutons l'un sous l'autre: les libellés longs (espagnol, chinois, grands textes) ne se cassent plus sur plusieurs lignes. */}
+      <View style={{ gap: 12 }}>
+        <KButton label={dueCount > 0 ? `${t(lang, 'review')} (${dueCount})` : t(lang, 'review')} onPress={onReview} hint={dueCount > 0 ? `${dueCount} ${t(lang, 'reviewDue')}` : undefined} />
+        <KButton variant="secondary" label={`👥 ${t(lang, 'duoTitle')}`} onPress={onDuo} />
       </View>
 
       <Card style={{ gap: 10 }}>

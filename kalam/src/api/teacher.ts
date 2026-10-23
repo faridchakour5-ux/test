@@ -1,6 +1,7 @@
 import { AgeProfileId } from '../theme/profiles';
 import { Level } from '../domain/lessons';
 import { UiLang } from '../i18n/strings';
+import { SseEvent, createSseParser } from './sse';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -83,6 +84,113 @@ export async function askTeacher(req: TeacherRequest, opts: AskOptions = {}): Pr
     } catch (e) {
       last = e instanceof TeacherError ? e : new TeacherError('server', true);
       if (!last.retryable || attempt === retries) break;
+      await sleep(600 * 2 ** attempt + Math.floor(Math.random() * 200));
+    }
+  }
+  throw last ?? new TeacherError('server', true);
+}
+
+// ---------- Réponse en flux (le professeur parle dès sa première phrase) ----------
+
+// Active avec EXPO_PUBLIC_STREAMING=1 (désactivé par défaut tant que non éprouvé sur appareil).
+export const streamingEnabled = (): boolean => process.env.EXPO_PUBLIC_STREAMING === '1';
+
+export interface StreamOptions extends AskOptions {
+  onDelta: (text: string) => void; // appelé pour chaque morceau de texte reçu
+  firstByteMs?: number; // attente max avant le premier morceau
+  idleMs?: number; // silence max entre deux morceaux
+}
+
+export interface StreamResult {
+  text: string;
+  partial: boolean; // le flux s'est interrompu: on garde ce qui a été reçu
+}
+
+// `fetch` d'Expo sait lire une réponse au fil de l'eau; celui de React Native non.
+function streamingFetch(): typeof fetch {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return (require('expo/fetch') as { fetch: unknown }).fetch as typeof fetch;
+  } catch {
+    return fetch;
+  }
+}
+
+function failFromStatus(res: Response): void {
+  if (res.status === 429) throw new TeacherError('rate', true);
+  if (res.status >= 500) throw new TeacherError('server', true, `teacher error ${res.status}`);
+  if (!res.ok) throw new TeacherError('invalid', false, `teacher error ${res.status}`);
+}
+
+async function streamOnce(req: TeacherRequest, o: Required<Pick<StreamOptions, 'firstByteMs' | 'idleMs'>> & StreamOptions): Promise<StreamResult> {
+  const base = resolveApiUrl(); // avant le try: une mauvaise configuration ne doit pas passer pour une panne réseau
+  const doFetch = o.fetchImpl ?? streamingFetch();
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let timedOut = false;
+  const arm = (ms: number) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => { timedOut = true; controller.abort(); }, ms);
+  };
+
+  let text = '';
+  let done = false;
+  let serverError = false;
+  const parser = createSseParser((e: SseEvent) => {
+    if (e.delta) { text += e.delta; o.onDelta(e.delta); }
+    else if (e.done) done = true;
+    else if (e.error) serverError = true;
+  });
+
+  try {
+    arm(o.firstByteMs);
+    const res = await doFetch(`${base}/chat/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+      body: JSON.stringify(req),
+      signal: controller.signal,
+    });
+    failFromStatus(res);
+
+    const reader = res.body?.getReader?.();
+    if (reader && typeof TextDecoder !== 'undefined') {
+      const decoder = new TextDecoder();
+      for (;;) {
+        const { value, done: finished } = await reader.read();
+        if (finished) break;
+        arm(o.idleMs);
+        parser.feed(decoder.decode(value, { stream: true }));
+        if (done || serverError) break;
+      }
+    } else {
+      // Pas de lecture au fil de l'eau sur cet appareil: on lit tout, puis on rejoue les évènements.
+      parser.feed(await res.text());
+    }
+  } catch (e) {
+    if (e instanceof TeacherError) throw e;
+    // Interruption APRÈS du texte: on garde ce qui est arrivé (jamais de nouvelle tentative: ça répéterait des phrases).
+    if (text) return { text, partial: true };
+    throw new TeacherError(timedOut ? 'timeout' : 'offline', true);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+
+  if (!text) throw new TeacherError('server', true, serverError ? 'stream error' : 'empty reply');
+  return { text, partial: serverError || !done };
+}
+
+// Demande une réponse en flux. Réessaie seulement tant qu'aucun texte n'a été reçu.
+export async function askTeacherStream(req: TeacherRequest, opts: StreamOptions): Promise<StreamResult> {
+  const { retries = 2, sleep = defaultSleep, firstByteMs = 20_000, idleMs = 15_000 } = opts;
+  let last: TeacherError | null = null;
+  let received = false;
+  const onDelta = (d: string) => { received = true; opts.onDelta(d); };
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await streamOnce(req, { ...opts, onDelta, firstByteMs, idleMs });
+    } catch (e) {
+      last = e instanceof TeacherError ? e : new TeacherError('server', true);
+      if (received || !last.retryable || attempt === retries) break;
       await sleep(600 * 2 ** attempt + Math.floor(Math.random() * 200));
     }
   }

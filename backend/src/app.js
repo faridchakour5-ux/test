@@ -39,11 +39,56 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
     });
   }
 
+  // Réponse en flux (SSE): chaque morceau de texte part dès qu'il arrive. Les erreurs AVANT le premier
+  // morceau sont de vraies erreurs HTTP (le client peut se replier sur /chat); après, un évènement « error ».
+  async function streamReply(req, res, params) {
+    let aborted = false;
+    res.on('close', () => { aborted = true; });
+    let stream;
+    try {
+      stream = await client.messages.create({ ...params, stream: true });
+    } catch (e) {
+      log.error('anthropic stream error', e?.status ?? e?.message);
+      return send(res, e?.status === 429 ? 429 : 502, { error: 'teacher unavailable' });
+    }
+    let started = false;
+    let total = '';
+    const begin = () => {
+      if (started) return;
+      started = true;
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-store, no-transform',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+        'Access-Control-Allow-Origin': allowedOrigin,
+        'X-Content-Type-Options': 'nosniff',
+      });
+    };
+    try {
+      for await (const ev of stream) {
+        if (aborted) { stream.controller?.abort?.(); return; }
+        if (ev?.type === 'content_block_delta' && ev.delta?.type === 'text_delta' && ev.delta.text) {
+          begin();
+          total += ev.delta.text;
+          res.write(`data: ${JSON.stringify({ delta: ev.delta.text })}\n\n`);
+        }
+      }
+      if (!total.trim()) return started ? res.end(`data: ${JSON.stringify({ error: 'empty reply' })}\n\n`) : send(res, 502, { error: 'empty reply' });
+      res.end(`data: ${JSON.stringify({ done: true })}\n\n`);
+    } catch (e) {
+      log.error('anthropic stream error', e?.status ?? e?.message);
+      if (!started) return send(res, e?.status === 429 ? 429 : 502, { error: 'teacher unavailable' });
+      res.end(`data: ${JSON.stringify({ error: 'teacher unavailable' })}\n\n`);
+    }
+  }
+
   return http.createServer(async (req, res) => {
     try {
       if (req.method === 'OPTIONS') return send(res, 204, {});
       if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, configured: !!client });
-      if (req.method !== 'POST' || req.url !== '/chat') return send(res, 404, { error: 'not found' });
+      const streaming = req.method === 'POST' && req.url === '/chat/stream';
+      if (req.method !== 'POST' || (req.url !== '/chat' && !streaming)) return send(res, 404, { error: 'not found' });
 
       if (!allow(clientKey(req, trustProxy))) return send(res, 429, { error: 'too many requests' });
       if (!client) return send(res, 503, { error: 'server not configured' });
@@ -59,13 +104,17 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
       const clean = sanitizeMessages(incoming, value.ageProfile);
       if (clean.error) return send(res, 400, { error: clean.error });
 
+      const params = {
+        model,
+        max_tokens: value.ageProfile === 'kids' ? 150 : 300,
+        system: buildSystemPrompt(value),
+        messages: clean.messages,
+      };
+
+      if (streaming) return await streamReply(req, res, params);
+
       try {
-        const reply = await client.messages.create({
-          model,
-          max_tokens: value.ageProfile === 'kids' ? 150 : 300,
-          system: buildSystemPrompt(value),
-          messages: clean.messages,
-        });
+        const reply = await client.messages.create(params);
         const text = reply.content.filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
         if (!text) return send(res, 502, { error: 'empty reply' });
         send(res, 200, { reply: text });

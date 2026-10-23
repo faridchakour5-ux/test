@@ -1,0 +1,135 @@
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import React from 'react';
+import { ChatScreen } from './ChatScreen';
+import { ThemeProvider } from '../theme/ThemeProvider';
+import { LESSONS } from '../domain/lessons';
+import { TeacherError } from '../api/teacher';
+import { loadConversation } from '../state/conversations';
+
+const mockPush = jest.fn();
+const mockEnd = jest.fn();
+const mockStop = jest.fn();
+const mockStream = jest.fn();
+const mockListen = jest.fn();
+
+jest.mock('../speech/tts', () => ({
+  tts: {
+    speak: jest.fn(async () => 'done'),
+    speakStream: () => ({ push: (...a: unknown[]) => mockPush(...a), end: () => mockEnd() }),
+    stop: (...a: unknown[]) => mockStop(...a),
+    hasVoice: async () => true,
+  },
+}));
+jest.mock('../speech/recognizer', () => ({
+  isSpeechInputAvailable: () => true,
+  cancelListening: jest.fn(),
+  listenOnce: (...a: unknown[]) => mockListen(...a),
+}));
+jest.mock('../api/teacher', () => {
+  const actual = jest.requireActual('../api/teacher');
+  return { ...actual, streamingEnabled: () => true, askTeacher: jest.fn(), askTeacherStream: (...a: unknown[]) => mockStream(...a) };
+});
+jest.mock('../state/conversations', () => ({
+  loadConversation: jest.fn(async () => []),
+  saveConversation: jest.fn(async () => undefined),
+  clearConversation: jest.fn(async () => undefined),
+}));
+
+const lesson = LESSONS.find((l) => l.id === 'restaurant')!;
+type OnDelta = { onDelta: (d: string) => void };
+
+async function setup() {
+  await render(
+    <ThemeProvider profileId="adult">
+      <ChatScreen lang="fr" lesson={lesson} level="A1" ageProfile="adult" onFinish={jest.fn()} onBack={jest.fn()} />
+    </ThemeProvider>,
+  );
+  await act(async () => {});
+}
+const type = async (text: string) => {
+  await fireEvent.changeText(screen.getByPlaceholderText('Écrivez en anglais…'), text);
+  await fireEvent.press(screen.getByText('Envoyer'));
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockEnd.mockResolvedValue('done');
+  mockStop.mockResolvedValue(undefined);
+  (loadConversation as jest.Mock).mockResolvedValue([{ role: 'assistant', content: 'Welcome!' }]);
+});
+
+describe('ChatScreen en mode flux', () => {
+  it('affiche le texte au fil de l\'eau et lance la voix AVANT la fin de la réponse', async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => { release = r; });
+    mockStream.mockImplementation(async (_req: unknown, o: OnDelta) => {
+      o.onDelta('Of course! We have ');
+      o.onDelta('fresh fish today. ');
+      await gate; // le serveur n'a pas fini
+      o.onDelta('Would you like some?');
+      return { text: 'Of course! We have fresh fish today. Would you like some?', partial: false };
+    });
+    await setup();
+    await type('I am hungry');
+
+    // En plein flux: texte partiel visible, 1re phrase déjà envoyée à la voix, réponse pas terminée.
+    await waitFor(() => expect(screen.getByText('Of course! We have fresh fish today. ')).toBeTruthy());
+    // « Of course! » est trop court pour être lu seul: il est regroupé avec la phrase suivante.
+    expect(mockPush).toHaveBeenCalledWith('Of course! We have fresh fish today.');
+    expect(mockEnd).not.toHaveBeenCalled();
+    expect(screen.getByText('⏹ Arrêter la voix')).toBeTruthy();
+
+    await act(async () => { release(); });
+    await waitFor(() => expect(screen.getByText('Of course! We have fresh fish today. Would you like some?')).toBeTruthy());
+    expect(mockPush).toHaveBeenLastCalledWith('Would you like some?'); // le reste est lu à la fin
+    await waitFor(() => expect(screen.getByText('🎤 Parler')).toBeTruthy()); // revenu au repos
+    // un seul message assistant a été construit (pas un par morceau)
+    expect(screen.getAllByText(/Of course!/)).toHaveLength(1);
+  });
+
+  it('le professeur ouvre la conversation en flux', async () => {
+    (loadConversation as jest.Mock).mockResolvedValue([]);
+    mockStream.mockImplementation(async (_req: unknown, o: OnDelta) => { o.onDelta('Hello and welcome to our restaurant! '); return { text: 'x', partial: false }; });
+    await setup();
+    await waitFor(() => expect(screen.getByText(/Hello and welcome/)).toBeTruthy());
+    expect(mockStream.mock.calls[0][0]).toMatchObject({ start: true, messages: [] });
+  });
+
+  it('erreur avant le premier morceau: message clair et « Réessayer » qui relance le flux', async () => {
+    mockStream.mockRejectedValueOnce(new TeacherError('offline', true)).mockImplementationOnce(async (_r: unknown, o: OnDelta) => { o.onDelta('Back online!'); return { text: 'Back online!', partial: false }; });
+    await setup();
+    await type('Hello');
+    await waitFor(() => expect(screen.getByText(/Pas de connexion/)).toBeTruthy());
+    await fireEvent.press(screen.getByText('Réessayer'));
+    await waitFor(() => expect(screen.getByText('Back online!')).toBeTruthy());
+    expect(mockStream).toHaveBeenCalledTimes(2);
+  });
+
+  it('interrompre la voix en plein flux: la réponse cesse de grandir', async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => { release = r; });
+    mockStream.mockImplementation(async (_req: unknown, o: OnDelta) => {
+      o.onDelta('First part of the answer. ');
+      await gate;
+      o.onDelta('LATE TEXT');
+      return { text: 'x', partial: false };
+    });
+    await setup();
+    await type('Tell me more');
+    await waitFor(() => expect(screen.getByText('⏹ Arrêter la voix')).toBeTruthy());
+    await fireEvent.press(screen.getByText('⏹ Arrêter la voix'));
+    expect(mockStop).toHaveBeenCalled();
+    await act(async () => { release(); });
+    expect(screen.queryByText(/LATE TEXT/)).toBeNull();
+    expect(screen.getByText('🎤 Parler')).toBeTruthy();
+  });
+
+  it('le mode mains libres fonctionne aussi en flux (réécoute après la réponse)', async () => {
+    mockListen.mockResolvedValueOnce({ ok: true, transcript: 'Hello' }).mockResolvedValue({ ok: false, reason: 'no-speech' });
+    mockStream.mockImplementation(async (_r: unknown, o: OnDelta) => { o.onDelta('Nice to meet you, friend. '); return { text: 'x', partial: false }; });
+    await setup();
+    await fireEvent(screen.getByLabelText('Conversation mains libres'), 'valueChange', true);
+    await fireEvent.press(screen.getByText('🎤 Parler'));
+    await waitFor(() => expect(mockListen).toHaveBeenCalledTimes(2));
+  });
+});

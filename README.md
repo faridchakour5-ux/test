@@ -14,6 +14,6 @@ Sur téléphone, `localhost` ne marche pas: utilisez l'IP de votre ordinateur su
 Tests: `npm test` dans chaque dossier. Publication: voir `PUBLISHING.md`.
 
 ## Qualité
-- `npm test` dans `kalam/` (245 tests dont l'écran de conversation et un audit d'accessibilité) et dans `backend/` (36 tests).
+- `npm test` dans `kalam/` (294 tests dont l'écran de conversation, le mode flux et un audit d'accessibilité) et dans `backend/` (44 tests).
 - Icônes et visuel Play Store : `node scripts/make-assets.mjs` (Playwright requis).
 - Fiche Play Store dans 5 langues : `kalam/store/listing.md`.

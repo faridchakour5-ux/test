@@ -40,3 +40,9 @@ eas build --platform android --profile development
 ```
 Installez l'APK obtenu, puis `npx expo start --dev-client`.
 Les builds `preview` et `production` incluent déjà le micro.
+
+## 7. Réponse en flux (le professeur parle dès sa première phrase)
+Le serveur expose `POST /chat/stream` (SSE) en plus de `POST /chat`. L'app l'utilise si `EXPO_PUBLIC_STREAMING=1` au moment du build (désactivé par défaut).
+- Si la lecture au fil de l'eau n'est pas disponible sur l'appareil, l'app lit toute la réponse puis la rejoue: aucun risque de blocage.
+- Une coupure réseau en plein flux garde le texte déjà reçu, sans jamais relancer la requête (cela répéterait des phrases à voix haute).
+- À tester d'abord sur un vrai téléphone avant de l'activer pour tous. Derrière un proxy, vérifiez qu'il ne met pas les réponses en mémoire tampon (l'en-tête `X-Accel-Buffering: no` est déjà envoyé).

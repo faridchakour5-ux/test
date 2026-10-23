@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Switch, TextInput, View } from 'react-native';
-import { ChatMessage, TeacherError, askTeacher } from '../api/teacher';
+import { ChatMessage, TeacherError, askTeacher, askTeacherStream, streamingEnabled } from '../api/teacher';
 import { BackButton } from '../components/BackButton';
 import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
@@ -12,6 +12,7 @@ import { PROBLEM_TEXT, RETRYABLE_SEND, problemFromListen, problemFromTeacher } f
 import { initialTurn, turnReducer } from '../domain/voiceTurn';
 import { UiLang, t } from '../i18n/strings';
 import { cancelListening, isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
+import { createSentenceSplitter } from '../speech/sentences';
 import { tts } from '../speech/tts';
 import { clearConversation, loadConversation, saveConversation } from '../state/conversations';
 import { AgeProfileId } from '../theme/profiles';
@@ -70,9 +71,46 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   // Demande la réponse du professeur pour la conversation donnée.
   const requestReply = useCallback(async (history: ChatMessage[]) => {
     const myToken = ++token.current;
+    const opening = history.length === 0; // aucun message: le professeur ouvre la scène
+    const request = { ageProfile, level, scenario: lesson.scenario, uiLang: lang, messages: history.slice(-20), ...(opening ? { start: true } : {}) };
+    const live = () => mounted.current && myToken === token.current;
+
+    // Réponse en flux: le texte s'affiche et la voix démarre dès la première phrase complète.
+    if (streamingEnabled()) {
+      const splitter = createSentenceSplitter();
+      const voice = tts.speakStream({ lang: 'en-US', rate: profile.speechRate });
+      let started = false;
+      try {
+        await askTeacherStream(request, {
+          onDelta: (d) => {
+            if (!live()) return;
+            if (!started) {
+              started = true;
+              setMessages((m) => [...m, { role: 'assistant', content: d }]);
+              dispatch({ type: 'REPLY' });
+            } else {
+              setMessages((m) => {
+                const last = m[m.length - 1];
+                return last?.role === 'assistant' ? [...m.slice(0, -1), { ...last, content: last.content + d }] : m;
+              });
+            }
+            splitter.push(d).forEach((sentence) => voice.push(sentence));
+          },
+        });
+        if (!live()) return;
+        splitter.flush().forEach((sentence) => voice.push(sentence));
+        const outcome = await voice.end();
+        if (live() && outcome !== 'stopped') dispatch({ type: 'SPOKEN' });
+      } catch (e) {
+        void voice.end();
+        if (!live()) return;
+        dispatch({ type: 'SEND_FAIL', problem: problemFromTeacher(e instanceof TeacherError ? e.kind : 'server') });
+      }
+      return;
+    }
+
     try {
-      const opening = history.length === 0; // aucun message: le professeur ouvre la scène
-      const reply = await askTeacher({ ageProfile, level, scenario: lesson.scenario, uiLang: lang, messages: history.slice(-20), ...(opening ? { start: true } : {}) });
+      const reply = await askTeacher(request);
       if (!mounted.current || myToken !== token.current) return;
       setMessages((m) => [...m, { role: 'assistant', content: reply }]);
       dispatch({ type: 'REPLY' });
@@ -82,7 +120,7 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
       if (!mounted.current || myToken !== token.current) return;
       dispatch({ type: 'SEND_FAIL', problem: problemFromTeacher(e instanceof TeacherError ? e.kind : 'server') });
     }
-  }, [ageProfile, level, lesson.scenario, lang, speak]);
+  }, [ageProfile, level, lesson.scenario, lang, speak, profile.speechRate]);
 
   // Conversation vide: c'est le professeur qui prend la parole en premier, comme dans un vrai jeu de rôle.
   const opened = useRef(false);

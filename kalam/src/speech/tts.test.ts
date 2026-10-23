@@ -87,3 +87,86 @@ describe('tts', () => {
     expect(await createTts(noEn).hasVoice('en-US')).toBe(false);
   });
 });
+
+describe('tts.speakStream', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it('lit les phrases dans l\'ordre, au fur et à mesure, sans chevauchement', async () => {
+    const { engine, spoken } = fakeEngine();
+    const stream = createTts(engine).speakStream();
+    stream.push('First sentence here.');
+    await jest.advanceTimersByTimeAsync(5);
+    expect(spoken.map((s) => s.text)).toEqual(['First sentence here.']); // la 1re part sans attendre la fin
+    stream.push('Second one.');
+    stream.push('Third one.');
+    const end = stream.end();
+    await jest.advanceTimersByTimeAsync(200);
+    await expect(end).resolves.toBe('done');
+    expect(spoken.map((s) => s.text)).toEqual(['First sentence here.', 'Second one.', 'Third one.']);
+  });
+
+  it('end() sans rien à lire se résout tout de suite', async () => {
+    const { engine } = fakeEngine();
+    await expect(createTts(engine).speakStream().end()).resolves.toBe('done');
+  });
+
+  it('stop() interrompt le flux et vide la file', async () => {
+    const { engine, spoken } = fakeEngine('silent');
+    const t = createTts(engine);
+    const stream = t.speakStream();
+    stream.push('Long first sentence that never ends.');
+    stream.push('Never spoken.');
+    await jest.advanceTimersByTimeAsync(5);
+    await t.stop();
+    const end = stream.end();
+    await jest.advanceTimersByTimeAsync(10_000);
+    await expect(end).resolves.toBe('stopped');
+    expect(spoken.map((s) => s.text)).toEqual(['Long first sentence that never ends.']);
+  });
+
+  it('un nouveau flux interrompt le précédent', async () => {
+    const { engine, spoken } = fakeEngine('silent');
+    const t = createTts(engine);
+    const a = t.speakStream();
+    a.push('Old stream sentence is long enough.');
+    await jest.advanceTimersByTimeAsync(5);
+    const b = t.speakStream();
+    b.push('New one.');
+    const endA = a.end();
+    const endB = b.end();
+    await jest.advanceTimersByTimeAsync(10_000);
+    await expect(endA).resolves.toBe('stopped');
+    await expect(endB).resolves.toBe('done');
+    expect(spoken.map((s) => s.text)).toEqual(['Old stream sentence is long enough.', 'New one.']);
+  });
+
+  it('une erreur du moteur sur une phrase n\'empêche pas les suivantes', async () => {
+    const spoken: string[] = [];
+    let n = 0;
+    const engine: SpeechEngine = {
+      maxSpeechInputLength: 4000,
+      speak: (text, o) => { spoken.push(text); n++; setTimeout(() => (n === 1 ? o?.onError?.(new Error('x')) : o?.onDone?.()), 5); },
+      stop: async () => undefined,
+      getAvailableVoicesAsync: async () => [],
+    };
+    const stream = createTts(engine).speakStream();
+    stream.push('One.'); stream.push('Two.');
+    const end = stream.end();
+    await jest.advanceTimersByTimeAsync(100);
+    await expect(end).resolves.toBe('error');
+    expect(spoken).toEqual(['One.', 'Two.']);
+  });
+
+  it('ignore les phrases poussées après end() ou après stop()', async () => {
+    const { engine, spoken } = fakeEngine();
+    const t = createTts(engine);
+    const s = t.speakStream();
+    const end = s.end();
+    s.push('Too late.');
+    await jest.advanceTimersByTimeAsync(50);
+    await expect(end).resolves.toBe('done');
+    expect(spoken).toHaveLength(0);
+  });
+});
+

@@ -91,6 +91,55 @@ export function createTts(engine: SpeechEngine = ExpoSpeech as unknown as Speech
     return myGen !== generation ? 'stopped' : 'done';
   }
 
+  // Lecture au fil de l'eau: on pousse des phrases au fur et à mesure qu'elles arrivent; elles sont lues
+  // l'une après l'autre. `end()` se résout quand tout est lu (ou 'stopped' si on a interrompu).
+  function speakStream({ lang = 'en-US', rate = 1 }: SpeakOptions = {}) {
+    const myGen = ++generation;
+    activeSettle?.('stopped');
+    const maxLen = Math.min(engine.maxSpeechInputLength || 3000, 3000);
+    const queue: string[] = [];
+    let closed = false;
+    let running = false;
+    let result: SpeakOutcome = 'done';
+    let finished = false;
+    let finishFn: (o: SpeakOutcome) => void = () => {};
+    const done = new Promise<SpeakOutcome>((r) => { finishFn = r; });
+    const finish = (o: SpeakOutcome) => { if (!finished) { finished = true; finishFn(o); } };
+    const stopped = () => myGen !== generation;
+    const ready = (async () => { try { await engine.stop(); } catch { /* rien à arrêter */ } return pickVoice(lang); })();
+
+    async function work() {
+      if (running) return;
+      running = true;
+      const voice = await ready;
+      while (queue.length > 0) {
+        if (stopped()) break;
+        const text = queue.shift() as string;
+        const outcome = await speakChunk(text, lang, rate, voice);
+        if (stopped()) break;
+        if (outcome === 'error') result = 'error'; // on continue avec les phrases suivantes
+      }
+      running = false;
+      if (stopped()) { queue.length = 0; finish('stopped'); }
+      else if (closed && queue.length === 0) finish(result);
+    }
+
+    return {
+      push(text: string) {
+        if (closed || stopped()) return;
+        const chunks = splitForSpeech(text, maxLen);
+        if (chunks.length === 0) return;
+        queue.push(...chunks);
+        void work();
+      },
+      end(): Promise<SpeakOutcome> {
+        closed = true;
+        if (!running && queue.length === 0) finish(stopped() ? 'stopped' : result);
+        return done;
+      },
+    };
+  }
+
   async function stop(): Promise<void> {
     generation++;
     activeSettle?.('stopped');
@@ -98,7 +147,7 @@ export function createTts(engine: SpeechEngine = ExpoSpeech as unknown as Speech
     try { await engine.stop(); } catch { /* ignoré */ }
   }
 
-  return { speak, stop, hasVoice };
+  return { speak, speakStream, stop, hasVoice };
 }
 
 // Instance partagée par toute l'app: garantit qu'une seule voix parle à la fois.

@@ -37,7 +37,7 @@ describe('App: premier lancement', () => {
     expect(await screen.findByText('Test de niveau')).toBeTruthy();
     expect(screen.getByText('She ___ a teacher.')).toBeTruthy();
     await fireEvent.press(screen.getByText('Passer'));
-    expect(await screen.findByText(/Kalam · A1/)).toBeTruthy();
+    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy();
     await waitFor(() => expect(saved()).toMatchObject({ profile: 'adult', targetLang: 'en', levels: { en: 'A1' } }));
   });
 
@@ -55,7 +55,7 @@ describe('App: changer de langue apprise', () => {
   const setupAdult = async () => {
     mockStore.set('kalam:state:v1', JSON.stringify({ profile: 'adult', level: 'A2', uiLang: 'fr' }));
     await boot();
-    expect(await screen.findByText(/Kalam · A2/)).toBeTruthy();
+    expect(await screen.findByText(/Kalam\s·\sA2/)).toBeTruthy();
   };
 
   it('une ancienne sauvegarde (niveau unique) ouvre directement l\'accueil au bon niveau, sans refaire le test', async () => {
@@ -69,9 +69,9 @@ describe('App: changer de langue apprise', () => {
     await fireEvent.press(screen.getByLabelText('Langue à apprendre: Français'));
     expect(await screen.findByText('Elle ___ professeur.')).toBeTruthy(); // pas encore de niveau en français
     await fireEvent.press(screen.getByText('Passer'));
-    expect(await screen.findByText(/Kalam · A1/)).toBeTruthy();
+    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Langue à apprendre: Anglais'));
-    expect(await screen.findByText(/Kalam · A2/)).toBeTruthy(); // le niveau d'anglais n'a pas été écrasé
+    expect(await screen.findByText(/Kalam\s·\sA2/)).toBeTruthy(); // le niveau d'anglais n'a pas été écrasé
     await waitFor(() => expect(saved().levels).toEqual({ en: 'A2', fr: 'A1' }));
   });
 
@@ -80,14 +80,14 @@ describe('App: changer de langue apprise', () => {
     await fireEvent.press(screen.getAllByLabelText('Se présenter')[0]);
     expect(await screen.findByText('Terminer la leçon')).toBeTruthy();
     await fireEvent.press(screen.getByText(/Retour/));
-    expect(await screen.findByText(/Kalam · A2/)).toBeTruthy();
+    expect(await screen.findByText(/Kalam\s·\sA2/)).toBeTruthy();
   });
 
   it('terminer une leçon enregistre la progression et crée les cartes de révision DE LA LANGUE APPRISE', async () => {
     await setupAdult();
     await fireEvent.press(screen.getByLabelText('Langue à apprendre: Français'));
     await fireEvent.press(await screen.findByText('Passer'));
-    await screen.findByText(/Kalam · A1/);
+    await screen.findByText(/Kalam\s·\sA1/);
     await fireEvent.press(screen.getAllByLabelText('Se présenter')[0]);
     await fireEvent.press(await screen.findByText('Terminer la leçon'));
     await waitFor(() => {
@@ -103,7 +103,7 @@ describe('App: accueil et réglages', () => {
   const adult = async () => {
     mockStore.set('kalam:state:v1', JSON.stringify({ profile: 'adult', levels: { en: 'A1' }, uiLang: 'fr' }));
     await boot();
-    await screen.findByText(/Kalam · A1/);
+    await screen.findByText(/Kalam\s·\sA1/);
   };
 
   it('le gros bouton « Continuer » ouvre la prochaine leçon', async () => {
@@ -177,7 +177,7 @@ describe('App: changer de profil ne détruit pas les réglages', () => {
     await fireEvent.press(await screen.findByLabelText('Réglages'));
     await fireEvent.press(await screen.findByText('Changer de profil'));
     await fireEvent.press(await screen.findByText('Ado / Adulte'));
-    expect(await screen.findByText(/Kalam · A2/)).toBeTruthy(); // niveau de français conservé
+    expect(await screen.findByText(/Kalam\s·\sA2/)).toBeTruthy(); // niveau de français conservé
     expect(screen.queryByText('Test de niveau')).toBeNull();
   });
 
@@ -279,7 +279,7 @@ describe('App: sauvegarde partiellement abîmée (chaque champ est vérifié)', 
 
   it('palette inconnue: thème par défaut, pas de plantage', async () => {
     await start({ ...ok, palette: 'neon-disco' });
-    expect(await screen.findByText(/Kalam · A1/)).toBeTruthy();
+    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy();
   });
   it('profil inconnu: retour au choix du profil', async () => {
     await start({ ...ok, profile: 'wizard' });
@@ -287,7 +287,7 @@ describe('App: sauvegarde partiellement abîmée (chaque champ est vérifié)', 
   });
   it('langue d\'interface inconnue: français par défaut', async () => {
     await start({ ...ok, uiLang: 'klingon' });
-    expect(await screen.findByText(/Kalam · A1/)).toBeTruthy();
+    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy();
     expect(screen.getByText(/Continuer/)).toBeTruthy();
   });
   it.each([
@@ -297,7 +297,7 @@ describe('App: sauvegarde partiellement abîmée (chaque champ est vérifié)', 
     ['mode enfant: tout à null', { kids: null }],
   ])('%s: l\'accueil s\'affiche, la révision et le reste fonctionnent', async (_label, extra) => {
     await start({ ...ok, ...extra });
-    expect(await screen.findByText(/Kalam · A1/)).toBeTruthy();
+    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy();
     await fireEvent.press(screen.getByText(/^Réviser/)); // ouvre la révision sans planter
     expect(await screen.findByText('Rien à réviser pour le moment. Bravo !')).toBeTruthy();
   });

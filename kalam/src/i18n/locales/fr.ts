@@ -74,7 +74,7 @@ export const fr = {
   hard: 'Difficile',
   good: 'Bien',
   easy: 'Facile',
-  hello: 'Prêt à parler ?',
+  hello: 'Prêt à parler\u00A0?',
   welcome: 'Bienvenue sur Kalam',
   pick: 'Qui va apprendre ?',
   kids: 'Enfant (4-8 ans)',

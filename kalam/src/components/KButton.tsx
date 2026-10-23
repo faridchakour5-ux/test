@@ -31,7 +31,7 @@ export function KButton({ label, onPress, hint, variant = 'primary' }: Props) {
         paddingHorizontal: 24,
       })}
     >
-      <KText weight="600" size={17} style={{ color: secondary ? colors.text : colors.onPrimary }}>{label}</KText>
+      <KText weight="600" size={17} style={{ color: secondary ? colors.text : colors.onPrimary, textAlign: 'center' }}>{label}</KText>
     </Pressable>
   );
 }

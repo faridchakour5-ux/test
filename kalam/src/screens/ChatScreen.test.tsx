@@ -97,6 +97,27 @@ describe('ChatScreen: conversation vocale', () => {
     expect(mockStop.mock.invocationCallOrder[0]).toBeLessThan(mockListen.mock.invocationCallOrder[0]);
   });
 
+  it('une écoute annulée ne libère pas le verrou de la suivante (pas de deuxième micro en parallèle)', async () => {
+    const resolvers: ((v: unknown) => void)[] = [];
+    mockListen.mockImplementation(() => new Promise((r) => { resolvers.push(r); }));
+    const ui = (level: 'A1' | 'A2') => (
+      <ThemeProvider profileId="adult">
+        <ChatScreen target="en" lang="fr" lesson={lesson} level={level} ageProfile="adult" onFinish={jest.fn()} onBack={jest.fn()} />
+      </ThemeProvider>
+    );
+    const view = await render(ui('A1'));
+    await act(async () => {});
+    await fireEvent.press(screen.getByText('🎤 Parler'));
+    await waitFor(() => expect(mockListen).toHaveBeenCalledTimes(1));
+    await fireEvent.press(screen.getByText('⏹ Arrêter')); // arrêt: la 1re écoute est annulée mais ne répond pas encore
+    await fireEvent.press(screen.getByText('🎤 Parler'));
+    await waitFor(() => expect(mockListen).toHaveBeenCalledTimes(2));
+    await act(async () => { resolvers[0]({ ok: false, reason: 'cancelled' }); }); // la 1re répond enfin
+    await view.rerender(ui('A2')); // un changement de réglage relance les effets: l'écoute 2 est toujours en cours
+    await act(async () => {});
+    expect(mockListen).toHaveBeenCalledTimes(2);
+  });
+
   it('passe la patience du profil au micro', async () => {
     mockListen.mockResolvedValue({ ok: false, reason: 'no-speech' });
     await setup();

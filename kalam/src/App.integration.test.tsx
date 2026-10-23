@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { resetGateLock } from './state/gateLock';
 import App from '../App';
 
 const mockStore = new Map<string, string>();
@@ -214,7 +215,35 @@ describe('App: mode enfant', () => {
       jest.spyOn(Math, 'random').mockReturnValue(0);
       mockStore.set('kalam:state:v1', JSON.stringify({ profile: 'kids', levels: { en: 'A1' }, uiLang: 'fr' }));
     });
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => { jest.useRealTimers(); jest.restoreAllMocks(); });
+    beforeEach(() => resetGateLock()); // le verrou vit pendant toute la session de l'app: on repart de zéro à chaque test
+
+    it('3 mauvaises réponses de suite bloquent le portail, même avec la bonne réponse ensuite, puis il se rouvre', async () => {
+      let clock = 1_000_000;
+      jest.spyOn(Date, 'now').mockImplementation(() => clock);
+      jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'queueMicrotask', 'setImmediate', 'clearImmediate'] });
+      await boot();
+      await fireEvent.press(await screen.findByLabelText('Parents'));
+      for (let i = 0; i < 3; i++) await fireEvent.press(await screen.findByLabelText('26'));
+      expect(await screen.findByText(/Trop d'essais/)).toBeTruthy();
+      await fireEvent.press(screen.getByLabelText('36')); // bonne réponse, mais pendant la pause
+      expect(screen.queryAllByText('Effacer toutes les données')).toHaveLength(0);
+      clock += 31_000; // la pause de 30 s est passée
+      await act(async () => { jest.advanceTimersByTime(31_000); }); // la minuterie réactive les boutons
+      jest.useRealTimers();
+      await fireEvent.press(screen.getByLabelText('36'));
+      expect((await screen.findAllByText('Effacer toutes les données')).length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('quitter puis rouvrir l\'espace parents ne remet pas les essais à zéro', async () => {
+      await boot();
+      await fireEvent.press(await screen.findByLabelText('Parents'));
+      for (let i = 0; i < 3; i++) await fireEvent.press(await screen.findByLabelText('26'));
+      await screen.findByText(/Trop d'essais/);
+      await fireEvent.press(screen.getByLabelText('Retour'));
+      await fireEvent.press(await screen.findByLabelText('Parents'));
+      expect(await screen.findByText(/Trop d'essais/)).toBeTruthy();
+    });
 
     it('une mauvaise réponse est refusée et l\'espace reste fermé', async () => {
       await boot();

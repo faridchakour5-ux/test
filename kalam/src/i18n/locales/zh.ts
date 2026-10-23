@@ -40,6 +40,7 @@ export const zh: Record<StringKey, string> = {
   gateTitle: '家长专区',
   gateIntro: '成人问题：请问',
   gateWrong: '答案错误，请重试。',
+  gateLocked: '尝试次数过多，请稍等片刻再试。',
   progressTitle: '学习进度',
   storiesRead: '已读故事',
   minutesToday: '今日分钟数',

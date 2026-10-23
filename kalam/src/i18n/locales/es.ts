@@ -40,6 +40,7 @@ export const es: Record<StringKey, string> = {
   gateTitle: 'Zona de padres',
   gateIntro: 'Pregunta para adultos: ¿cuánto es',
   gateWrong: 'Respuesta incorrecta. Inténtalo de nuevo.',
+  gateLocked: 'Demasiados intentos. Espera un momento antes de volver a intentarlo.',
   progressTitle: 'Progreso',
   storiesRead: 'Cuentos leídos',
   minutesToday: 'Minutos hoy',

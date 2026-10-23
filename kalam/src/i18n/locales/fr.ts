@@ -38,6 +38,7 @@ export const fr = {
   gateTitle: 'Espace parents',
   gateIntro: 'Question pour adultes : combien font',
   gateWrong: 'Mauvaise réponse. Réessayez.',
+  gateLocked: 'Trop d\'essais. Patientez un moment avant de réessayer.',
   progressTitle: 'Progrès',
   storiesRead: 'Histoires lues',
   minutesToday: 'Minutes aujourd\'hui',

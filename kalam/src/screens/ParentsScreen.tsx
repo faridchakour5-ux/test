@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, Share, Switch, View } from 'react-native';
 import { BackButton } from '../components/BackButton';
 import { Card } from '../components/Card';
@@ -7,7 +7,8 @@ import { KText } from '../components/KText';
 import { LanguagePicker } from '../components/LanguagePicker';
 import { PalettePicker } from '../components/PalettePicker';
 import { PaletteId } from '../theme/palettes';
-import { DailyLimit, checkGate, makeGate } from '../domain/parental';
+import { DailyLimit, checkGate, isGateLocked, makeGate, registerGateFail } from '../domain/parental';
+import { getGateLock, resetGateLock, setGateLock } from '../state/gateLock';
 import { UiLang, t } from '../i18n/strings';
 import { KidsState } from '../state/AppState';
 import { useTheme } from '../theme/ThemeProvider';
@@ -27,6 +28,8 @@ interface Props {
   onExport: () => Promise<string>;
 }
 
+const clock = () => Date.now(); // lu seulement au moment d'un appui ou d'une minuterie, jamais pendant le rendu
+
 export function ParentsScreen({ lang, kids, minutesToday, onMic, onLimit, onSwitchProfile, onErase, onBack, palette, onPalette, onLang, onExport }: Props) {
   const { colors, profile } = useTheme();
   const [gate, setGate] = useState(() => makeGate());
@@ -34,9 +37,27 @@ export function ParentsScreen({ lang, kids, minutesToday, onMic, onLimit, onSwit
   const [wrong, setWrong] = useState(false);
   const limits: DailyLimit[] = [10, 20, 30, null];
 
+  const [lock, setLock] = useState(getGateLock);
+  const [now, setNow] = useState(() => Date.now());
+  const locked = isGateLocked(lock, now);
+
+  // Quand la pause se termine, on réactive les boutons.
+  useEffect(() => {
+    if (!locked) return;
+    const id = setTimeout(() => setNow(clock()), Math.max(0, lock.lockedUntil - clock()) + 50);
+    return () => clearTimeout(id);
+  }, [locked, lock.lockedUntil]);
+
   const tryAnswer = (n: number) => {
-    if (checkGate(gate, n)) { setUnlocked(true); setWrong(false); }
-    else { setWrong(true); setGate(makeGate()); } // nouvelle question: on ne peut pas deviner par essais
+    const at = clock();
+    if (isGateLocked(lock, at)) return;
+    setNow(at);
+    if (checkGate(gate, n)) { resetGateLock(); setLock(getGateLock()); setUnlocked(true); setWrong(false); return; }
+    const next = registerGateFail(lock, at);
+    setGateLock(next);
+    setLock(next);
+    setWrong(true);
+    setGate(makeGate()); // nouvelle question à chaque erreur
   };
 
   const confirmErase = () =>
@@ -51,11 +72,11 @@ export function ParentsScreen({ lang, kids, minutesToday, onMic, onLimit, onSwit
         <BackButton lang={lang} onPress={onBack} />
         <KText size={26} weight="800" accessibilityRole="header">🔒 {t(lang, 'gateTitle')}</KText>
         <KText size={20}>{t(lang, 'gateIntro')} {gate.question.a} × {gate.question.b} ?</KText>
-        {wrong && <KText accessibilityLiveRegion="assertive" style={{ color: colors.danger }}>{t(lang, 'gateWrong')}</KText>}
+        {(wrong || locked) && <KText accessibilityLiveRegion="assertive" style={{ color: colors.danger }}>{t(lang, locked ? 'gateLocked' : 'gateWrong')}</KText>}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
           {gate.options.map((o) => (
-            <Pressable key={o} accessibilityRole="button" accessibilityLabel={String(o)} onPress={() => tryAnswer(o)}
-              style={{ width: '47%', minHeight: 64, borderRadius: profile.radius, borderWidth: 2, borderColor: colors.border, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+            <Pressable key={o} accessibilityRole="button" accessibilityLabel={String(o)} accessibilityState={{ disabled: locked }} disabled={locked} onPress={() => tryAnswer(o)}
+              style={{ width: '47%', minHeight: 64, borderRadius: profile.radius, borderWidth: 2, borderColor: colors.border, backgroundColor: colors.surface, opacity: locked ? 0.4 : 1, alignItems: 'center', justifyContent: 'center' }}>
               <KText size={24} weight="800">{o}</KText>
             </Pressable>
           ))}

@@ -13,7 +13,7 @@
 ## Mode enfant (4-8 ans)
 - Aucune donnée de l'enfant n'est envoyée à un serveur : pas de chat libre avec l'IA, pas de compte, pas d'identifiant publicitaire.
 - Les étoiles, histoires lues et réglages sont stockés sur l'appareil seulement.
-- Le micro est désactivé par défaut. Un parent peut l'activer dans l'espace parents, protégé par une question d'adulte. L'audio est traité par le service de reconnaissance vocale du système (Android ou Apple), qui peut l'envoyer à Google ou Apple selon l'appareil. Kalam ne conserve aucun enregistrement.
+- Le micro est désactivé par défaut. Un parent peut l'activer dans l'espace parents, protégé par une question d'adulte (après 3 erreurs de suite, une pause de 30 secondes, de plus en plus longue, empêche de deviner au hasard). L'audio est traité par le service de reconnaissance vocale du système (Android ou Apple), qui peut l'envoyer à Google ou Apple selon l'appareil. Kalam ne conserve aucun enregistrement.
 - Le parent peut limiter le temps quotidien et **effacer toutes les données** de l'appareil en un geste.
 - Le consentement parental (date et version du texte) est enregistré localement sur l'appareil.
 

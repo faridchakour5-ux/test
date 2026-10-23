@@ -40,6 +40,7 @@ export const ar: Record<StringKey, string> = {
   gateTitle: 'منطقة الوالدين',
   gateIntro: 'سؤال للكبار: كم يساوي',
   gateWrong: 'إجابة خاطئة. حاول مرة أخرى.',
+  gateLocked: 'محاولات كثيرة. انتظر قليلاً قبل المحاولة مرة أخرى.',
   progressTitle: 'التقدم',
   storiesRead: 'القصص المقروءة',
   minutesToday: 'دقائق اليوم',

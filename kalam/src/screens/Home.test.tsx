@@ -105,4 +105,10 @@ describe('HomeScreen: langue apprise', () => {
     await render(home(P({ completedLessons: ['fr:family'] }), '2026-03-10', 'en'));
     expect(screen.queryAllByText(/✓ Terminée/)).toHaveLength(0);
   });
+  it('« Réviser » ressort (bouton plein) seulement quand des cartes sont à revoir; sinon il reste discret', async () => {
+    await render(home(P(), '2026-03-10', 'en', {}, 0));
+    expect(screen.getByLabelText('Réviser')).toHaveStyle({ backgroundColor: 'transparent' });
+    await render(home(P(), '2026-03-10', 'en', {}, 3));
+    expect(screen.getByLabelText('Réviser (3)')).not.toHaveStyle({ backgroundColor: 'transparent' });
+  });
 });

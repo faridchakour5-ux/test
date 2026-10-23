@@ -57,7 +57,7 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
 
       {/* Boutons l'un sous l'autre: les libellés longs (espagnol, chinois, grands textes) ne se cassent plus sur plusieurs lignes. */}
       <View style={{ gap: 12 }}>
-        <KButton label={dueCount > 0 ? `${t(lang, 'review')} (${dueCount})` : t(lang, 'review')} onPress={onReview} hint={dueCount > 0 ? `${dueCount} ${t(lang, 'reviewDue')}` : undefined} />
+        <KButton variant={dueCount > 0 ? 'primary' : 'secondary'} label={dueCount > 0 ? `${t(lang, 'review')} (${dueCount})` : t(lang, 'review')} onPress={onReview} hint={dueCount > 0 ? `${dueCount} ${t(lang, 'reviewDue')}` : undefined} />
         <KButton variant="secondary" label={`👥 ${t(lang, 'duoTitle')}`} onPress={onDuo} />
       </View>
 

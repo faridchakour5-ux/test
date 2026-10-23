@@ -39,6 +39,8 @@ const LEVELS: Level[] = ['A1', 'A2', 'B1'];
 // Remet d'aplomb une sauvegarde: ancienne version (niveau unique = anglais), valeurs inconnues ou abîmées.
 export function migrate(saved: Partial<Persisted> & { level?: Level | null }): Persisted {
   const base = initial();
+  // Une sauvegarde qui n'est pas un objet (null, nombre, texte, liste) est inutilisable: on repart de l'état initial.
+  if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
   const levels: Partial<Record<TargetLang, Level>> = {};
   if (saved.levels && typeof saved.levels === 'object') {
     for (const t of TARGET_LANGS) { const l = saved.levels[t]; if (l && LEVELS.includes(l)) levels[t] = l; }
@@ -84,7 +86,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    load<Persisted & { level?: Level | null }>(KEY, initial()).then((s) => { setState(migrate(s)); setReady(true); });
+    load<Persisted & { level?: Level | null }>(KEY, initial())
+      .then((s) => { setState(migrate(s)); })
+      // Quoi qu'il arrive à la lecture, l'app démarre: au pire sur l'état initial (jamais bloquée sur le chargement).
+      .catch(() => { setState(initial()); })
+      .finally(() => { setReady(true); });
   }, []);
 
   const update = useCallback((fn: (s: Persisted) => Persisted) => {

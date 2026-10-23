@@ -245,6 +245,12 @@ describe('App: mode enfant', () => {
 });
 
 describe('App: sauvegarde corrompue', () => {
+  it.each(['null', '42', '"texte"', '[]', '[1,2]', 'true'])('une sauvegarde valant %s ne bloque pas l\'app sur le chargement', async (raw) => {
+    mockStore.set('kalam:state:v1', raw);
+    await boot();
+    expect(await screen.findByText('Qui va apprendre ?')).toBeTruthy();
+  });
+
   it('une sauvegarde illisible ne plante pas l\'app: retour au choix du profil', async () => {
     mockStore.set('kalam:state:v1', '{pas du json');
     await boot();

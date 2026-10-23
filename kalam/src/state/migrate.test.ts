@@ -26,4 +26,12 @@ describe('migrate (anciennes sauvegardes)', () => {
     expect(migrate({}).cards).toEqual([]);
     expect(migrate({}).kids.consent.micAllowed).toBe(false);
   });
+
+  it.each([null, undefined, 42, 'texte', true, [], [1, 2]])('une sauvegarde qui n\'est pas un objet (%j) donne l\'état initial sans planter', (bad) => {
+    const m = migrate(bad as never);
+    expect(m.profile).toBeNull();
+    expect(m.targetLang).toBe('en');
+    expect(m.levels).toEqual({});
+    expect(m.cards).toEqual([]);
+  });
 });

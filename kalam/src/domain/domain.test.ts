@@ -1,6 +1,6 @@
 import { LESSONS, meaning, recommendLessons } from './lessons';
 import { PLACEMENT, scorePlacement } from './level';
-import { addMinutes, completeLesson, goalReached, initialProgress } from './progress';
+import { addMinutes, completeLesson, goalReached, initialProgress, lastDays, normalizeProgress, shiftDay, totalMinutes } from './progress';
 import { newCard, review } from './srs';
 
 describe('lessons', () => {
@@ -116,5 +116,50 @@ describe('recommendLessons', () => {
   it('liste vide quand tout est fait, et jamais la conversation libre', () => {
     expect(recommendLessons('A1', LESSONS.map((l) => l.id))).toEqual([]);
     expect(recommendLessons('B1', []).map((l) => l.id)).not.toContain('free');
+  });
+});
+
+describe('historique de progression', () => {
+  it('cumule les minutes par jour', () => {
+    let p = addMinutes(initialProgress('2026-03-10'), 4, '2026-03-10');
+    p = addMinutes(p, 3, '2026-03-10');
+    p = addMinutes(p, 5, '2026-03-11');
+    expect(p.history).toEqual({ '2026-03-10': 7, '2026-03-11': 5 });
+  });
+  it('lastDays renvoie 7 jours consécutifs, du plus ancien à aujourd\'hui, avec les jours vides à 0', () => {
+    let p = addMinutes(initialProgress('2026-03-10'), 6, '2026-03-10');
+    p = addMinutes(p, 9, '2026-03-12');
+    const bars = lastDays(p, '2026-03-12');
+    expect(bars.map((b) => b.day)).toEqual(['2026-03-06', '2026-03-07', '2026-03-08', '2026-03-09', '2026-03-10', '2026-03-11', '2026-03-12']);
+    expect(bars.map((b) => b.minutes)).toEqual([0, 0, 0, 0, 6, 0, 9]);
+    expect(bars.filter((b) => b.isToday)).toHaveLength(1);
+    expect(totalMinutes(bars)).toBe(15);
+  });
+  it('shiftDay traverse les fins de mois, d\'année et le 29 février', () => {
+    expect(shiftDay('2026-03-01', -1)).toBe('2026-02-28');
+    expect(shiftDay('2024-03-01', -1)).toBe('2024-02-29');
+    expect(shiftDay('2026-01-01', -1)).toBe('2025-12-31');
+    expect(shiftDay('2026-12-31', 1)).toBe('2027-01-01');
+  });
+  it('purge au-delà de 60 jours', () => {
+    let p = addMinutes(initialProgress('2026-01-01'), 5, '2026-01-01');
+    p = addMinutes(p, 5, '2026-03-30');
+    expect(p.history['2026-01-01']).toBeUndefined();
+    expect(p.history['2026-03-30']).toBe(5);
+  });
+  it('normalizeProgress migre une ancienne sauvegarde sans historique', () => {
+    const old = { dailyGoalMinutes: 20, minutesToday: 3, today: '2026-03-10', streak: 4, lastActiveDay: '2026-03-10', completedLessons: ['family'] };
+    expect(normalizeProgress(old as never, '2026-03-10')).toMatchObject({ dailyGoalMinutes: 20, streak: 4, completedLessons: ['family'], history: {} });
+  });
+  it('normalizeProgress répare des données abîmées sans planter', () => {
+    const bad = { dailyGoalMinutes: 99, minutesToday: -5, streak: 'x', completedLessons: [1, 'ok'], history: { 'pas-une-date': 5, '2026-03-10': -1, '2026-03-09': 12, '2026-03-08': 99999 } };
+    const n = normalizeProgress(bad as never, '2026-03-10');
+    expect(n.dailyGoalMinutes).toBe(10);
+    expect(n.minutesToday).toBe(0);
+    expect(n.streak).toBe(0);
+    expect(n.completedLessons).toEqual(['ok']);
+    expect(n.history).toEqual({ '2026-03-09': 12 });
+    expect(normalizeProgress(null, '2026-03-10').history).toEqual({});
+    expect(normalizeProgress('oops' as never, '2026-03-10').streak).toBe(0);
   });
 });

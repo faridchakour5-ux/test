@@ -3,7 +3,7 @@ import { cardsForLesson } from '../domain/deck';
 import { Level } from '../domain/lessons';
 import { Card, review } from '../domain/srs';
 import { Consent, DailyLimit, grantMic, noConsent, revokeMic } from '../domain/parental';
-import { Progress, addMinutes, completeLesson, initialProgress } from '../domain/progress';
+import { Progress, addMinutes, completeLesson, initialProgress, normalizeProgress } from '../domain/progress';
 import { UiLang } from '../i18n/strings';
 import { DEFAULT_PALETTE, PaletteId } from '../theme/palettes';
 import { AgeProfileId } from '../theme/profiles';
@@ -58,7 +58,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    load<Persisted>(KEY, initial()).then((s) => { setState({ ...initial(), ...s, kids: { ...initialKids(), ...(s.kids ?? {}) } }); setReady(true); });
+    load<Persisted>(KEY, initial()).then((s) => { setState({ ...initial(), ...s, progress: normalizeProgress(s.progress, todayStr()), kids: { ...initialKids(), ...(s.kids ?? {}) } }); setReady(true); });
   }, []);
 
   const update = useCallback((fn: (s: Persisted) => Persisted) => {

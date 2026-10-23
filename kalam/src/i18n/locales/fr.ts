@@ -110,6 +110,10 @@ export const fr = {
   allLessons: 'Toutes les leçons',
   pConfig: 'L\'application n\'est pas configurée correctement (adresse du serveur). Mettez-la à jour.',
   chooseFreeTopic: 'De quoi veux-tu parler ?',
+  thisWeek: 'Cette semaine',
+  totalMinutes: 'minutes au total',
+  lessonsDone: 'leçons terminées',
+  weekChartLabel: '7 derniers jours',
 } as const;
 
 export type StringKey = keyof typeof fr;

@@ -112,4 +112,8 @@ export const zh: Record<StringKey, string> = {
   allLessons: '全部课程',
   pConfig: '应用配置不正确（服务器地址）。请更新应用。',
   chooseFreeTopic: '你想聊什么话题？',
+  thisWeek: '本周',
+  totalMinutes: '分钟（合计）',
+  lessonsDone: '节课已完成',
+  weekChartLabel: '最近 7 天',
 };

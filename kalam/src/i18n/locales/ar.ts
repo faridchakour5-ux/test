@@ -112,4 +112,8 @@ export const ar: Record<StringKey, string> = {
   allLessons: 'كل الدروس',
   pConfig: 'التطبيق غير مهيأ بشكل صحيح (عنوان الخادم). يرجى تحديثه.',
   chooseFreeTopic: 'عن ماذا تريد أن تتحدث؟',
+  thisWeek: 'هذا الأسبوع',
+  totalMinutes: 'دقيقة في المجموع',
+  lessonsDone: 'دروس مكتملة',
+  weekChartLabel: 'آخر ٧ أيام',
 };

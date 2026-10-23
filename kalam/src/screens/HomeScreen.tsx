@@ -8,7 +8,8 @@ import { PalettePicker } from '../components/PalettePicker';
 import { PaletteId } from '../theme/palettes';
 import { KText } from '../components/KText';
 import { LESSONS, Level, recommendLessons } from '../domain/lessons';
-import { Progress, goalReached } from '../domain/progress';
+import { Progress, goalReached, lastDays } from '../domain/progress';
+import { WeekChart } from '../components/WeekChart';
 import { UiLang, isRtl, t } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
 
@@ -61,6 +62,11 @@ export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal, dueCou
             </Pressable>
           ))}
         </View>
+      </Card>
+
+      <Card style={{ gap: 8 }}>
+        <KText weight="800" accessibilityRole="header">📊 {t(lang, 'thisWeek')}</KText>
+        <WeekChart lang={lang} bars={lastDays(progress, progress.today)} goal={progress.dailyGoalMinutes} lessonsDone={progress.completedLessons.length} />
       </Card>
 
       {recommendLessons(level, progress.completedLessons).length > 0 && (

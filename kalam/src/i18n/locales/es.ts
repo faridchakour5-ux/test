@@ -112,4 +112,8 @@ export const es: Record<StringKey, string> = {
   allLessons: 'Todas las lecciones',
   pConfig: 'La aplicación no está configurada correctamente (dirección del servidor). Actualízala.',
   chooseFreeTopic: '¿De qué quieres hablar?',
+  thisWeek: 'Esta semana',
+  totalMinutes: 'minutos en total',
+  lessonsDone: 'lecciones completadas',
+  weekChartLabel: 'Últimos 7 días',
 };

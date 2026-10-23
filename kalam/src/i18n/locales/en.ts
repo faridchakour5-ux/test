@@ -112,4 +112,8 @@ export const en: Record<StringKey, string> = {
   allLessons: 'All lessons',
   pConfig: 'The app is not configured correctly (server address). Please update it.',
   chooseFreeTopic: 'What do you want to talk about?',
+  thisWeek: 'This week',
+  totalMinutes: 'minutes in total',
+  lessonsDone: 'lessons completed',
+  weekChartLabel: 'Last 7 days',
 };

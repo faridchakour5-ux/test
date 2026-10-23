@@ -108,4 +108,6 @@ export const ar: Record<StringKey, string> = {
   eraseMineBody: 'يحذف تقدمك وإعداداتك ومحادثاتك المحفوظة من هذا الجهاز. لا يمكن التراجع.',
   practice: 'تدرّب على الكلمات الأساسية',
   practiceHint: 'المس كلمة ثم انطقها بصوت عالٍ.',
+  recommended: 'مقترح لك',
+  allLessons: 'كل الدروس',
 };

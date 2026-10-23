@@ -106,6 +106,8 @@ export const fr = {
   eraseMineBody: 'Supprime votre progression, vos réglages et vos conversations enregistrées sur cet appareil. Action définitive.',
   practice: 'Pratiquer les mots clés',
   practiceHint: 'Touche un mot, puis dis-le à voix haute.',
+  recommended: 'Pour vous',
+  allLessons: 'Toutes les leçons',
 } as const;
 
 export type StringKey = keyof typeof fr;

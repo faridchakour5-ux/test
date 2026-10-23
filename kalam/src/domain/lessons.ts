@@ -78,3 +78,15 @@ export const LESSONS: Lesson[] = [
 ];
 
 export const getLesson = (id: string): Lesson | undefined => LESSONS.find((l) => l.id === id);
+
+// Leçons conseillées: celles du niveau de l'apprenant non encore faites, puis du niveau suivant.
+export function recommendLessons(level: Level, completed: string[], n = 3): Lesson[] {
+  const order: Level[] = ['A1', 'A2', 'B1'];
+  const start = order.indexOf(level);
+  const todo = (l: Lesson) => !completed.includes(l.id) && l.id !== 'free';
+  const result: Lesson[] = [];
+  for (const lvl of order.slice(start)) {
+    for (const l of LESSONS) if (l.level === lvl && todo(l) && result.length < n) result.push(l);
+  }
+  return result;
+}

@@ -17,12 +17,9 @@ interface Props {
   onParents: () => void;
 }
 
-export function KidsHomeScreen({ lang, stars, minutesToday, dailyLimit, onStories, onPlay, onStickers, onParents }: Props) {
-  const { colors, profile } = useTheme();
-  const up = timeIsUp(dailyLimit, minutesToday);
-  const left = minutesLeft(dailyLimit, minutesToday);
-
-  const Tile = ({ emoji, label, onPress, tint }: { emoji: string; label: string; onPress: () => void; tint: string }) => (
+function Tile({ emoji, label, onPress, tint }: { emoji: string; label: string; onPress: () => void; tint: string }) {
+  const { profile } = useTheme();
+  return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
@@ -33,6 +30,12 @@ export function KidsHomeScreen({ lang, stars, minutesToday, dailyLimit, onStorie
       <KText size={20} weight="800" style={{ color: '#1B1A2E', textAlign: 'center' }}>{label}</KText>
     </Pressable>
   );
+}
+
+export function KidsHomeScreen({ lang, stars, minutesToday, dailyLimit, onStories, onPlay, onStickers, onParents }: Props) {
+  const { colors } = useTheme();
+  const up = timeIsUp(dailyLimit, minutesToday);
+  const left = minutesLeft(dailyLimit, minutesToday);
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: 20, paddingTop: 56, gap: 16 }}>

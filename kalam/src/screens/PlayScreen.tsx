@@ -25,8 +25,8 @@ export function PlayScreen({ lang, stars, micAllowed, onCorrect, onExit }: Props
   const [wrongIds, setWrongIds] = useState<string[]>([]);
   const [solved, setSolved] = useState(false);
   const [earned, setEarned] = useState(0);
-  const startStars = useRef(stars);
-  const started = useRef(Date.now());
+  const [startStars] = useState(stars); // étoiles au début de la partie
+  const started = useRef<number>(0);
   const advance = useRef<ReturnType<typeof setTimeout> | null>(null);
   const minutes = () => Math.max(1, Math.round((Date.now() - started.current) / 60_000));
 
@@ -55,7 +55,7 @@ export function PlayScreen({ lang, stars, micAllowed, onCorrect, onExit }: Props
   }
 
   if (!round) {
-    const unlocked = newlyUnlocked(startStars.current, stars);
+    const unlocked = newlyUnlocked(startStars, stars);
     return (
       <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 }}>
         <Mascot mood="cheer" size={200} />

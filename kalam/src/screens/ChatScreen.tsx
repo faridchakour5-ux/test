@@ -8,8 +8,7 @@ import { KText } from '../components/KText';
 import { Mascot } from '../components/Mascot';
 import { PronunciationPractice } from '../components/PronunciationPractice';
 import { Lesson, Level, VocabItem, meaning } from '../domain/lessons';
-import { RETRYABLE_SEND } from '../speech/problems';
-import { PROBLEM_TEXT, problemFromListen, problemFromTeacher } from '../speech/problems';
+import { PROBLEM_TEXT, RETRYABLE_SEND, problemFromListen, problemFromTeacher } from '../speech/problems';
 import { initialTurn, turnReducer } from '../domain/voiceTurn';
 import { UiLang, t } from '../i18n/strings';
 import { cancelListening, isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
@@ -39,19 +38,21 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   const [turn, dispatch] = useReducer(turnReducer, undefined, initialTurn);
   const micOk = isSpeechInputAvailable();
 
-  const started = useRef(Date.now());
+  const [startedAt] = useState(() => Date.now());
   const scroller = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const token = useRef(0); // invalide les opérations en vol quand on interrompt ou qu'on quitte
   const listening = useRef(false);
   const mounted = useRef(true);
   const messagesRef = useRef<ChatMessage[]>([]);
-  messagesRef.current = messages;
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
 
   // Chargement de la conversation précédente + vérification de la voix anglaise.
   useEffect(() => {
     mounted.current = true;
     loadConversation(lesson.id).then((m) => { if (mounted.current) { setMessages(m); setLoaded(true); } });
     tts.hasVoice('en-US').then((ok) => { if (mounted.current) setNoVoice(!ok); });
+    // `token` est un compteur volontairement lu à la fermeture: il sert à invalider les opérations en vol.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     return () => { mounted.current = false; token.current++; void tts.stop(); cancelListening(); };
   }, [lesson.id]);
 
@@ -146,7 +147,7 @@ export function ChatScreen({ lang, lesson, level, ageProfile, onFinish, onBack }
   };
 
   const sendTyped = () => { if (!input.trim() || turn.phase === 'sending') return; const text = input; setInput(''); submit(text, false); };
-  const finish = () => { stopAll(); onFinish(Math.max(1, Math.round((Date.now() - started.current) / 60_000))); };
+  const finish = () => { stopAll(); onFinish(Math.max(1, Math.round((Date.now() - startedAt) / 60_000))); };
   const back = () => { stopAll(); onBack(); };
 
   const phase = turn.phase;

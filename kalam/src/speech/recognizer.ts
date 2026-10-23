@@ -33,7 +33,7 @@ export interface RecModule {
   start(options: Record<string, unknown>): void;
   stop(): void;
   abort(): void;
-  addListener(name: string, cb: (e: any) => void): Sub; // eslint-disable-line @typescript-eslint/no-explicit-any
+  addListener(name: string, cb: (e: any) => void): Sub;
 }
 
 export function createRecognizer(mod: RecModule | null) {

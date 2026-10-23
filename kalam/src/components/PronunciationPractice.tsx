@@ -21,14 +21,16 @@ const MARK: Record<WordStatus, string> = { correct: '✓', close: '~', wrong: '�
 export function PronunciationPractice({ lang, expected, onResult }: Props) {
   const { colors, profile } = useTheme();
   const [listening, setListening] = useState(false);
-  const [result, setResult] = useState<PronunciationResult | null>(null);
-  const [message, setMessage] = useState<StringKey | null>(null);
-  const [blocked, setBlocked] = useState(false);
+  // Le résultat est rattaché à la phrase demandée: changer de phrase l'efface sans effet de bord.
+  const [outcome, setOutcome] = useState<{ for: string; result: PronunciationResult | null; message: StringKey | null; blocked: boolean } | null>(null);
   const [heardLive, setHeardLive] = useState('');
+  const current = outcome && outcome.for === expected ? outcome : null;
+  const result = current?.result ?? null;
+  const message = current?.message ?? null;
+  const blocked = current?.blocked ?? false;
   const available = isSpeechInputAvailable();
   const COLOR: Record<WordStatus, string> = { correct: colors.success, close: colors.warning, wrong: colors.danger, missing: colors.textMuted };
 
-  useEffect(() => { setResult(null); setMessage(null); }, [expected]);
   useEffect(() => () => cancelListening(), []);
 
   if (!available) {
@@ -36,7 +38,7 @@ export function PronunciationPractice({ lang, expected, onResult }: Props) {
   }
 
   const start = async () => {
-    setListening(true); setResult(null); setMessage(null); setBlocked(false); setHeardLive('');
+    setListening(true); setOutcome(null); setHeardLive('');
     await tts.stop(); // le micro ne doit pas capter la voix de l'application
     const r = await listenOnce({ lang: 'en-US', patienceMs: profile.speechPatienceMs, maxMs: 10_000, onPartial: setHeardLive });
     setListening(false);
@@ -44,12 +46,11 @@ export function PronunciationPractice({ lang, expected, onResult }: Props) {
     if (!r.ok) {
       if (r.reason === 'cancelled') return;
       const problem = problemFromListen(r.reason);
-      setBlocked(problem === 'permission-blocked');
-      setMessage(PROBLEM_TEXT[problem]);
+      setOutcome({ for: expected, result: null, message: PROBLEM_TEXT[problem], blocked: problem === 'permission-blocked' });
       return;
     }
     const evaluated = evaluatePronunciation(expected, r.transcript);
-    setResult(evaluated);
+    setOutcome({ for: expected, result: evaluated, message: null, blocked: false });
     onResult?.(evaluated);
   };
 

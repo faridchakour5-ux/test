@@ -20,7 +20,7 @@ export function StoryScreen({ lang, onFinish, onExit }: Props) {
   const [story, setStory] = useState<Story | null>(null);
   const [index, setIndex] = useState(0);
   const [done, setDone] = useState(false);
-  const [started] = useState(Date.now());
+  const [started] = useState(() => Date.now());
   const minutes = () => Math.max(1, Math.round((Date.now() - started) / 60_000));
 
   const speak = (text: string) => { void tts.speak(text, { lang: 'en-US', rate: profile.speechRate }); };

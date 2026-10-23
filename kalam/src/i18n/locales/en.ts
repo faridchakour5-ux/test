@@ -108,4 +108,6 @@ export const en: Record<StringKey, string> = {
   eraseMineBody: 'Deletes your progress, settings and saved conversations from this device. This cannot be undone.',
   practice: 'Practise key words',
   practiceHint: 'Tap a word, then say it out loud.',
+  recommended: 'For you',
+  allLessons: 'All lessons',
 };

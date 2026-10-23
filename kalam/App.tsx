@@ -33,7 +33,9 @@ type Route =
 function Root() {
   const app = useApp();
   const [route, setRoute] = useState<Route>({ name: 'home' });
-  const home = () => setRoute({ name: 'home' });
+  // `now` n'est lu qu'à la création et à chaque retour à l'accueil (jamais pendant un rendu).
+  const [now, setNow] = useState(() => Date.now());
+  const home = () => { setNow(Date.now()); setRoute({ name: 'home' }); };
 
   useEffect(() => {
     I18nManager.allowRTL(true);
@@ -84,8 +86,8 @@ function Root() {
   } else {
     screen = <HomeScreen lang={app.uiLang} level={app.level} progress={app.progress}
       onOpenLesson={(id) => setRoute({ name: 'lesson', id })} onGoal={app.setGoal}
-      dueCount={buildReviewSession(app.cards, Date.now(), 999).length}
-      onReview={() => setRoute({ name: 'review', session: buildReviewSession(app.cards, Date.now()) })}
+      dueCount={buildReviewSession(app.cards, now, 999).length}
+      onReview={() => setRoute({ name: 'review', session: buildReviewSession(app.cards, now) })}
       onSwitchProfile={() => { app.resetProfile(); home(); }} palette={app.palette} onPalette={app.setPalette}
       onLang={app.setUiLang} onErase={() => { app.eraseAll(); home(); }} />;
   }

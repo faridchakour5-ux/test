@@ -4,6 +4,8 @@ import { Linking } from 'react-native';
 import { ChatScreen } from './ChatScreen';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { LESSONS } from '../domain/lessons';
+import { TeacherError } from '../api/teacher';
+import { loadConversation } from '../state/conversations';
 
 const mockSpeak = jest.fn();
 const mockStop = jest.fn();
@@ -27,9 +29,6 @@ jest.mock('../state/conversations', () => ({
   saveConversation: jest.fn(async () => undefined),
   clearConversation: jest.fn(async () => undefined),
 }));
-
-import { TeacherError } from '../api/teacher';
-import { loadConversation } from '../state/conversations';
 
 const lesson = LESSONS.find((l) => l.id === 'restaurant')!;
 

@@ -108,4 +108,6 @@ export const zh: Record<StringKey, string> = {
   eraseMineBody: '将删除此设备上的学习进度、设置和已保存的对话，且无法恢复。',
   practice: '练习关键词',
   practiceHint: '点一个词，然后大声说出来。',
+  recommended: '为你推荐',
+  allLessons: '全部课程',
 };

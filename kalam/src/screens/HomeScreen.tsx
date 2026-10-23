@@ -7,8 +7,7 @@ import { LanguagePicker } from '../components/LanguagePicker';
 import { PalettePicker } from '../components/PalettePicker';
 import { PaletteId } from '../theme/palettes';
 import { KText } from '../components/KText';
-import { LESSONS } from '../domain/lessons';
-import { Level } from '../domain/lessons';
+import { LESSONS, Level, recommendLessons } from '../domain/lessons';
 import { Progress, goalReached } from '../domain/progress';
 import { UiLang, isRtl, t } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
@@ -64,7 +63,21 @@ export function HomeScreen({ lang, level, progress, onOpenLesson, onGoal, dueCou
         </View>
       </Card>
 
-      <KText size={22} weight="600" accessibilityRole="header">{t(lang, 'lessons')}</KText>
+      {recommendLessons(level, progress.completedLessons).length > 0 && (
+        <>
+          <KText size={22} weight="600" accessibilityRole="header">⭐ {t(lang, 'recommended')}</KText>
+          {recommendLessons(level, progress.completedLessons).map((l) => (
+            <Pressable key={`rec-${l.id}`} accessibilityRole="button" accessibilityLabel={l.title[lang]} onPress={() => onOpenLesson(l.id)}>
+              <Card style={{ flexDirection: rtl ? 'row-reverse' : 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: profile.minTouchSize, borderColor: colors.primary, borderWidth: 2 }}>
+                <KText weight="600">{l.title[lang]}</KText>
+                <KText muted>{l.level}</KText>
+              </Card>
+            </Pressable>
+          ))}
+        </>
+      )}
+
+      <KText size={22} weight="600" accessibilityRole="header">{t(lang, 'allLessons')}</KText>
       {LESSONS.map((l) => (
         <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={l.title[lang]} onPress={() => onOpenLesson(l.id)}>
           <Card style={{ flexDirection: rtl ? 'row-reverse' : 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: profile.minTouchSize }}>

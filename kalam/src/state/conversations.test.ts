@@ -1,3 +1,4 @@
+import { MAX_SAVED_MESSAGES, clearAllKalamData, clearConversation, loadConversation, saveConversation, trimConversation } from './conversations';
 const mockStore = new Map<string, string>();
 jest.mock('@react-native-async-storage/async-storage', () => ({
   __esModule: true,
@@ -10,7 +11,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   },
 }));
 
-import { MAX_SAVED_MESSAGES, clearAllKalamData, clearConversation, loadConversation, saveConversation, trimConversation } from './conversations';
 
 beforeEach(() => mockStore.clear());
 

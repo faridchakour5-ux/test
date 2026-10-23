@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing } from 'react-native';
 import Svg, { Circle, Ellipse, G, Path } from 'react-native-svg';
 
@@ -17,7 +17,7 @@ const ACCENT = '#FDCB6E';
 const INK = '#1B1A2E';
 
 export function Mascot({ mood = 'happy', size = 120, animated = true }: Props) {
-  const bob = useRef(new Animated.Value(0)).current;
+  const [bob] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     if (!animated) return;

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, Switch, View } from 'react-native';
 import { BackButton } from '../components/BackButton';
 import { Card } from '../components/Card';

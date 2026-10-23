@@ -97,3 +97,12 @@ test('le professeur ouvre la conversation (start) avec une consigne interne', as
     assert.match(client.calls[0].messages[0].content, /Start the role-play/);
   });
 });
+
+test('le professeur de français reçoit la bonne langue dans sa consigne', async () => {
+  const client = okClient('Bonjour !');
+  await withServer({ client }, async (base) => {
+    await post(base, { ageProfile: 'adult', level: 'A1', targetLang: 'fr', messages: [{ role: 'user', content: 'Bonjour' }] });
+    assert.match(client.calls[0].system, /French conversation teacher/);
+    assert.equal((await post(base, { ageProfile: 'adult', level: 'A1', targetLang: 'de', messages: [{ role: 'user', content: 'x' }] })).status, 400);
+  });
+});

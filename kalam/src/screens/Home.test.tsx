@@ -6,10 +6,10 @@ import { ThemeProvider } from '../theme/ThemeProvider';
 import { HomeScreen } from './HomeScreen';
 
 const noop = () => {};
-const home = (progress: ReturnType<typeof initialProgress>, today: string, onExport: () => Promise<string> = async () => '{}') => (
+const home = (progress: ReturnType<typeof initialProgress>, today: string, onExport: () => Promise<string> = async () => '{}', target: 'en' | 'fr' = 'en', onTarget: (t: 'en' | 'fr') => void = noop) => (
   <ThemeProvider profileId="adult">
     <HomeScreen lang="fr" level="A1" progress={progress} onOpenLesson={noop} onGoal={noop} dueCount={0} onReview={noop}
-      onSwitchProfile={noop} palette="violet" onPalette={noop} onLang={noop} onErase={noop} onExport={onExport} onDuo={noop} today={today} />
+      onSwitchProfile={noop} palette="violet" onPalette={noop} onLang={noop} onErase={noop} onExport={onExport} onDuo={noop} target={target} onTarget={onTarget} today={today} />
   </ThemeProvider>
 );
 
@@ -48,5 +48,27 @@ describe('HomeScreen: export des données', () => {
     await render(home(initialProgress('2026-03-10'), '2026-03-10'));
     await fireEvent.press(screen.getByText('Exporter mes données'));
     await waitFor(() => expect(alert).toHaveBeenCalledWith('L\'export a échoué. Réessayez.'));
+  });
+});
+
+describe('HomeScreen: langue apprise', () => {
+  it('propose anglais et français et prévient du choix', async () => {
+    const onTarget = jest.fn();
+    await render(home(initialProgress('2026-03-10'), '2026-03-10', async () => '{}', 'en', onTarget));
+    expect(screen.getByLabelText('Langue à apprendre: Anglais')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Langue à apprendre: Français'));
+    expect(onTarget).toHaveBeenCalledWith('fr');
+    expect(screen.queryByLabelText(/Langue à apprendre: (Espagnol|Arabe)/)).toBeNull(); // pas d'autre langue pour l'instant
+    expect(screen.getAllByLabelText('Français')).toHaveLength(1); // le sélecteur de la langue de l'interface, distinct
+  });
+  it('les leçons terminées en anglais ne comptent pas comme terminées en français', async () => {
+    const p = { ...initialProgress('2026-03-10'), completedLessons: ['family'] };
+    await render(home(p, '2026-03-10', async () => '{}', 'en'));
+    expect(screen.getAllByText(/✓ Terminée/)).toHaveLength(1);
+  });
+  it('...et inversement: « fr:family » ne compte que pour le français', async () => {
+    const p = { ...initialProgress('2026-03-10'), completedLessons: ['fr:family'] };
+    await render(home(p, '2026-03-10', async () => '{}', 'en'));
+    expect(screen.queryAllByText(/✓ Terminée/)).toHaveLength(0);
   });
 });

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Linking, Pressable, View } from 'react-native';
 import { PronunciationResult, WordStatus, evaluatePronunciation } from '../domain/pronunciation';
 import { UiLang, StringKey, t } from '../i18n/strings';
+import { DEFAULT_TARGET, TARGET_LOCALE, TargetLang } from '../domain/targets';
 import { PROBLEM_TEXT, problemFromListen } from '../speech/problems';
 import { cancelListening, isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
 import { tts } from '../speech/tts';
@@ -10,6 +11,7 @@ import { KText } from './KText';
 import { Mascot } from './Mascot';
 
 interface Props {
+  target?: TargetLang; // langue de la phrase à prononcer
   lang: UiLang;
   expected: string; // la phrase ou le mot à prononcer (en anglais)
   onResult?: (r: PronunciationResult) => void;
@@ -18,7 +20,7 @@ interface Props {
 // Couleur ET symbole: le sens ne repose jamais sur la couleur seule (daltonisme).
 const MARK: Record<WordStatus, string> = { correct: '✓', close: '~', wrong: '✗', missing: '…' };
 
-export function PronunciationPractice({ lang, expected, onResult }: Props) {
+export function PronunciationPractice({ lang, expected, onResult, target = DEFAULT_TARGET }: Props) {
   const { colors, profile } = useTheme();
   const [listening, setListening] = useState(false);
   // Le résultat est rattaché à la phrase demandée: changer de phrase l'efface sans effet de bord.
@@ -40,7 +42,7 @@ export function PronunciationPractice({ lang, expected, onResult }: Props) {
   const start = async () => {
     setListening(true); setOutcome(null); setHeardLive('');
     await tts.stop(); // le micro ne doit pas capter la voix de l'application
-    const r = await listenOnce({ lang: 'en-US', patienceMs: profile.speechPatienceMs, maxMs: 10_000, onPartial: setHeardLive });
+    const r = await listenOnce({ lang: TARGET_LOCALE[target], patienceMs: profile.speechPatienceMs, maxMs: 10_000, onPartial: setHeardLive });
     setListening(false);
     setHeardLive('');
     if (!r.ok) {

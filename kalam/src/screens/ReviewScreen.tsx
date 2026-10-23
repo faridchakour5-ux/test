@@ -6,6 +6,7 @@ import { KButton } from '../components/KButton';
 import { KText } from '../components/KText';
 import { Mascot } from '../components/Mascot';
 import { meaning } from '../domain/lessons';
+import { DEFAULT_TARGET, TARGET_LOCALE, TargetLang, targetText } from '../domain/targets';
 import { PronunciationPractice } from '../components/PronunciationPractice';
 import { ANSWER_QUALITY, Answer, vocabForKey } from '../domain/deck';
 import { Card as SrsCard } from '../domain/srs';
@@ -13,13 +14,14 @@ import { UiLang, t } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
 
 interface Props {
+  target?: TargetLang; // langue apprise
   lang: UiLang;
   session: SrsCard[];
   onAnswer: (key: string, quality: number) => void;
   onExit: () => void;
 }
 
-export function ReviewScreen({ lang, session, onAnswer, onExit }: Props) {
+export function ReviewScreen({ lang, session, onAnswer, onExit, target = DEFAULT_TARGET }: Props) {
   const { colors, profile } = useTheme();
   // La séance est figée au départ: répondre ne la modifie pas pendant qu'on la parcourt.
   const queue = useMemo(() => session, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -37,7 +39,7 @@ export function ReviewScreen({ lang, session, onAnswer, onExit }: Props) {
     setIndex(index + 1);
   };
 
-  const speak = (text: string) => { void tts.speak(text, { lang: 'en-US', rate: profile.speechRate }); };
+  const speak = (text: string) => { void tts.speak(text, { lang: TARGET_LOCALE[target], rate: profile.speechRate }); };
 
   const answers: { id: Answer; key: 'again' | 'hard' | 'good' | 'easy' }[] = [
     { id: 'again', key: 'again' }, { id: 'hard', key: 'hard' }, { id: 'good', key: 'good' }, { id: 'easy', key: 'easy' },
@@ -65,19 +67,19 @@ export function ReviewScreen({ lang, session, onAnswer, onExit }: Props) {
             <Mascot mood={revealed ? 'happy' : 'thinking'} size={profile.id === 'kids' ? 160 : 100} />
           </View>
           <Card style={{ gap: 12, alignItems: 'center', paddingVertical: 32 }}>
-            <KText size={28} weight="800" style={{ textAlign: 'center' }}>{current ? meaning(current, lang) : ''}</KText>
+            <KText size={28} weight="800" style={{ textAlign: 'center' }}>{current ? meaning(current, lang, target) : ''}</KText>
             {revealed && (
               <>
-                <KText size={26} weight="600" style={{ color: colors.primary, textAlign: 'center' }}>{current?.en}</KText>
-                <Pressable accessibilityRole="button" accessibilityLabel={t(lang, 'listen')} onPress={() => current && speak(current.en)} style={{ minHeight: 44, justifyContent: 'center' }}>
+                <KText size={26} weight="600" style={{ color: colors.primary, textAlign: 'center' }}>{current ? targetText(current, target) : ''}</KText>
+                <Pressable accessibilityRole="button" accessibilityLabel={t(lang, 'listen')} onPress={() => current && speak(targetText(current, target))} style={{ minHeight: 44, justifyContent: 'center' }}>
                   <KText weight="600" style={{ color: colors.primary }}>🔊 {t(lang, 'listen')}</KText>
                 </Pressable>
               </>
             )}
           </Card>
-          {revealed && current && <PronunciationPractice lang={lang} expected={current.en} />}
+          {revealed && current && <PronunciationPractice lang={lang} target={target} expected={targetText(current, target)} />}
           {!revealed ? (
-            <KButton label={t(lang, 'reveal')} onPress={() => { setRevealed(true); if (current) speak(current.en); }} />
+            <KButton label={t(lang, 'reveal')} onPress={() => { setRevealed(true); if (current) speak(targetText(current, target)); }} />
           ) : (
             <View style={{ gap: 10 }}>
               <KText muted style={{ textAlign: 'center' }}>{t(lang, 'howWell')}</KText>

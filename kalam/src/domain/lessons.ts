@@ -1,5 +1,6 @@
 // 30 leçons d'anglais organisées par situations (CEFR A1 -> B1), pas par listes de mots.
 import { UiLang } from '../i18n/strings';
+import { DEFAULT_TARGET, TargetLang, lessonKey } from './targets';
 import { LESSON_TITLES_TR, VOCAB_TR } from './translations';
 
 export type Level = 'A1' | 'A2' | 'B1';
@@ -13,7 +14,8 @@ export interface VocabItem {
 }
 
 // Sens d'un mot dans la langue de l'interface. Pour une interface anglaise (langue apprise), on garde le français.
-export const meaning = (v: VocabItem, lang: UiLang): string => (lang === 'en' ? v.fr : v[lang]);
+export const meaning = (v: VocabItem, lang: UiLang, target: TargetLang = DEFAULT_TARGET): string =>
+  lang === target ? (target === 'en' ? v.fr : v.en) : v[lang];
 
 export interface Lesson {
   id: string;
@@ -80,10 +82,10 @@ export const LESSONS: Lesson[] = [
 export const getLesson = (id: string): Lesson | undefined => LESSONS.find((l) => l.id === id);
 
 // Leçons conseillées: celles du niveau de l'apprenant non encore faites, puis du niveau suivant.
-export function recommendLessons(level: Level, completed: string[], n = 3): Lesson[] {
+export function recommendLessons(level: Level, completed: string[], n = 3, target: TargetLang = DEFAULT_TARGET): Lesson[] {
   const order: Level[] = ['A1', 'A2', 'B1'];
   const start = order.indexOf(level);
-  const todo = (l: Lesson) => !completed.includes(l.id) && l.id !== 'free';
+  const todo = (l: Lesson) => !completed.includes(lessonKey(l.id, target)) && l.id !== 'free';
   const result: Lesson[] = [];
   for (const lvl of order.slice(start)) {
     for (const l of LESSONS) if (l.level === lvl && todo(l) && result.length < n) result.push(l);

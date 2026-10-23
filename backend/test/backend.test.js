@@ -49,3 +49,23 @@ test('mode à deux: consigne de 300 caractères et messages « [Prénom] texte �
   assert.ok(validateChat({ ageProfile: 'adult', level: 'A1', scenario: 'x'.repeat(301), messages: [{ role: 'user', content: 'Hi' }] }).error);
   assert.ok(validateChat({ ageProfile: 'adult', level: 'A1', messages: [{ role: 'user', content: '[' + 'é'.repeat(16) + '] ' + 'a'.repeat(480) }] }).value);
 });
+
+test('targetLang: anglais par défaut (anciens clients), français accepté, le reste refusé', () => {
+  assert.equal(validateChat(ok).value.targetLang, 'en');
+  assert.equal(validateChat({ ...ok, targetLang: 'fr' }).value.targetLang, 'fr');
+  for (const bad of ['es', 'ar', 'de', '', null, 5, 'FR']) assert.ok(validateChat({ ...ok, targetLang: bad }).error, String(bad));
+  assert.equal(validateChat({ ageProfile: 'adult', level: 'A1', start: true, messages: [], targetLang: 'fr' }).value.targetLang, 'fr');
+});
+test('le prompt enseigne la bonne langue et donne l\'exemple dans cette langue', () => {
+  const fr = buildSystemPrompt({ ageProfile: 'adult', level: 'A1', targetLang: 'fr', uiLang: 'en' });
+  assert.match(fr, /French conversation teacher/);
+  assert.match(fr, /always reply in French/);
+  assert.match(fr, /je suis allé au marché/);
+  assert.doesNotMatch(fr, /always reply in English/);
+  const en = buildSystemPrompt({ ageProfile: 'adult', level: 'A1', targetLang: 'en', uiLang: 'fr' });
+  assert.match(en, /English conversation teacher/);
+  assert.match(en, /always reply in English/);
+  // langue absente ou inconnue: anglais (comportement historique)
+  assert.match(buildSystemPrompt({ ageProfile: 'adult', level: 'A1' }), /English conversation teacher/);
+  assert.match(buildSystemPrompt({ ageProfile: 'adult', level: 'A1', targetLang: 'xx' }), /English conversation teacher/);
+});

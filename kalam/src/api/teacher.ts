@@ -1,6 +1,7 @@
 import { AgeProfileId } from '../theme/profiles';
 import { Level } from '../domain/lessons';
 import { UiLang } from '../i18n/strings';
+import { TargetLang } from '../domain/targets';
 import { SseEvent, createSseParser } from './sse';
 
 export interface ChatMessage {
@@ -16,6 +17,7 @@ export interface TeacherRequest {
   level: Level;
   scenario: string;
   uiLang: UiLang;
+  targetLang?: TargetLang; // langue enseignée (anglais par défaut côté serveur)
   messages: ChatMessage[];
   start?: boolean; // le professeur ouvre la conversation (messages vide)
 }

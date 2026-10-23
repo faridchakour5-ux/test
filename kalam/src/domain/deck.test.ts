@@ -1,4 +1,4 @@
-import { ANSWER_QUALITY, buildReviewSession, cardKey, cardsForLesson, vocabForKey } from './deck';
+import { ANSWER_QUALITY, buildReviewSession, cardKey, cardsForLesson, parseCardKey, targetOfKey, vocabForKey } from './deck';
 import { newCard, review } from './srs';
 
 describe('deck', () => {
@@ -23,5 +23,40 @@ describe('deck', () => {
   });
   it('un oubli donne une qualité qui remet la carte à 1 jour', () => {
     expect(review(newCard('a', 0), ANSWER_QUALITY.again, 0).intervalDays).toBe(1);
+  });
+});
+
+describe('révision par langue apprise', () => {
+  it('l\'anglais garde l\'ancien format de clé (compatible avec les sauvegardes existantes), le français est préfixé', () => {
+    expect(cardKey('restaurant', 0)).toBe('restaurant:0');
+    expect(cardKey('restaurant', 0, 'en')).toBe('restaurant:0');
+    expect(cardKey('restaurant', 0, 'fr')).toBe('fr:restaurant:0');
+  });
+  it('parseCardKey lit les deux formats et refuse le reste', () => {
+    expect(parseCardKey('restaurant:2')).toEqual({ target: 'en', lessonId: 'restaurant', index: 2 });
+    expect(parseCardKey('fr:restaurant:2')).toEqual({ target: 'fr', lessonId: 'restaurant', index: 2 });
+    for (const bad of ['', 'x', 'a:b', 'fr:a:b', 'de:restaurant:1', 'a:b:c:d', ':1', 'restaurant:']) expect(parseCardKey(bad)).toBeNull();
+  });
+  it('cardsForLesson crée des cartes distinctes par langue pour la même leçon', () => {
+    let cards = cardsForLesson('family', [], 0, 'en');
+    cards = cardsForLesson('family', cards, 0, 'fr');
+    expect(cards).toHaveLength(8);
+    expect(cards.filter((c) => targetOfKey(c.key) === 'fr')).toHaveLength(4);
+    expect(cardsForLesson('family', cards, 0, 'fr')).toHaveLength(8); // pas de doublon
+  });
+  it('une séance de révision ne mélange jamais les langues', () => {
+    const cards = cardsForLesson('family', cardsForLesson('family', [], 0, 'en'), 0, 'fr');
+    const en = buildReviewSession(cards, 0, 99, 'en');
+    const fr = buildReviewSession(cards, 0, 99, 'fr');
+    expect(en).toHaveLength(4);
+    expect(fr).toHaveLength(4);
+    expect(en.every((c) => targetOfKey(c.key) === 'en')).toBe(true);
+    expect(fr.every((c) => targetOfKey(c.key) === 'fr')).toBe(true);
+    expect(buildReviewSession(cards, 0, 99)).toHaveLength(4); // défaut: anglais
+  });
+  it('vocabForKey retrouve le mot pour les deux formats de clé', () => {
+    expect(vocabForKey('restaurant:0')?.en).toBe('menu');
+    expect(vocabForKey('fr:restaurant:0')?.en).toBe('menu');
+    expect(vocabForKey('fr:nope:0')).toBeUndefined();
   });
 });

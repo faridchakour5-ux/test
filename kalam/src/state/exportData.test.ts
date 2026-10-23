@@ -4,7 +4,7 @@ import { initialProgress } from '../domain/progress';
 import { newCard } from '../domain/srs';
 
 const state = (over: Partial<ExportableState> = {}): ExportableState => ({
-  profile: 'adult', level: 'A2', uiLang: 'fr', palette: 'ocean',
+  profile: 'adult', targetLang: 'fr', levels: { en: 'A2', fr: 'A1' }, uiLang: 'fr', palette: 'ocean',
   progress: { ...initialProgress('2026-03-10'), xp: 42, streak: 3, completedLessons: ['family'] },
   cards: [newCard('family:0', 0)],
   kids: { ...initialKids(), stars: 7, storiesRead: ['little-cat'] },
@@ -19,7 +19,7 @@ describe('buildExport (droit à la portabilité)', () => {
     expect(json).toContain('\n'); // lisible (indenté)
     const d = parse(json);
     expect(d).toMatchObject({ app: 'kalam', formatVersion: EXPORT_FORMAT_VERSION, exportedAt: '2026-03-10T10:00:00.000Z' });
-    expect(d.settings).toEqual({ profile: 'adult', level: 'A2', interfaceLanguage: 'fr', palette: 'ocean' });
+    expect(d.settings).toEqual({ profile: 'adult', learningLanguage: 'fr', levels: { en: 'A2', fr: 'A1' }, interfaceLanguage: 'fr', palette: 'ocean' });
     expect(d.progress).toMatchObject({ xp: 42, streak: 3, completedLessons: ['family'] });
     expect(d.vocabularyCards).toHaveLength(1);
     expect(d.kidsMode).toMatchObject({ stars: 7, storiesRead: ['little-cat'], microphoneConsent: { micAllowed: false } });
@@ -27,7 +27,7 @@ describe('buildExport (droit à la portabilité)', () => {
     expect(d.conversations.restaurant[0].content).toBe('I would like water');
   });
   it('fonctionne pour un tout nouvel utilisateur (profil vide, aucune conversation)', () => {
-    const d = parse(buildExport(state({ profile: null, level: null, cards: [] }), {}));
+    const d = parse(buildExport(state({ profile: null, levels: {}, cards: [] }), {}));
     expect(d.settings.profile).toBeNull();
     expect(d.vocabularyCards).toEqual([]);
     expect(d.conversations).toEqual({});

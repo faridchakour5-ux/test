@@ -17,7 +17,7 @@ Kalam: apprends en parlant
 
 ## Description longue
 ### fr
-Kalam t'apprend l'anglais en parlant, pas en cochant des cases.
+Kalam t'apprend l'anglais et le français en parlant, pas en cochant des cases.
 
 • Un professeur IA patient qui ne juge jamais : il te répond, te reformule en douceur et garde le rythme de la conversation.
 • Des situations de la vie réelle : restaurant, médecin, voyage, travail, école…
@@ -29,7 +29,7 @@ Kalam t'apprend l'anglais en parlant, pas en cochant des cases.
 • Aucune publicité. Aucune vente de données. Interface en français, anglais, arabe (droite-à-gauche), espagnol et chinois.
 
 ### en
-Kalam teaches you English by speaking, not by ticking boxes.
+Kalam teaches you English and French by speaking, not by ticking boxes.
 
 • A patient AI teacher who never judges: it answers, gently rephrases your mistakes and keeps the conversation flowing.
 • Real-life situations: restaurant, doctor, travel, work, school…
@@ -41,7 +41,7 @@ Kalam teaches you English by speaking, not by ticking boxes.
 • No ads. No data selling. Interface in French, English, Arabic (right-to-left), Spanish and Chinese.
 
 ### ar
-يعلّمك «كلام» الإنجليزية بالكلام، لا بالنقر على الخيارات.
+يعلّمك «كلام» الإنجليزية والفرنسية بالكلام، لا بالنقر على الخيارات.
 
 • معلّم ذكي صبور لا يحكم عليك أبدًا: يجيبك ويصحّح أخطاءك بلطف ويحافظ على سلاسة الحديث.
 • مواقف من الحياة الواقعية: المطعم، الطبيب، السفر، العمل، المدرسة…
@@ -53,7 +53,7 @@ Kalam teaches you English by speaking, not by ticking boxes.
 • بلا إعلانات. بلا بيع للبيانات. الواجهة بالفرنسية والإنجليزية والعربية (من اليمين إلى اليسار) والإسبانية والصينية.
 
 ### es
-Kalam te enseña inglés hablando, no marcando casillas.
+Kalam te enseña inglés y francés hablando, no marcando casillas.
 
 • Un profesor IA paciente que nunca juzga: te responde, reformula tus errores con suavidad y mantiene el ritmo de la conversación.
 • Situaciones de la vida real: restaurante, médico, viajes, trabajo, escuela…
@@ -65,7 +65,7 @@ Kalam te enseña inglés hablando, no marcando casillas.
 • Sin anuncios. Sin venta de datos. Interfaz en francés, inglés, árabe (de derecha a izquierda), español y chino.
 
 ### zh
-Kalam 让你通过开口说来学英语，而不是靠点选择题。
+Kalam 让你通过开口说来学英语和法语，而不是靠点选择题。
 
 • 耐心的 AI 老师从不评判：会回应你、温和地纠正错误，并保持对话流畅。
 • 真实生活场景：餐厅、看医生、旅行、工作、学校……

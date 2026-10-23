@@ -35,12 +35,12 @@ jest.mock('../state/conversations', () => ({
 
 const lesson = LESSONS.find((l) => l.id === 'restaurant')!;
 
-async function setup(lessonId = 'restaurant') {
+async function setup(lessonId = 'restaurant', target: 'en' | 'fr' = 'en') {
   const onFinish = jest.fn();
   const onBack = jest.fn();
   await render(
     <ThemeProvider profileId="adult">
-      <ChatScreen lang="fr" lesson={LESSONS.find((l) => l.id === lessonId) ?? lesson} level="A1" ageProfile="adult" onFinish={onFinish} onBack={onBack} />
+      <ChatScreen target={target} lang="fr" lesson={LESSONS.find((l) => l.id === lessonId) ?? lesson} level="A1" ageProfile="adult" onFinish={onFinish} onBack={onBack} />
     </ThemeProvider>,
   );
   await act(async () => {}); // laisse le chargement de la conversation se terminer
@@ -48,7 +48,7 @@ async function setup(lessonId = 'restaurant') {
 }
 
 const type = async (text: string) => {
-  await fireEvent.changeText(screen.getByPlaceholderText('Écrivez en anglais…'), text);
+  await fireEvent.changeText(screen.getByPlaceholderText('Écrivez votre message…'), text);
   await fireEvent.press(screen.getByText('Envoyer'));
 };
 
@@ -369,6 +369,54 @@ describe('ChatScreen: conversation à deux', () => {
     await type('Hello');
     await waitFor(() => expect(mockAsk).toHaveBeenCalled());
     expect(mockAsk.mock.calls[0][0].messages.at(-1).content).toBe('Hello');
+  });
+});
+
+describe('ChatScreen: apprendre le français', () => {
+  beforeEach(() => {
+    (loadConversation as jest.Mock).mockResolvedValue([{ role: 'assistant', content: 'Bonjour ! Que désirez-vous ?' }]);
+  });
+
+  it('demande au professeur de parler français et lit sa réponse avec une voix française', async () => {
+    mockAsk.mockResolvedValue('Très bien ! Une carte ?');
+    await setup('restaurant', 'fr');
+    await type('Je voudrais de l\'eau');
+    await waitFor(() => expect(screen.getByText('Très bien ! Une carte ?')).toBeTruthy());
+    expect(mockAsk.mock.calls[0][0]).toMatchObject({ targetLang: 'fr' });
+    expect(mockSpeak).toHaveBeenCalledWith('Très bien ! Une carte ?', expect.objectContaining({ lang: 'fr-FR' }));
+  });
+
+  it('écoute le micro en français', async () => {
+    mockListen.mockResolvedValue({ ok: true, transcript: 'Bonjour madame' });
+    await setup('restaurant', 'fr');
+    await fireEvent.press(screen.getByText('🎤 Parler'));
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
+    expect(mockListen.mock.calls[0][0]).toMatchObject({ lang: 'fr-FR' });
+  });
+
+  it('les mots clés sont les mots FRANÇAIS de la leçon, avec leur sens', async () => {
+    await setup('restaurant', 'fr');
+    await fireEvent.press(screen.getByText(/Pratiquer les mots clés/));
+    expect(screen.getAllByText('carte').length).toBeGreaterThan(0); // « menu » en français
+    expect(screen.queryByText('menu')).toBeTruthy(); // le sens (interface en français → sens en anglais)
+    await fireEvent.press(screen.getByLabelText('carte, menu'));
+    expect(mockSpeak).toHaveBeenCalledWith('carte', expect.objectContaining({ lang: 'fr-FR' }));
+  });
+
+  it('l\'anglais reste inchangé: requête targetLang en et voix en-US', async () => {
+    (loadConversation as jest.Mock).mockResolvedValue([{ role: 'assistant', content: 'Welcome!' }]);
+    await setup('restaurant', 'en');
+    await type('Hello');
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
+    expect(mockAsk.mock.calls[0][0]).toMatchObject({ targetLang: 'en' });
+  });
+
+  it('le professeur ouvre la scène en français', async () => {
+    (loadConversation as jest.Mock).mockResolvedValue([]);
+    mockAsk.mockResolvedValue('Bonjour et bienvenue !');
+    await setup('restaurant', 'fr');
+    await waitFor(() => expect(screen.getByText('Bonjour et bienvenue !')).toBeTruthy());
+    expect(mockAsk.mock.calls[0][0]).toMatchObject({ start: true, targetLang: 'fr' });
   });
 });
 

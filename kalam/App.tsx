@@ -54,7 +54,7 @@ function Root() {
   const pickProfile = (p: AgeProfileId) => {
     app.setProfile(p);
     // Le mode enfant n'a pas de test de niveau: tout est guidé.
-    if (p === 'kids') app.setLevel('A1');
+    if (p === 'kids') { app.setTargetLang('en'); app.setLevel('A1'); } // le contenu enfant est en anglais
     home();
   };
 
@@ -62,9 +62,9 @@ function Root() {
 
   let screen: React.ReactNode;
   if (!app.profile) {
-    screen = <ProfilePickerScreen lang={app.uiLang} onPick={pickProfile} onLang={app.setUiLang} />;
+    screen = <ProfilePickerScreen lang={app.uiLang} onPick={pickProfile} onLang={app.setUiLang} target={app.targetLang} onTarget={app.setTargetLang} />;
   } else if (!app.level) {
-    screen = <LevelTestScreen lang={app.uiLang} onDone={app.setLevel} />;
+    screen = <LevelTestScreen lang={app.uiLang} target={app.targetLang} onDone={app.setLevel} />;
   } else if (app.profile === 'kids') {
     // Mode enfant: aucune route vers le chat libre avec l'IA ni vers les leçons adultes.
     if (route.name === 'story' && !timeUp) {
@@ -90,20 +90,20 @@ function Root() {
       onStart={(names, topic) => { void clearConversation(DUO_LESSON_ID).then(() => setRoute({ name: 'duo', names, topic })); }} />;
   } else if (route.name === 'duo') {
     // Conversation à deux: deux personnes, le professeur anime. Jamais disponible en mode enfant (branche ci-dessus).
-    screen = <ChatScreen duo={{ names: route.names }} lang={app.uiLang} lesson={duoLesson(route.names[0], route.names[1], route.topic)} level={app.level} ageProfile={app.profile}
+    screen = <ChatScreen duo={{ names: route.names }} target={app.targetLang} lang={app.uiLang} lesson={duoLesson(route.names[0], route.names[1], route.topic)} level={app.level} ageProfile={app.profile}
       onBack={home} onFinish={(m) => { app.logSession(m); home(); }} />;
   } else if (route.name === 'review') {
-    screen = <ReviewScreen lang={app.uiLang} session={route.session} onAnswer={app.reviewCard} onExit={home} />;
+    screen = <ReviewScreen target={app.targetLang} lang={app.uiLang} session={route.session} onAnswer={app.reviewCard} onExit={home} />;
   } else if (route.name === 'lesson' && getLesson(route.id)) {
-    screen = <ChatScreen lang={app.uiLang} lesson={getLesson(route.id) ?? LESSONS[0]} level={app.level} ageProfile={app.profile}
+    screen = <ChatScreen target={app.targetLang} lang={app.uiLang} lesson={getLesson(route.id) ?? LESSONS[0]} level={app.level} ageProfile={app.profile}
       onBack={home} onFinish={(m) => { app.logSession(m, route.id); home(); }} />;
   } else {
     screen = <HomeScreen lang={app.uiLang} level={app.level} progress={app.progress}
       onOpenLesson={(id) => setRoute({ name: 'lesson', id })} onGoal={app.setGoal}
-      dueCount={buildReviewSession(app.cards, now, 999).length}
-      onReview={() => setRoute({ name: 'review', session: buildReviewSession(app.cards, now) })}
+      dueCount={buildReviewSession(app.cards, now, 999, app.targetLang).length}
+      onReview={() => setRoute({ name: 'review', session: buildReviewSession(app.cards, now, 10, app.targetLang) })}
       onSwitchProfile={() => { app.resetProfile(); home(); }} palette={app.palette} onPalette={app.setPalette}
-      onLang={app.setUiLang} onErase={() => { app.eraseAll(); home(); }} onExport={app.exportData} onDuo={() => setRoute({ name: 'duo-setup' })} today={localDay(new Date(now))} />;
+      onLang={app.setUiLang} onErase={() => { app.eraseAll(); home(); }} onExport={app.exportData} onDuo={() => setRoute({ name: 'duo-setup' })} target={app.targetLang} onTarget={app.setTargetLang} today={localDay(new Date(now))} />;
   }
 
   return (

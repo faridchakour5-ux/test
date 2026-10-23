@@ -17,10 +17,10 @@ import { newCard } from '../domain/srs';
 const noop = () => {};
 
 const screens = (lang: UiLang): Record<string, React.ReactElement> => ({
-  profilePicker: <ProfilePickerScreen lang={lang} onPick={noop} onLang={noop} />,
+  profilePicker: <ProfilePickerScreen lang={lang} onPick={noop} onLang={noop} target="en" onTarget={noop} />,
   levelTest: <LevelTestScreen lang={lang} onDone={noop} />,
   home: <HomeScreen lang={lang} level="A1" progress={initialProgress('2026-01-01')} onOpenLesson={noop} onGoal={noop} dueCount={2} onReview={noop}
-    onSwitchProfile={noop} palette="violet" onPalette={noop} onLang={noop} onErase={noop} onExport={async () => '{}'} onDuo={noop} today="2026-01-01" />,
+    onSwitchProfile={noop} palette="violet" onPalette={noop} onLang={noop} onErase={noop} onExport={async () => '{}'} onDuo={noop} onTarget={noop} today="2026-01-01" />,
   kidsHome: <KidsHomeScreen lang={lang} stars={5} minutesToday={0} dailyLimit={20} onStories={noop} onPlay={noop} onStickers={noop} onParents={noop} />,
   stickers: <StickersScreen lang={lang} stars={9} onBack={noop} />,
   duoSetup: <DuoSetupScreen lang={lang} onStart={noop} onBack={noop} />,

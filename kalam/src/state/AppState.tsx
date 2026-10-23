@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { cardsForLesson } from '../domain/deck';
 import { Level } from '../domain/lessons';
+import { DEFAULT_TARGET, TARGET_LANGS, TargetLang, isTargetLang, lessonKey } from '../domain/targets';
 import { Card, review } from '../domain/srs';
 import { Consent, DailyLimit, grantMic, noConsent, revokeMic } from '../domain/parental';
 import { Progress, XP_PER_REVIEW, localDay, addMinutes, addXp, applyChallenge, completeLesson, initialProgress, noteLessonToday, normalizeProgress } from '../domain/progress';
@@ -13,7 +14,8 @@ import { load, save } from './storage';
 
 interface Persisted {
   profile: AgeProfileId | null;
-  level: Level | null;
+  targetLang: TargetLang; // langue apprise
+  levels: Partial<Record<TargetLang, Level>>; // un niveau PAR langue apprise
   uiLang: UiLang;
   progress: Progress;
   cards: Card[];
@@ -32,10 +34,32 @@ export const initialKids = (): KidsState => ({ stars: 0, storiesRead: [], consen
 
 export const todayStr = () => localDay();
 
-const initial = (): Persisted => ({ profile: null, level: null, uiLang: 'fr', progress: initialProgress(todayStr()), cards: [], kids: initialKids(), palette: DEFAULT_PALETTE });
+const LEVELS: Level[] = ['A1', 'A2', 'B1'];
+
+// Remet d'aplomb une sauvegarde: ancienne version (niveau unique = anglais), valeurs inconnues ou abîmées.
+export function migrate(saved: Partial<Persisted> & { level?: Level | null }): Persisted {
+  const base = initial();
+  const levels: Partial<Record<TargetLang, Level>> = {};
+  if (saved.levels && typeof saved.levels === 'object') {
+    for (const t of TARGET_LANGS) { const l = saved.levels[t]; if (l && LEVELS.includes(l)) levels[t] = l; }
+  }
+  if (saved.level && LEVELS.includes(saved.level) && !levels.en) levels.en = saved.level; // ancienne version: un seul niveau, l'anglais
+  return {
+    ...base,
+    ...saved,
+    targetLang: isTargetLang(saved.targetLang) ? saved.targetLang : DEFAULT_TARGET,
+    levels,
+    progress: normalizeProgress(saved.progress, todayStr()),
+    kids: { ...initialKids(), ...(saved.kids ?? {}) },
+  };
+}
+
+const initial = (): Persisted => ({ profile: null, targetLang: DEFAULT_TARGET, levels: {}, uiLang: 'fr', progress: initialProgress(todayStr()), cards: [], kids: initialKids(), palette: DEFAULT_PALETTE });
 
 interface Ctx extends Persisted {
   ready: boolean;
+  level: Level | null; // niveau dans la langue apprise courante
+  setTargetLang: (t: TargetLang) => void;
   setProfile: (p: AgeProfileId) => void;
   setLevel: (l: Level) => void;
   setUiLang: (l: UiLang) => void;
@@ -60,7 +84,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    load<Persisted>(KEY, initial()).then((s) => { setState({ ...initial(), ...s, progress: normalizeProgress(s.progress, todayStr()), kids: { ...initialKids(), ...(s.kids ?? {}) } }); setReady(true); });
+    load<Persisted & { level?: Level | null }>(KEY, initial()).then((s) => { setState(migrate(s)); setReady(true); });
   }, []);
 
   const update = useCallback((fn: (s: Persisted) => Persisted) => {
@@ -71,18 +95,20 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     ...state,
     ready,
     setProfile: (profile) => update((s) => ({ ...s, profile })),
-    setLevel: (level) => update((s) => ({ ...s, level })),
+    level: state.levels[state.targetLang] ?? null,
+    setLevel: (level) => update((s) => ({ ...s, levels: { ...s.levels, [s.targetLang]: level } })),
+    setTargetLang: (targetLang) => update((s) => ({ ...s, targetLang })),
     setUiLang: (uiLang) => update((s) => ({ ...s, uiLang })),
     setGoal: (g) => update((s) => ({ ...s, progress: { ...s.progress, dailyGoalMinutes: g } })),
     logSession: (minutes, lessonId) => update((s) => {
       const today = todayStr();
       let progress = addMinutes(s.progress, minutes, today);
-      if (lessonId) progress = noteLessonToday(completeLesson(progress, lessonId), today);
+      if (lessonId) progress = noteLessonToday(completeLesson(progress, lessonKey(lessonId, s.targetLang)), today);
       progress = applyChallenge(progress, today);
-      return { ...s, progress, cards: lessonId ? cardsForLesson(lessonId, s.cards, Date.now()) : s.cards };
+      return { ...s, progress, cards: lessonId ? cardsForLesson(lessonId, s.cards, Date.now(), s.targetLang) : s.cards };
     }),
     setPalette: (palette) => update((s) => ({ ...s, palette })),
-    resetProfile: () => update((s) => ({ ...s, profile: null, level: null })),
+    resetProfile: () => update((s) => ({ ...s, profile: null, levels: {} })),
     addStars: (n) => update((s) => ({ ...s, kids: { ...s.kids, stars: s.kids.stars + n } })),
     markStoryRead: (id) => update((s) => ({ ...s, kids: { ...s.kids, storiesRead: s.kids.storiesRead.includes(id) ? s.kids.storiesRead : [...s.kids.storiesRead, id] } })),
     setMicConsent: (on) => update((s) => ({ ...s, kids: { ...s.kids, consent: on ? grantMic(s.kids.consent, Date.now()) : revokeMic(s.kids.consent) } })),

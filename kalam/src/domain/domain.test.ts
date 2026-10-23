@@ -1,5 +1,5 @@
 import { LESSONS, meaning, recommendLessons } from './lessons';
-import { PLACEMENT, scorePlacement } from './level';
+import { PLACEMENT, PLACEMENTS, scorePlacement } from './level';
 import { CHALLENGE_POOL, CHALLENGE_XP, ChallengeId, addMinutes, addXp, applyChallenge, challengeProgress, completeLesson, dailyChallenge, goalReached, initialProgress, isChallengeDone, lastDays, lessonsDoneToday, levelFromXp, localDay, noteLessonToday, normalizeProgress, shiftDay, totalMinutes, xpForLevel } from './progress';
 import { newCard, review } from './srs';
 
@@ -274,5 +274,51 @@ describe('défi du jour', () => {
     expect(n.lessonsToday).toEqual({ day: '2026-03-10', count: 2 });
     expect(n.challengeClaimedDay).toBe('2026-03-09');
     expect(normalizeProgress({ lessonsToday: 'x' } as never, '2026-03-10').lessonsToday).toEqual({ day: '2026-03-10', count: 0 });
+  });
+});
+
+describe('test de niveau par langue', () => {
+  for (const target of ['en', 'fr'] as const) {
+    describe(target, () => {
+      const qs = PLACEMENTS[target];
+      it('12 questions bien formées, 4 par niveau', () => {
+        expect(qs).toHaveLength(12);
+        for (const lvl of ['A1', 'A2', 'B1'] as const) expect(qs.filter((q) => q.level === lvl)).toHaveLength(4);
+        qs.forEach((q) => {
+          expect(q.options).toHaveLength(3);
+          expect(new Set(q.options).size).toBe(3);
+          expect(q.answer).toBeGreaterThanOrEqual(0);
+          expect(q.answer).toBeLessThan(3);
+          expect(q.prompt).toContain('___');
+        });
+        expect(new Set(qs.map((q) => q.answer)).size).toBeGreaterThanOrEqual(3);
+      });
+      it('tout juste -> B1, tout faux -> A1', () => {
+        expect(scorePlacement(qs.map((q) => q.answer), target)).toBe('B1');
+        expect(scorePlacement(qs.map(() => -1), target)).toBe('A1');
+      });
+      it('A1 et A2 justes, B1 faux -> A2', () => {
+        expect(scorePlacement(qs.map((q) => (q.level === 'B1' ? -1 : q.answer)), target)).toBe('A2');
+      });
+    });
+  }
+  it('les questions françaises sont en français (accents conservés)', () => {
+    expect(PLACEMENTS.fr.some((q) => /[àâçéèêëîïôùûü]/i.test(q.prompt + q.options.join(' ')))).toBe(true);
+    expect(PLACEMENTS.fr[0].prompt).toBe('Elle ___ professeur.');
+  });
+  it('sans langue précisée, c\'est l\'anglais (compatibilité)', () => {
+    expect(scorePlacement(PLACEMENT.map((q) => q.answer))).toBe('B1');
+  });
+  it('recommendLessons ne compte que les leçons faites dans CETTE langue', () => {
+    const doneEnglish = ['family', 'greetings', 'numbers'];
+    expect(recommendLessons('A1', doneEnglish, 3, 'en').map((l) => l.id)).not.toContain('family');
+    expect(recommendLessons('A1', doneEnglish, 3, 'fr').map((l) => l.id)).toContain('greetings'); // pas encore faite en français
+    expect(recommendLessons('A1', ['fr:greetings'], 3, 'fr').map((l) => l.id)).not.toContain('greetings');
+  });
+  it('meaning garde son comportement pour l\'anglais et s\'adapte au français', () => {
+    const menu = LESSONS.find((l) => l.id === 'restaurant')!.vocab[0];
+    expect(meaning(menu, 'fr')).toBe('carte');
+    expect(meaning(menu, 'fr', 'fr')).toBe('menu');
+    expect(meaning(menu, 'zh', 'fr')).toBe('菜单');
   });
 });

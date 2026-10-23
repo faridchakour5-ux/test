@@ -4,6 +4,8 @@ import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
 import { Mascot } from '../components/Mascot';
 import { LanguagePicker } from '../components/LanguagePicker';
+import { TargetPicker } from '../components/TargetPicker';
+import { DEFAULT_TARGET, TargetLang, lessonKey } from '../domain/targets';
 import { PalettePicker } from '../components/PalettePicker';
 import { PaletteId } from '../theme/palettes';
 import { KText } from '../components/KText';
@@ -30,10 +32,12 @@ interface Props {
   onErase: () => void;
   onExport: () => Promise<string>;
   onDuo: () => void;
+  target?: TargetLang; // langue apprise
+  onTarget: (t: TargetLang) => void;
   today: string; // jour local courant (YYYY-MM-DD)
 }
 
-export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson, onGoal, dueCount, onReview, onSwitchProfile, palette, onPalette, onLang, onErase, onExport, onDuo, today }: Props) {
+export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson, onGoal, dueCount, onReview, onSwitchProfile, palette, onPalette, onLang, onErase, onExport, onDuo, today, target = DEFAULT_TARGET, onTarget }: Props) {
   // La progression sauvegardée peut dater d'hier: on l'aligne sur le jour courant pour l'affichage.
   const progress = rollDay(storedProgress, today);
   const { colors, profile } = useTheme();
@@ -49,6 +53,7 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
           <KText muted>{t(lang, 'hello')}</KText>
         </View>
       </View>
+      <TargetPicker lang={lang} value={target} onChange={onTarget} />
       <KButton label={`👥 ${t(lang, 'duoTitle')}`} onPress={onDuo} />
       <KButton label={dueCount > 0 ? `${t(lang, 'review')} (${dueCount} ${t(lang, 'reviewDue')})` : t(lang, 'review')} onPress={onReview} />
 
@@ -81,10 +86,10 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
         <WeekChart lang={lang} bars={lastDays(progress, today)} goal={progress.dailyGoalMinutes} lessonsDone={progress.completedLessons.length} />
       </Card>
 
-      {recommendLessons(level, progress.completedLessons).length > 0 && (
+      {recommendLessons(level, progress.completedLessons, 3, target).length > 0 && (
         <>
           <KText size={22} weight="600" accessibilityRole="header">⭐ {t(lang, 'recommended')}</KText>
-          {recommendLessons(level, progress.completedLessons).map((l) => (
+          {recommendLessons(level, progress.completedLessons, 3, target).map((l) => (
             <Pressable key={`rec-${l.id}`} accessibilityRole="button" accessibilityLabel={l.title[lang]} onPress={() => onOpenLesson(l.id)}>
               <Card style={{ flexDirection: rtl ? 'row-reverse' : 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: profile.minTouchSize, borderColor: colors.primary, borderWidth: 2 }}>
                 <KText weight="600">{l.title[lang]}</KText>
@@ -100,7 +105,7 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
         <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={l.title[lang]} onPress={() => onOpenLesson(l.id)}>
           <Card style={{ flexDirection: rtl ? 'row-reverse' : 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: profile.minTouchSize }}>
             <KText weight="600">{l.title[lang]}</KText>
-            <KText muted>{progress.completedLessons.includes(l.id) ? `✓ ${t(lang, 'done')}` : l.level}</KText>
+            <KText muted>{progress.completedLessons.includes(lessonKey(l.id, target)) ? `✓ ${t(lang, 'done')}` : l.level}</KText>
           </Card>
         </Pressable>
       ))}

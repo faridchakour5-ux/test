@@ -5,11 +5,13 @@ import { UiLang } from '../i18n/strings';
 import { PaletteId } from '../theme/palettes';
 import { AgeProfileId } from '../theme/profiles';
 import { Level } from '../domain/lessons';
+import { TargetLang } from '../domain/targets';
 import { KidsState } from './AppState';
 
 export interface ExportableState {
   profile: AgeProfileId | null;
-  level: Level | null;
+  targetLang: TargetLang;
+  levels: Partial<Record<TargetLang, Level>>;
   uiLang: UiLang;
   palette: PaletteId;
   progress: Progress;
@@ -27,7 +29,7 @@ export function buildExport(state: ExportableState, conversations: Record<string
       app: 'kalam',
       formatVersion: EXPORT_FORMAT_VERSION,
       exportedAt: now.toISOString(),
-      settings: { profile: state.profile, level: state.level, interfaceLanguage: state.uiLang, palette: state.palette },
+      settings: { profile: state.profile, learningLanguage: state.targetLang, levels: state.levels, interfaceLanguage: state.uiLang, palette: state.palette },
       progress: state.progress,
       vocabularyCards: state.cards,
       kidsMode: {

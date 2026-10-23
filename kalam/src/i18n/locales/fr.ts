@@ -7,13 +7,13 @@ export const fr = {
   openSettings: 'Ouvrir les réglages',
   pBlocked: 'Le micro est bloqué. Ouvrez les réglages pour l\'autoriser.',
   pMicNetwork: 'Connexion trop faible pour la reconnaissance vocale. Réessayez ou écrivez.',
-  pLanguage: 'L\'anglais n\'est pas installé pour la reconnaissance vocale sur cet appareil.',
+  pLanguage: 'La reconnaissance vocale ({target}) n\'est pas installée sur cet appareil.',
   pMic: 'Le micro a eu un problème. Réessayez ou écrivez votre message.',
   pOffline: 'Pas de connexion. Votre message est gardé, réessayez dans un instant.',
   pTimeout: 'Le professeur met trop de temps à répondre. Réessayez.',
   pServer: 'Le professeur est indisponible. Votre message est gardé, réessayez.',
   pRate: 'Trop de messages d\'un coup. Attendez un instant puis réessayez.',
-  noVoice: 'Aucune voix anglaise n\'est installée sur cet appareil. Installez-en une dans les réglages « Synthèse vocale » pour entendre le professeur.',
+  noVoice: 'Aucune voix ({target}) n\'est installée sur cet appareil. Installez-en une dans les réglages « Synthèse vocale » pour entendre le professeur.',
   newChat: 'Nouvelle conversation',
   stopVoice: 'Arrêter la voix',
   colors: 'Couleurs',
@@ -90,7 +90,7 @@ export const fr = {
   minutes: 'min',
   streak: 'Jours d\'affilée',
   done: 'Terminée',
-  typeHere: 'Écrivez en anglais…',
+  typeHere: 'Écrivez votre message…',
   send: 'Envoyer',
   listen: 'Écouter',
   back: 'Retour',
@@ -132,6 +132,7 @@ export const fr = {
   duoStart: 'Commencer la conversation',
   duoTurn: 'Au tour de',
   anyTopic: 'Au choix',
+  learnLang: 'Langue à apprendre',
 } as const;
 
 export type StringKey = keyof typeof fr;

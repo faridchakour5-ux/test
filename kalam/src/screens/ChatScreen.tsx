@@ -10,17 +10,19 @@ import { PronunciationPractice } from '../components/PronunciationPractice';
 import { Lesson, Level, VocabItem, meaning } from '../domain/lessons';
 import { PROBLEM_TEXT, RETRYABLE_SEND, problemFromListen, problemFromTeacher } from '../speech/problems';
 import { initialTurn, turnReducer } from '../domain/voiceTurn';
-import { UiLang, t } from '../i18n/strings';
+import { UiLang, t, tf } from '../i18n/strings';
 import { cancelListening, isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
 import { createSentenceSplitter } from '../speech/sentences';
 import { tts } from '../speech/tts';
 import { parseTagged, tagMessage } from '../domain/duo';
+import { DEFAULT_TARGET, TARGET_LOCALE, TARGET_NAMES, TargetLang, targetText } from '../domain/targets';
 import { FREE_LESSON_ID, FREE_TOPICS, FreeTopic, getFreeTopic } from '../domain/freeTopics';
 import { clearConversation, loadConversation, loadTopicId, saveConversation, saveTopicId } from '../state/conversations';
 import { AgeProfileId } from '../theme/profiles';
 import { useTheme } from '../theme/ThemeProvider';
 
 interface Props {
+  target?: TargetLang; // langue apprise
   duo?: { names: [string, string] }; // mode « conversation à deux »
   lang: UiLang;
   lesson: Lesson;
@@ -30,7 +32,8 @@ interface Props {
   onBack: () => void;
 }
 
-export function ChatScreen({ duo, lang, lesson, level, ageProfile, onFinish, onBack }: Props) {
+export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, ageProfile, onFinish, onBack }: Props) {
+  const locale = TARGET_LOCALE[target]; // voix et micro dans la langue apprise
   const { colors, profile } = useTheme();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -64,11 +67,11 @@ export function ChatScreen({ duo, lang, lesson, level, ageProfile, onFinish, onB
       setTopic(getFreeTopic(topicId) ?? null);
       setLoaded(true);
     });
-    tts.hasVoice('en-US').then((ok) => { if (mounted.current) setNoVoice(!ok); });
+    tts.hasVoice(locale).then((ok) => { if (mounted.current) setNoVoice(!ok); });
     // `token` est un compteur volontairement lu à la fermeture: il sert à invalider les opérations en vol.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     return () => { mounted.current = false; token.current++; streamAbort.current?.abort(); void tts.stop(); cancelListening(); };
-  }, [lesson.id, isFree]);
+  }, [lesson.id, isFree, locale]);
 
   // Sauvegarde locale à chaque changement: rien n'est perdu si l'app est fermée.
   useEffect(() => { if (loaded) void saveConversation(lesson.id, messages); }, [messages, loaded, lesson.id]);
@@ -76,16 +79,16 @@ export function ChatScreen({ duo, lang, lesson, level, ageProfile, onFinish, onB
   const scrollEnd = () => setTimeout(() => scroller.current?.scrollToEnd({ animated: true }), 60);
 
   const speak = useCallback(async (text: string, myToken: number) => {
-    const outcome = await tts.speak(text, { lang: 'en-US', rate: profile.speechRate });
+    const outcome = await tts.speak(text, { lang: locale, rate: profile.speechRate });
     if (!mounted.current || myToken !== token.current) return;
     if (outcome !== 'stopped') dispatch({ type: 'SPOKEN' });
-  }, [profile.speechRate]);
+  }, [profile.speechRate, locale]);
 
   // Demande la réponse du professeur pour la conversation donnée.
   const requestReply = useCallback(async (history: ChatMessage[]) => {
     const myToken = ++token.current;
     const opening = history.length === 0; // aucun message: le professeur ouvre la scène
-    const request = { ageProfile, level, scenario, uiLang: lang, messages: history.slice(-20), ...(opening ? { start: true } : {}) };
+    const request = { ageProfile, level, scenario, uiLang: lang, targetLang: target, messages: history.slice(-20), ...(opening ? { start: true } : {}) };
     const live = () => mounted.current && myToken === token.current;
     streamAbort.current?.abort(); // une seule réponse en cours à la fois
     const abort = new AbortController();
@@ -94,7 +97,7 @@ export function ChatScreen({ duo, lang, lesson, level, ageProfile, onFinish, onB
     // Réponse en flux: le texte s'affiche et la voix démarre dès la première phrase complète.
     if (streamingEnabled()) {
       const splitter = createSentenceSplitter();
-      const voice = tts.speakStream({ lang: 'en-US', rate: profile.speechRate });
+      const voice = tts.speakStream({ lang: locale, rate: profile.speechRate });
       let started = false;
       try {
         await askTeacherStream(request, {
@@ -137,7 +140,7 @@ export function ChatScreen({ duo, lang, lesson, level, ageProfile, onFinish, onB
       if (!mounted.current || myToken !== token.current) return;
       dispatch({ type: 'SEND_FAIL', problem: problemFromTeacher(e instanceof TeacherError ? e.kind : 'server') });
     }
-  }, [ageProfile, level, scenario, lang, speak, profile.speechRate]);
+  }, [ageProfile, level, scenario, lang, speak, profile.speechRate, locale, target]);
 
   // Conversation vide: c'est le professeur qui prend la parole en premier, comme dans un vrai jeu de rôle.
   const opened = useRef(false);
@@ -174,14 +177,14 @@ export function ChatScreen({ duo, lang, lesson, level, ageProfile, onFinish, onB
     setPartial('');
     (async () => {
       await tts.stop(); // le micro ne doit jamais capter la voix du professeur
-      const r = await listenOnce({ lang: 'en-US', patienceMs: profile.speechPatienceMs, onPartial: (p) => { if (mounted.current && myToken === token.current) setPartial(p); } });
+      const r = await listenOnce({ lang: locale, patienceMs: profile.speechPatienceMs, onPartial: (p) => { if (mounted.current && myToken === token.current) setPartial(p); } });
       listening.current = false;
       if (!mounted.current || myToken !== token.current) return;
       setPartial('');
       if (r.ok) submit(r.transcript, true);
       else if (r.reason !== 'cancelled') dispatch({ type: 'HEARD_FAIL', problem: problemFromListen(r.reason) });
     })();
-  }, [turn.listenId, turn.phase, profile.speechPatienceMs, submit]);
+  }, [turn.listenId, turn.phase, profile.speechPatienceMs, submit, locale]);
 
   const stopAll = () => {
     token.current++;
@@ -230,7 +233,7 @@ export function ChatScreen({ duo, lang, lesson, level, ageProfile, onFinish, onB
           <Mascot mood={mood} size={profile.id === 'kids' ? 90 : 56} />
           <View style={{ flex: 1 }}>
             <KText size={22} weight="800" accessibilityRole="header">{lesson.title[lang] ?? lesson.title.en}</KText>
-            <KText size={13} muted accessibilityLiveRegion="polite">{status || lesson.vocab.map((v) => v.en).join(' · ')}</KText>
+            <KText size={13} muted accessibilityLiveRegion="polite">{status || lesson.vocab.map((v) => targetText(v, target)).join(' · ')}</KText>
           </View>
         </View>
       </View>
@@ -244,15 +247,15 @@ export function ChatScreen({ duo, lang, lesson, level, ageProfile, onFinish, onB
             <KText size={13} muted>{t(lang, 'practiceHint')}</KText>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {lesson.vocab.map((v) => (
-                <Pressable key={v.en} accessibilityRole="button" accessibilityLabel={`${v.en}, ${meaning(v, lang)}`} accessibilityState={{ selected: practiceItem?.en === v.en }}
-                  onPress={() => { stopAll(); setPracticeItem(v); void tts.speak(v.en, { lang: 'en-US', rate: profile.speechRate }); }}
+                <Pressable key={v.en} accessibilityRole="button" accessibilityLabel={`${targetText(v, target)}, ${meaning(v, lang, target)}`} accessibilityState={{ selected: practiceItem?.en === v.en }}
+                  onPress={() => { stopAll(); setPracticeItem(v); void tts.speak(targetText(v, target), { lang: locale, rate: profile.speechRate }); }}
                   style={{ minHeight: 48, paddingHorizontal: 12, borderRadius: profile.radius, justifyContent: 'center', borderWidth: practiceItem?.en === v.en ? 3 : 1, borderColor: practiceItem?.en === v.en ? colors.primary : colors.border }}>
-                  <KText weight="600">{v.en}</KText>
-                  <KText size={12} muted>{meaning(v, lang)}</KText>
+                  <KText weight="600">{targetText(v, target)}</KText>
+                  <KText size={12} muted>{meaning(v, lang, target)}</KText>
                 </Pressable>
               ))}
             </View>
-            {practiceItem && <PronunciationPractice lang={lang} expected={practiceItem.en} />}
+            {practiceItem && <PronunciationPractice lang={lang} target={target} expected={targetText(practiceItem, target)} />}
           </Card>
         )}
         {isFree && loaded && !topic && messages.length === 0 && (
@@ -270,7 +273,7 @@ export function ChatScreen({ duo, lang, lesson, level, ageProfile, onFinish, onB
           </Card>
         )}
         {isFree && topic && <KText size={13} muted>{topic.emoji} {topic.title[lang]}</KText>}
-        {noVoice && <KText size={14} style={{ color: colors.warning }}>⚠ {t(lang, 'noVoice')}</KText>}
+        {noVoice && <KText size={14} style={{ color: colors.warning }}>⚠ {tf(lang, 'noVoice', { target: TARGET_NAMES[lang][target] })}</KText>}
         {messages.map((m, i) => (
           <Card key={i} style={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '88%', backgroundColor: m.role === 'user' ? colors.primary : colors.surface }}>
             {duo && m.role === 'user' ? (
@@ -282,7 +285,7 @@ export function ChatScreen({ duo, lang, lesson, level, ageProfile, onFinish, onB
               <KText style={{ color: m.role === 'user' ? colors.onPrimary : colors.text }}>{m.content}</KText>
             )}
             {m.role === 'assistant' && (
-              <Pressable accessibilityRole="button" accessibilityLabel={t(lang, 'listen')} onPress={() => { stopAll(); void tts.speak(m.content, { lang: 'en-US', rate: profile.speechRate }); }} style={{ minHeight: 44, justifyContent: 'center' }}>
+              <Pressable accessibilityRole="button" accessibilityLabel={t(lang, 'listen')} onPress={() => { stopAll(); void tts.speak(m.content, { lang: locale, rate: profile.speechRate }); }} style={{ minHeight: 44, justifyContent: 'center' }}>
                 <KText weight="600" style={{ color: colors.primary }}>🔊 {t(lang, 'listen')}</KText>
               </Pressable>
             )}

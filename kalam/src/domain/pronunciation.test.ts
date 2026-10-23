@@ -29,4 +29,23 @@ describe('pronunciation', () => {
     expect(r.score).toBe(0);
     expect(r.words.map((w) => w.status)).toEqual(['missing', 'missing']);
   });
+
+  it('conserve les lettres accentuées du français et de l\'espagnol', () => {
+    expect(normalize('Où est la gare ?')).toEqual(['où', 'est', 'la', 'gare']);
+    expect(normalize('¿Dónde está el baño?')).toEqual(['dónde', 'está', 'el', 'baño']);
+    expect(normalize("J'ai mal à la tête")).toEqual(['jai', 'mal', 'à', 'la', 'tête']);
+  });
+  it('évalue une phrase française identique à 100 % et signale un mot manquant', () => {
+    expect(evaluatePronunciation('Je voudrais de l\'eau', 'je voudrais de l\'eau').score).toBe(100);
+    const r = evaluatePronunciation('Je voudrais de l\'eau', 'je voudrais eau');
+    expect(r.words.map((w) => w.status)).toContain('missing');
+  });
+  it('évalue l\'espagnol: « año » entendu comme « ano » n\'est pas « correct »', () => {
+    const r = evaluatePronunciation('año', 'ano');
+    expect(r.words[0].status).not.toBe('correct');
+    expect(evaluatePronunciation('mañana', 'mañana').score).toBe(100);
+  });
+  it('une forme décomposée (e + accent) est reconnue comme la forme composée', () => {
+    expect(evaluatePronunciation('café', 'cafe\u0301').score).toBe(100);
+  });
 });

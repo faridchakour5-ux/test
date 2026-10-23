@@ -1,4 +1,5 @@
 import { Level } from './lessons';
+import { DEFAULT_TARGET, TargetLang } from './targets';
 
 // Test de niveau: chaque question vaut un niveau CEFR. Un parcours adaptatif simple.
 export interface PlacementQuestion {
@@ -8,7 +9,7 @@ export interface PlacementQuestion {
   level: Level;
 }
 
-export const PLACEMENT: PlacementQuestion[] = [
+export const PLACEMENT_EN: PlacementQuestion[] = [
   { prompt: 'She ___ a teacher.', options: ['is', 'are', 'am'], answer: 0, level: 'A1' },
   { prompt: 'I ___ coffee every morning.', options: ['drinks', 'drink', 'drinking'], answer: 1, level: 'A1' },
   { prompt: 'This is ___ apple.', options: ['a', 'an', 'the'], answer: 1, level: 'A1' },
@@ -23,12 +24,33 @@ export const PLACEMENT: PlacementQuestion[] = [
   { prompt: 'The report ___ by the team yesterday.', options: ['wrote', 'was written', 'has write'], answer: 1, level: 'B1' },
 ];
 
+export const PLACEMENT_FR: PlacementQuestion[] = [
+  { prompt: 'Elle ___ professeur.', options: ['est', 'es', 'suis'], answer: 0, level: 'A1' },
+  { prompt: 'Nous ___ du café le matin.', options: ['boivent', 'buvons', 'bois'], answer: 1, level: 'A1' },
+  { prompt: 'J\'habite ___ Paris.', options: ['en', 'à', 'au'], answer: 1, level: 'A1' },
+  { prompt: 'Ils ___ de Madrid.', options: ['sommes', 'est', 'sont'], answer: 2, level: 'A1' },
+  { prompt: 'Hier, nous ___ au marché.', options: ['allons', 'sommes allés', 'irons'], answer: 1, level: 'A2' },
+  { prompt: 'Je ___ lève à sept heures.', options: ['me', 'te', 'se'], answer: 0, level: 'A2' },
+  { prompt: 'Cette voiture est ___ que l\'autre.', options: ['plus rapide', 'rapide plus', 'plus rapidement'], answer: 0, level: 'A2' },
+  { prompt: 'Elle a ___ fini ses devoirs.', options: ['déjà', 'demain', 'toujours'], answer: 0, level: 'A2' },
+  { prompt: 'Si j\'avais plus de temps, je ___ plus de livres.', options: ['lirai', 'lis', 'lirais'], answer: 2, level: 'B1' },
+  { prompt: 'J\'habite ici ___ 2019.', options: ['pendant', 'depuis', 'il y a'], answer: 1, level: 'B1' },
+  { prompt: 'Quand j\'étais enfant, j\'___ à la campagne.', options: ['habitais', 'habite', 'habiterai'], answer: 0, level: 'B1' },
+  { prompt: 'Le rapport ___ par l\'équipe hier.', options: ['a écrit', 'a été écrit', 'est écrire'], answer: 1, level: 'B1' },
+];
+
+export const PLACEMENTS: Record<TargetLang, PlacementQuestion[]> = { en: PLACEMENT_EN, fr: PLACEMENT_FR };
+
+// Compatibilité: l'ancien nom désigne le test d'anglais.
+export const PLACEMENT = PLACEMENT_EN;
+
 // Le niveau est le plus haut dont au moins la moitié des questions sont justes, sans casser la chaîne.
-export function scorePlacement(answers: number[]): Level {
+export function scorePlacement(answers: number[], target: TargetLang = DEFAULT_TARGET): Level {
+  const questions = PLACEMENTS[target];
   const order: Level[] = ['A1', 'A2', 'B1'];
   let result: Level = 'A1';
   for (const lvl of order) {
-    const qs = PLACEMENT.map((q, i) => ({ q, i })).filter(({ q }) => q.level === lvl);
+    const qs = questions.map((q, i) => ({ q, i })).filter(({ q }) => q.level === lvl);
     const good = qs.filter(({ q, i }) => answers[i] === q.answer).length;
     if (good * 2 >= qs.length && good > 0) result = lvl;
     else break;

@@ -1,4 +1,4 @@
-import { LANG_NAMES, UI_LANGS, isRtl, pick, t } from './strings';
+import { LANG_NAMES, UI_LANGS, isRtl, pick, t, tf } from './strings';
 import { ar } from './locales/ar';
 import { en } from './locales/en';
 import { es } from './locales/es';
@@ -34,5 +34,20 @@ describe('i18n', () => {
     expect(t('es', 'welcome')).toBe('Bienvenido a Kalam');
     expect(pick({ fr: 'a', en: 'b' }, 'zh')).toBe('b');
     expect(pick({ fr: 'a' }, 'zh')).toBe('a');
+  });
+
+  it('tf remplace {target} dans toutes les langues et ne laisse aucune accolade', () => {
+    for (const lang of UI_LANGS) {
+      for (const key of ['noVoice', 'pLanguage'] as const) {
+        expect(t(lang, key)).toContain('{target}');
+        const out = tf(lang, key, { target: 'FRTEST' });
+        expect(out).toContain('FRTEST');
+        expect(out).not.toMatch(/[{}]/);
+      }
+    }
+    expect(tf('fr', 'noVoice', {})).not.toContain('{'); // variable manquante: vide, jamais « {target} » affiché
+  });
+  it('« Écrivez en anglais » n\'existe plus: le champ de saisie vaut pour toutes les langues apprises', () => {
+    for (const lang of UI_LANGS) expect(t(lang, 'typeHere')).not.toMatch(/anglais|English|إنجليزية|inglés|英/i);
   });
 });

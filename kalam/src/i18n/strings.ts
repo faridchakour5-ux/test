@@ -19,6 +19,11 @@ export const isRtl = (lang: UiLang) => RTL_LANGS.includes(lang);
 // Repli sur le français puis l'anglais si une langue venait à manquer d'un texte.
 export const t = (lang: UiLang, key: StringKey): string => STRINGS[lang]?.[key] ?? fr[key] ?? key;
 
+// Texte avec variables: « {target} » est remplacé par la valeur fournie.
+export function tf(lang: UiLang, key: StringKey, vars: Record<string, string>): string {
+  return t(lang, key).replace(/\{(\w+)\}/g, (_m, name: string) => vars[name] ?? '');
+}
+
 // Choisit le texte d'un contenu multilingue (titres, traductions) avec repli sûr.
 export function pick<T extends Partial<Record<UiLang, string>>>(obj: T, lang: UiLang): string {
   return obj[lang] ?? obj.en ?? obj.fr ?? '';

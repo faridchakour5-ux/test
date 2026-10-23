@@ -49,7 +49,7 @@ async function setup() {
   await act(async () => {});
 }
 const type = async (text: string) => {
-  await fireEvent.changeText(screen.getByPlaceholderText('Écrivez en anglais…'), text);
+  await fireEvent.changeText(screen.getByPlaceholderText('Écrivez votre message…'), text);
   await fireEvent.press(screen.getByText('Envoyer'));
 };
 

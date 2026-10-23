@@ -14,11 +14,13 @@ export interface PronunciationResult {
   score: number; // 0-100
 }
 
+// Mots d'une phrase, en minuscules, avec les lettres de toute langue (é, ñ, ç, ü…) conservées.
 export const normalize = (text: string): string[] =>
   text
+    .normalize('NFC')
     .toLowerCase()
-    .replace(/[’']/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/[’'`]/g, '')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
     .split(/\s+/)
     .filter(Boolean);
 

@@ -367,8 +367,8 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
         />
         <KButton label={t(lang, 'send')} onPress={sendTyped} />
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <View style={{ flex: 1 }}><KButton label={t(lang, 'finish')} onPress={finish} /></View>
-          {messages.length > 0 && <View style={{ flex: 1 }}><KButton label={t(lang, 'newChat')} onPress={() => { void newConversation(); }} /></View>}
+          <View style={{ flex: 1 }}><KButton variant="secondary" label={t(lang, 'finish')} onPress={finish} /></View>
+          {messages.length > 0 && <View style={{ flex: 1 }}><KButton variant="secondary" label={t(lang, 'newChat')} onPress={() => { void newConversation(); }} /></View>}
         </View>
       </View>
     </KeyboardAvoidingView>

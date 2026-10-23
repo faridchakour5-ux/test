@@ -21,9 +21,16 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test -- --ci
-      # Les jours, séries et objectifs dépendent du fuseau horaire: on rejoue la logique dans deux fuseaux extrêmes.
-      - run: TZ=Pacific/Kiritimati npx jest --ci src/domain src/state
-      - run: TZ=America/Los_Angeles npx jest --ci src/domain src/state
+      # Les jours, séries et objectifs dépendent du fuseau horaire: toute la suite est rejouée dans deux fuseaux extrêmes
+      # (Kiritimati, UTC+14, et Los Angeles, avec heure d'été), en plus du fuseau par défaut du serveur (UTC).
+      - name: Tests dans le fuseau Pacific/Kiritimati
+        run: npm test -- --ci
+        env:
+          TZ: Pacific/Kiritimati
+      - name: Tests dans le fuseau America/Los_Angeles
+        run: npm test -- --ci
+        env:
+          TZ: America/Los_Angeles
 
   backend:
     runs-on: ubuntu-latest

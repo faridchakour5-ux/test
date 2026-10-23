@@ -49,6 +49,7 @@ export function KidsHomeScreen({ lang, stars, minutesToday, dailyLimit, onStorie
 
       <View style={{ alignItems: 'center' }}>
         <Mascot mood={up ? 'sleepy' : 'cheer'} size={200} />
+        <KText size={32} weight="800" accessibilityRole="header">Kalam</KText>
       </View>
 
       {up ? (

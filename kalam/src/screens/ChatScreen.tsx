@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Switch, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, TextInput, View } from 'react-native';
 import { ChatMessage, TeacherError, askTeacher, askTeacherStream, streamingEnabled } from '../api/teacher';
 import { BackButton } from '../components/BackButton';
 import { Card } from '../components/Card';
@@ -12,6 +12,7 @@ import { PROBLEM_TEXT, RETRYABLE_SEND, problemFromListen, problemFromTeacher } f
 import { initialTurn, turnReducer } from '../domain/voiceTurn';
 import { UiLang, t, tf } from '../i18n/strings';
 import { cancelListening, isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
+import { openAppSettings } from '../speech/openSettings';
 import { createSentenceSplitter } from '../speech/sentences';
 import { tts } from '../speech/tts';
 import { useStopInBackground } from '../speech/useStopInBackground';
@@ -322,7 +323,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
       {turn.problem && (
         <View accessibilityLiveRegion="assertive" style={{ paddingHorizontal: 24, paddingBottom: 8, gap: 8 }}>
           <KText size={14} style={{ color: colors.danger }}>{t(lang, PROBLEM_TEXT[turn.problem])}</KText>
-          {turn.problem === 'permission-blocked' && <KButton label={t(lang, 'openSettings')} onPress={() => { void Linking.openSettings(); }} />}
+          {turn.problem === 'permission-blocked' && <KButton label={t(lang, 'openSettings')} onPress={() => { void openAppSettings(); }} />}
           {RETRYABLE_SEND.includes(turn.problem) && (lastIsUser || messages.length === 0) && <KButton label={t(lang, 'retry')} onPress={retrySend} />}
         </View>
       )}

@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Linking, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { PronunciationResult, WordStatus, evaluatePronunciation } from '../domain/pronunciation';
 import { UiLang, StringKey, t } from '../i18n/strings';
 import { DEFAULT_TARGET, TARGET_LOCALE, TargetLang } from '../domain/targets';
 import { PROBLEM_TEXT, problemFromListen } from '../speech/problems';
 import { cancelListening, isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
+import { openAppSettings } from '../speech/openSettings';
 import { tts } from '../speech/tts';
 import { useStopInBackground } from '../speech/useStopInBackground';
 import { useTheme } from '../theme/ThemeProvider';
@@ -84,7 +85,7 @@ export function PronunciationPractice({ lang, expected, onResult, target = DEFAU
       {listening && !!heardLive && <KText muted accessibilityLiveRegion="polite">“{heardLive}”</KText>}
       {message && <KText accessibilityLiveRegion="polite" style={{ color: colors.danger }}>{t(lang, message)}</KText>}
       {blocked && (
-        <Pressable accessibilityRole="button" onPress={() => { void Linking.openSettings(); }} style={{ minHeight: 48, justifyContent: 'center' }}>
+        <Pressable accessibilityRole="button" onPress={() => { void openAppSettings(); }} style={{ minHeight: 48, justifyContent: 'center' }}>
           <KText weight="600" style={{ color: colors.primary }}>{t(lang, 'openSettings')}</KText>
         </Pressable>
       )}

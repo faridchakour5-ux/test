@@ -4,6 +4,11 @@ Apprendre les langues en parlant. Monorepo:
 - `kalam/` : application mobile (Expo, React Native, TypeScript)
 - `backend/` : serveur qui garde la clé API et appelle le professeur IA
 
+## Documentation
+- `docs/ARCHITECTURE.md` : comment l'application est construite et pourquoi (plan du dépôt, parcours d'un message, décisions, tests, recettes).
+- `docs/APPRENDRE.md` : un parcours d'exercices pour apprendre à programmer sur ce projet.
+- `PRIVACY.md` (confidentialité) et `PUBLISHING.md` (mise en ligne).
+
 ## Lancer en local
 ```
 cd backend && npm install && ANTHROPIC_API_KEY=sk-... npm start

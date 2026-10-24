@@ -13,3 +13,16 @@ function resolveAppId(value, fallback) {
 }
 
 module.exports = { resolveAppId, PATTERN };
+
+// Garde-fou de construction: un build de PRODUCTION sans adresse HTTPS du serveur donnerait une app qui affiche « problème de
+// configuration » chez tout le monde. On échoue à la construction (EAS fournit EAS_BUILD_PROFILE), pas chez les utilisateurs.
+function checkProductionEnv(env) {
+  if (env.EAS_BUILD_PROFILE !== 'production') return null;
+  const url = (env.EXPO_PUBLIC_API_URL || '').trim();
+  if (!/^https:\/\/[^/\s]+/i.test(url)) {
+    return 'Build de production sans EXPO_PUBLIC_API_URL en https. Créez-la avec: eas env:create --environment production --name EXPO_PUBLIC_API_URL --value https://votre-serveur --visibility plaintext';
+  }
+  return null;
+}
+
+module.exports.checkProductionEnv = checkProductionEnv;

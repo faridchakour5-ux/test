@@ -10,7 +10,7 @@ Tout se fait depuis VOTRE ordinateur: les identifiants Google/Apple ne doivent j
 5. Mettez cette URL dans `EXPO_PUBLIC_API_URL` avant de construire l'app (HTTPS obligatoire).
 
 ## 2. Build Android (.aab)
-**Avant le tout premier envoi: choisissez votre identifiant d'application.** `com.kalam.app` est un exemple et peut déjà être pris sur Google Play. L'identifiant ne peut plus changer après le premier envoi. Aucun fichier à modifier: donnez-le à EAS dans la variable `KALAM_APP_ID` (par exemple `com.votrenom.kalam`, voir la commande `eas env:create` ci-dessous). Il s'applique à Android et à iOS (`kalam/app.config.js`), et un identifiant mal formé fait échouer la construction tout de suite avec un message clair.
+**Avant le tout premier envoi: choisissez votre identifiant d'application.** `com.kalam.app` est un exemple et peut déjà être pris sur Google Play. L'identifiant ne peut plus changer après le premier envoi. Aucun fichier à modifier: donnez-le à EAS dans la variable `KALAM_APP_ID` (par exemple `com.votrenom.kalam`, voir la commande `eas env:create` ci-dessous). Il s'applique à Android et à iOS (`kalam/app.config.js`), et un identifiant mal formé fait échouer la construction tout de suite avec un message clair. De même, un build `production` sans `EXPO_PUBLIC_API_URL` en https échoue à la construction (avec la commande à lancer) au lieu de livrer une app qui ne peut parler à aucun serveur.
 
 ```
 npm i -g eas-cli

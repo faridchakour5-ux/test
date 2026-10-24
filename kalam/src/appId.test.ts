@@ -1,7 +1,7 @@
 import appJson from '../app.json';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const { resolveAppId } = require('../scripts/appId') as { resolveAppId: (v: unknown, fallback: string) => string };
+const { resolveAppId, checkProductionEnv } = require('../scripts/appId') as { resolveAppId: (v: unknown, fallback: string) => string; checkProductionEnv: (e: Record<string, string | undefined>) => string | null };
 const makeConfig = require('../app.config') as (a: { config: Record<string, any> }) => any;
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -46,5 +46,34 @@ describe('app.config.js', () => {
   it('variable mal formée: la construction échoue au lieu de produire un identifiant refusé par le store', () => {
     process.env.KALAM_APP_ID = 'pas un identifiant';
     expect(() => makeConfig({ config: base })).toThrow(/KALAM_APP_ID invalide/);
+  });
+});
+
+describe('garde-fou de construction (production)', () => {
+  it('hors build de production (développement, aperçu, local): rien n\'est exigé', () => {
+    for (const profile of [undefined, '', 'development', 'preview']) expect(checkProductionEnv({ EAS_BUILD_PROFILE: profile })).toBeNull();
+  });
+  it('production avec une adresse HTTPS: accepté', () => {
+    expect(checkProductionEnv({ EAS_BUILD_PROFILE: 'production', EXPO_PUBLIC_API_URL: 'https://api.kalam.app' })).toBeNull();
+    expect(checkProductionEnv({ EAS_BUILD_PROFILE: 'production', EXPO_PUBLIC_API_URL: ' https://api.kalam.app/v1 ' })).toBeNull();
+  });
+  it('production sans adresse, en http, ou sans nom d\'hôte: refusé avec la commande à lancer', () => {
+    for (const url of [undefined, '', 'http://api.kalam.app', 'https://', 'localhost:8787']) {
+      expect(checkProductionEnv({ EAS_BUILD_PROFILE: 'production', EXPO_PUBLIC_API_URL: url })).toMatch(/eas env:create/);
+    }
+  });
+  it('app.config.js applique ce garde-fou', () => {
+    const base = appJson.expo as unknown as Record<string, any>;
+    const keep = { p: process.env.EAS_BUILD_PROFILE, u: process.env.EXPO_PUBLIC_API_URL };
+    try {
+      process.env.EAS_BUILD_PROFILE = 'production';
+      delete process.env.EXPO_PUBLIC_API_URL;
+      expect(() => makeConfig({ config: base })).toThrow(/EXPO_PUBLIC_API_URL/);
+      process.env.EXPO_PUBLIC_API_URL = 'https://api.kalam.app';
+      expect(makeConfig({ config: base }).name).toBe('Kalam');
+    } finally {
+      if (keep.p === undefined) delete process.env.EAS_BUILD_PROFILE; else process.env.EAS_BUILD_PROFILE = keep.p;
+      if (keep.u === undefined) delete process.env.EXPO_PUBLIC_API_URL; else process.env.EXPO_PUBLIC_API_URL = keep.u;
+    }
   });
 });

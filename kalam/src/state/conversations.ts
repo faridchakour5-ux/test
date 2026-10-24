@@ -37,7 +37,7 @@ export async function clearAllKalamData(): Promise<void> {
   try {
     const keys = await AsyncStorage.getAllKeys();
     const mine = keys.filter((k) => k.startsWith('kalam:'));
-    if (mine.length) await AsyncStorage.removeMany(mine);
+    if (mine.length) await AsyncStorage.multiRemove(mine);
   } catch { /* ignoré */ }
 }
 

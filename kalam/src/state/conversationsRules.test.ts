@@ -12,7 +12,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
     setItem: async (k: string, v: string) => { if (mockFail.on) throw new Error('x'); mockStore.set(k, v); },
     removeItem: async (k: string) => { if (mockFail.on) throw new Error('x'); mockStore.delete(k); },
     getAllKeys: async () => { if (mockFail.on) throw new Error('x'); return [...mockStore.keys()]; },
-    removeMany: async (ks: string[]) => { if (mockFail.on) throw new Error('x'); ks.forEach((k) => mockStore.delete(k)); },
+    multiRemove: async (ks: string[]) => { if (mockFail.on) throw new Error('x'); ks.forEach((k) => mockStore.delete(k)); },
   },
 }));
 

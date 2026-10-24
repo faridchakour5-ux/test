@@ -110,6 +110,7 @@ La CI (`.github/workflows/ci.yml`) les lance à chaque envoi.
 
 **Ajouter une leçon** : ajoutez-la dans `kalam/src/domain/lessons.ts`, puis ses traductions dans
 `kalam/src/domain/translations.ts` (mots et titre). Si une traduction manque, l'application et les tests le signalent.
+**Ajouter des mots à une leçon** : toujours **à la fin** de sa liste. Les cartes de révision déjà enregistrées pointent sur « leçon:numéro », donc réordonner ou insérer au milieu changerait le sens des cartes des utilisateurs (un test fige les 4 premiers mots de chaque leçon).
 
 **Ajouter une langue d'interface** : un fichier dans `kalam/src/i18n/locales/` typé pour avoir exactement les mêmes clés
 que le français (une clé oubliée empêche la compilation), puis `kalam/src/i18n/strings.ts`, les traductions du contenu

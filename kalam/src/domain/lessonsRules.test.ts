@@ -13,11 +13,17 @@ describe('contenu des leçons', () => {
       expect(l.id).toMatch(/^[a-z]+$/);
     }
   });
-  it('titre dans les 5 langues d\'interface et 4 mots de vocabulaire traduits partout', () => {
+  it('titre dans les 5 langues d\'interface et 6 mots de vocabulaire traduits partout', () => {
     for (const l of LESSONS) {
       for (const lang of UI_LANGS) expect(l.title[lang].trim()).not.toBe('');
-      expect(l.vocab).toHaveLength(4);
+      expect(l.vocab).toHaveLength(6);
       for (const v of l.vocab) for (const k of ['en', 'fr', 'ar', 'es', 'zh'] as const) expect(v[k].trim()).not.toBe('');
+    }
+  });
+  it('aucun mot en double dans une même leçon, ni en anglais ni en français', () => {
+    for (const l of LESSONS) {
+      expect(new Set(l.vocab.map((v) => v.en.toLowerCase())).size).toBe(l.vocab.length);
+      expect(new Set(l.vocab.map((v) => v.fr.toLowerCase())).size).toBe(l.vocab.length);
     }
   });
   it('au moins 5 leçons par niveau (de quoi progresser)', () => {
@@ -61,5 +67,46 @@ describe('recommendLessons', () => {
     const r = recommendLessons('A2', doneA2, 3, 'en');
     expect(r[0].id).toBe(a2[a2.length - 1]);
     expect(r.slice(1).every((l) => l.level === 'B1')).toBe(true);
+  });
+});
+
+// Les cartes de révision déjà enregistrées pointent sur « leçon:index »: les 4 premiers mots de chaque leçon ne doivent
+// JAMAIS changer de place ni de sens (on ajoute de nouveaux mots à la FIN).
+describe('compatibilité des sauvegardes existantes', () => {
+  const FIRST_FOUR: Record<string, string[]> = {
+  greetings: ["Hello", "My name is", "Nice to meet you", "How are you?"],
+    family: ["mother", "father", "brother", "sister"],
+    numbers: ["How much is it?", "cheap", "expensive", "I will take it"],
+    restaurant: ["menu", "I would like", "water", "the bill, please"],
+    directions: ["turn left", "turn right", "straight ahead", "Where is...?"],
+    daily: ["wake up", "breakfast", "go to work", "go to bed"],
+    shopping: ["size", "try on", "discount", "receipt"],
+    transport: ["ticket", "platform", "delay", "return ticket"],
+    doctor: ["headache", "fever", "prescription", "It hurts here"],
+    hotel: ["reservation", "key", "single room", "check out"],
+    weather: ["sunny", "rainy", "cold", "It is going to rain"],
+    school: ["homework", "exam", "subject", "I do not understand"],
+    phone: ["Can I speak to", "hold on", "leave a message", "call back"],
+    hobbies: ["I like", "play football", "read books", "free time"],
+    job: ["experience", "strength", "salary", "apply for"],
+    meeting: ["agenda", "deadline", "I agree", "in my opinion"],
+    travel: ["boarding pass", "luggage", "customs", "gate"],
+    opinions: ["I think that", "however", "because", "on the other hand"],
+    problems: ["refund", "broken", "complaint", "replace"],
+    bank: ["account", "withdraw money", "deposit", "bank card"],
+    pharmacy: ["medicine", "allergic", "twice a day", "side effects"],
+    neighbors: ["neighbour", "noisy", "borrow", "I am sorry"],
+    time: ["What time is it?", "o'clock", "half past", "I am late"],
+    clothes: ["shirt", "shoes", "jacket", "too small"],
+    cinema: ["movie", "seat", "popcorn", "subtitles"],
+    rent: ["landlord", "rent", "contract", "furnished"],
+    news: ["headline", "according to", "in the future", "it depends"],
+    emergency: ["Help!", "ambulance", "accident", "call the police"],
+    goals: ["goal", "improve", "achieve", "in the long run"],
+    free: ["by the way", "actually", "I wonder if", "let me explain"],
+  };
+  it('chaque leçon garde ses 4 premiers mots, dans le même ordre', () => {
+    expect(Object.keys(FIRST_FOUR).sort()).toEqual(LESSONS.map((l) => l.id).sort());
+    for (const l of LESSONS) expect([l.id, l.vocab.slice(0, 4).map((v) => v.en)]).toEqual([l.id, FIRST_FOUR[l.id]]);
   });
 });

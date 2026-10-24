@@ -50,4 +50,23 @@ describe('i18n', () => {
   it('« Écrivez en anglais » n\'existe plus: le champ de saisie vaut pour toutes les langues apprises', () => {
     for (const lang of UI_LANGS) expect(t(lang, 'typeHere')).not.toMatch(/anglais|English|إنجليزية|inglés|英/i);
   });
+
+  it('chaque traduction garde exactement les mêmes variables {…} que le français (jamais de texte brut « {target} » ni de variable oubliée)', () => {
+    const vars = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+    const problems: string[] = [];
+    for (const [key, frText] of Object.entries(fr)) {
+      for (const lang of ['en', 'ar', 'es', 'zh'] as const) {
+        const other = (ALL[lang] as Record<string, string>)[key];
+        if (JSON.stringify(vars(other)) !== JSON.stringify(vars(frText))) problems.push(`${lang}.${key}`);
+      }
+      expect(frText).not.toMatch(/\{\s|\s\}|\{\}/); // accolades mal formées
+    }
+    expect(problems).toEqual([]);
+  });
+  it('aucune accolade ne subsiste dans un texte sans variable', () => {
+    for (const lang of UI_LANGS) for (const [key, text] of Object.entries(ALL[lang] as Record<string, string>)) {
+      const clean = text.replace(/\{\w+\}/g, '');
+      expect([lang, key, /[{}]/.test(clean)]).toEqual([lang, key, false]);
+    }
+  });
 });

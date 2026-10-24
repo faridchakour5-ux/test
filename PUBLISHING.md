@@ -10,7 +10,7 @@ Tout se fait depuis VOTRE ordinateur: les identifiants Google/Apple ne doivent j
 5. Mettez cette URL dans `EXPO_PUBLIC_API_URL` avant de construire l'app (HTTPS obligatoire).
 
 ## 2. Build Android (.aab)
-**Avant le tout premier envoi: choisissez votre identifiant d'application.** `com.kalam.app` est un exemple et peut déjà être pris sur Google Play. L'identifiant ne peut plus changer après le premier envoi. Remplacez-le (par exemple `com.votrenom.kalam`) dans `kalam/app.json` (`android.package` et `ios.bundleIdentifier`) et dans `kalam/src/appConfig.test.ts`, puis relancez `npm test`.
+**Avant le tout premier envoi: choisissez votre identifiant d'application.** `com.kalam.app` est un exemple et peut déjà être pris sur Google Play. L'identifiant ne peut plus changer après le premier envoi. Aucun fichier à modifier: donnez-le à EAS dans la variable `KALAM_APP_ID` (par exemple `com.votrenom.kalam`, voir la commande `eas env:create` ci-dessous). Il s'applique à Android et à iOS (`kalam/app.config.js`), et un identifiant mal formé fait échouer la construction tout de suite avec un message clair.
 
 ```
 npm i -g eas-cli
@@ -18,6 +18,7 @@ cd kalam
 eas login
 eas build:configure
 eas env:create --environment production --name EXPO_PUBLIC_API_URL --value https://votre-backend --visibility plaintext
+eas env:create --environment production --name KALAM_APP_ID --value com.votrenom.kalam --visibility plaintext
 eas build --platform android --profile production
 ```
 Le build se fait sur les serveurs d'EAS: une variable écrite devant la commande dans votre terminal (`EXPO_PUBLIC_API_URL=... eas build`) n'y est **pas** transmise, et l'application construite n'aurait alors aucune adresse de serveur. Donnez l'adresse à EAS avec `eas env:create` (ci-dessus) ou dans le bloc `env` du profil `production` de `kalam/eas.json`. Après le build, ouvrez l'application: si elle affiche une erreur de configuration du serveur, l'adresse n'a pas été prise en compte. (Cette étape n'a pas pu être vérifiée depuis l'environnement de développement: la documentation d'Expo y est bloquée.)

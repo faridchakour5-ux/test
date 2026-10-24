@@ -19,7 +19,7 @@ Le micro, la voix, la réponse en flux et le rappel quotidien (notification à l
 3. Notez ce qui ne va pas et corrigez-le avant toute publication.
 
 ## Ce que vous devez faire vous-même
-- Choisir l'identifiant d'application (remplacer `com.kalam.app`) avant le premier envoi sur Google Play.
+- Choisir l'identifiant d'application avant le premier envoi sur Google Play et le donner à EAS dans `KALAM_APP_ID` (aucun fichier à modifier, `PUBLISHING.md` section 2).
 - Déployer le serveur et donner son adresse à EAS (`PUBLISHING.md`, sections 1 et 2).
 - Ne jamais partager vos identifiants (Google, Apple, clé d'API) dans un chat.
 

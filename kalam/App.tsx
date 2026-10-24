@@ -29,6 +29,8 @@ import { useHardwareBack } from './src/navigation/useHardwareBack';
 import { reminderTexts, useReminderSync } from './src/notifications/useReminderSync';
 import { AppStateProvider, useApp } from './src/state/AppState';
 import { AgeProfileId } from './src/theme/profiles';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AppFrame } from './src/components/AppFrame';
 import { ThemeProvider } from './src/theme/ThemeProvider';
 
 type Route =
@@ -146,7 +148,9 @@ function Root() {
 
   return (
     <ThemeProvider profileId={app.profile ?? 'adult'} paletteId={app.palette}>
-      {screen}
+      <AppFrame>
+        {screen}
+      </AppFrame>
       <StatusBar style="auto" />
     </ThemeProvider>
   );
@@ -155,9 +159,11 @@ function Root() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <AppStateProvider>
-        <Root />
-      </AppStateProvider>
+      <SafeAreaProvider>
+        <AppStateProvider>
+          <Root />
+        </AppStateProvider>
+      </SafeAreaProvider>
     </ErrorBoundary>
   );
 }

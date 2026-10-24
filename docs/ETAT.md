@@ -5,7 +5,10 @@ Ce fichier dit, en mots simples, ce qui est fait, ce qui ne l'est pas, et ce que
 ## Ce qui est fait et vérifié automatiquement
 - Conversation écrite et vocale avec un professeur IA, en anglais ou en français (l'arabe et les autres langues viendront plus tard).
 - Trois univers: enfants, adultes, seniors. Mode enfant sans envoi de données, micro désactivé par défaut, portail parental protégé contre les essais au hasard.
-- Leçons, test de niveau, révision espacée, objectifs sans culpabilisation, progression, mode à deux, mode « Parle librement ».
+- Leçons (34 situations de la vie courante, 6 mots chacune, niveaux A1 à B1), test de niveau, révision espacée, objectifs sans culpabilisation, progression, mode à deux, mode « Parle librement ».
+- Mode enfant: 8 thèmes de jeu (animaux, fruits, couleurs, corps, nourriture, chiffres, maison, véhicules) et 7 histoires courtes, tout local.
+- Interface en 5 langues (français, anglais, arabe de droite à gauche, espagnol, chinois). Les traductions ont été écrites sans relecteur natif: une relecture avant la publication est recommandée.
+- Diagnostic de l'appareil dans les réglages (serveur, voix, micro, rappels).
 - Rappel quotidien facultatif (notification locale, désactivé par défaut, jamais pour les enfants).
 - Données seulement sur le téléphone; export et effacement (RGPD). Aucune clé d'API dans l'application: seul le serveur (`backend/`) parle à l'IA.
 - Chaque envoi de code relance les tests, le lint et la vérification des types (`.github/workflows/ci.yml`), en trois fuseaux horaires pour la série de jours.

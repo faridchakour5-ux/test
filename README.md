@@ -22,7 +22,8 @@ Tests: `npm test` dans chaque dossier. Publication: voir `PUBLISHING.md`.
 
 ## Qualité
 - Tests : `npm test` dans `kalam/` (application : logique, écrans, accessibilité, application complète, contrat avec le serveur) et dans `backend/` (serveur). Vérifications en plus : `npm run lint` et `npm run typecheck` dans `kalam/`.
-- Tout est relancé automatiquement à chaque envoi de code (`.github/workflows/ci.yml`).
+- Tout est relancé automatiquement à chaque envoi de code (`.github/workflows/ci.yml`): tests dans trois fuseaux horaires, compilation des bundles Android et iOS, contrôle de la configuration de production.
+- Un écran « Diagnostic de l'appareil » (Réglages) vérifie en un geste serveur, voix, micro et rappels sur le téléphone.
 - Icônes et visuel Play Store : `cd kalam && node scripts/make-assets.mjs` (Playwright requis).
 - Fiche Play Store dans 5 langues : `kalam/store/listing.md`.
 

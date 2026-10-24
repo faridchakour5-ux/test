@@ -30,6 +30,7 @@ via un petit serveur : la clé de l'IA ne quitte jamais le serveur.
 | `kalam/src/speech/` | La voix (synthèse), le micro (reconnaissance) et le découpage du texte parlé |
 | `kalam/src/api/` | Le dialogue avec le serveur (réponse simple, réponse en flux, nouvelles tentatives) |
 | `kalam/src/state/` | L'état de l'app et sa sauvegarde sur l'appareil, l'export des données |
+| `kalam/src/navigation/` | Le bouton « retour » physique d'Android (`useHardwareBack`): même effet que le bouton « Retour » de l'écran, jamais la fermeture de l'app depuis un sous-écran |
 | `kalam/src/notifications/` | Le rappel quotidien (notification locale, désactivé par défaut) |
 | `kalam/src/diagnostics/` | Le diagnostic de l'appareil : vérifie serveur, voix, micro et rappels en un geste |
 | `kalam/src/theme/` | Couleurs (palettes vérifiées pour la lisibilité), profils d'âge (enfant, adulte, senior) |

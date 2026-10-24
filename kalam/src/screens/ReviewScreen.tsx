@@ -13,6 +13,7 @@ import { ANSWER_QUALITY, Answer, vocabForKey } from '../domain/deck';
 import { Card as SrsCard } from '../domain/srs';
 import { UiLang, t } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
+import { useHardwareBack } from '../navigation/useHardwareBack';
 
 interface Props {
   target?: TargetLang; // langue apprise
@@ -24,6 +25,7 @@ interface Props {
 
 export function ReviewScreen({ lang, session, onAnswer, onExit, target = DEFAULT_TARGET }: Props) {
   useStopInBackground();
+  useHardwareBack(onExit);
   const { colors, profile } = useTheme();
   // La séance est figée au départ: répondre ne la modifie pas pendant qu'on la parcourt.
   const queue = useMemo(() => session, []); // eslint-disable-line react-hooks/exhaustive-deps

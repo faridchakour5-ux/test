@@ -7,6 +7,7 @@ import { MAX_NAME_LENGTH, uniqueNames } from '../domain/duo';
 import { FREE_TOPICS, FreeTopic } from '../domain/freeTopics';
 import { UiLang, t } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
+import { useHardwareBack } from '../navigation/useHardwareBack';
 
 interface Props {
   lang: UiLang;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function DuoSetupScreen({ lang, onStart, onBack }: Props) {
+  useHardwareBack(onBack);
   const { colors, profile } = useTheme();
   const [a, setA] = useState('');
   const [b, setB] = useState('');

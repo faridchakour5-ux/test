@@ -12,6 +12,7 @@ import { PROBLEM_TEXT, problemFromListen } from '../speech/problems';
 import { isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
 import { tts } from '../speech/tts';
 import { useTheme } from '../theme/ThemeProvider';
+import { useHardwareBack } from '../navigation/useHardwareBack';
 
 // Couleur ET symbole: le résultat ne repose jamais sur la couleur seule.
 const MARK: Record<CheckStatus, string> = { ok: '✓', warn: '⚠', fail: '✗' };
@@ -30,6 +31,7 @@ interface Props { lang: UiLang; onBack: () => void; deps?: Partial<DiagnosticDep
 
 export function DiagnosticScreen({ lang, onBack, deps }: Props) {
   const { colors } = useTheme();
+  useHardwareBack(onBack);
   const [results, setResults] = useState<CheckResult[] | null>(null);
   const [heard, setHeard] = useState<{ text?: string; problem?: StringKey } | null>(null);
   const [testing, setTesting] = useState(false);

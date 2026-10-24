@@ -9,6 +9,7 @@ import { Mascot } from '../components/Mascot';
 import { STORIES, Story } from '../domain/kids';
 import { UiLang, t } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
+import { useHardwareBack } from '../navigation/useHardwareBack';
 
 interface Props {
   lang: UiLang;
@@ -24,6 +25,8 @@ export function StoryScreen({ lang, onFinish, onExit }: Props) {
   const [done, setDone] = useState(false);
   const [started] = useState(() => Date.now());
   const minutes = () => Math.max(1, Math.round((Date.now() - started) / 60_000));
+  // Retour d'Android: comme le bouton « Retour »; sur l'écran de fin, on valide l'histoire (l'étoile n'est jamais perdue).
+  useHardwareBack(() => { if (story && done) onFinish(story.id, minutes()); else onExit(story ? minutes() : 0); });
 
   const speak = (text: string) => { void tts.speak(text, { lang: 'en-US', rate: profile.speechRate }); };
   useEffect(() => () => { void tts.stop(); }, []);

@@ -12,6 +12,7 @@ import { getGateLock, resetGateLock, setGateLock } from '../state/gateLock';
 import { UiLang, t } from '../i18n/strings';
 import { KidsState } from '../state/AppState';
 import { useTheme } from '../theme/ThemeProvider';
+import { useHardwareBack } from '../navigation/useHardwareBack';
 
 interface Props {
   lang: UiLang;
@@ -32,6 +33,7 @@ const clock = () => Date.now(); // lu seulement au moment d'un appui ou d'une mi
 
 export function ParentsScreen({ lang, kids, minutesToday, onMic, onLimit, onSwitchProfile, onErase, onBack, palette, onPalette, onLang, onExport }: Props) {
   const { colors, profile } = useTheme();
+  useHardwareBack(onBack);
   const [gate, setGate] = useState(() => makeGate());
   const [unlocked, setUnlocked] = useState(false);
   const [wrong, setWrong] = useState(false);

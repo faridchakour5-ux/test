@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { BackHandler } from 'react-native';
 import App from '../App';
 import { initialProgress, localDay } from './domain/progress';
 import { KIDS_TOPICS, STORIES } from './domain/kids';
@@ -245,5 +246,112 @@ describe('App: conversation à deux', () => {
     expect(await screen.findByText(t('fr', 'duoStart'))).toBeTruthy();
     await fireEvent.press(screen.getByText(/Retour/));
     expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy();
+  });
+});
+
+describe('App: bouton retour physique d\'Android', () => {
+  type Handler = () => boolean | null | undefined;
+  let handlers: Handler[] = [];
+  const pressBack = async (): Promise<boolean> => {
+    let handled = false;
+    await act(async () => { for (const h of [...handlers].reverse()) { if (h()) { handled = true; break; } } });
+    return handled;
+  };
+  beforeEach(() => {
+    handlers = [];
+    jest.spyOn(BackHandler, 'addEventListener').mockImplementation(((_n: string, h: Handler) => {
+      handlers.push(h);
+      return { remove: () => { handlers = handlers.filter((x) => x !== h); } };
+    }) as never);
+  });
+  const adult = JSON.stringify({ profile: 'adult', levels: { en: 'A1' }, uiLang: 'fr', progress: initialProgress(localDay()) });
+
+  it('accueil: le retour n\'est pas intercepté (l\'application peut se fermer)', async () => {
+    mockStore.set('kalam:state:v1', adult);
+    await boot();
+    await screen.findByText(/Kalam\s·\sA1/);
+    expect(await pressBack()).toBe(false);
+  });
+
+  it('réglages → diagnostic: chaque retour remonte d\'un écran, puis l\'accueil n\'est plus intercepté', async () => {
+    mockStore.set('kalam:state:v1', adult);
+    await boot();
+    await fireEvent.press(await screen.findByLabelText(t('fr', 'settings')));
+    await fireEvent.press(await screen.findByText(`🩺 ${t('fr', 'diagnostic')}`));
+    expect(await screen.findByText(t('fr', 'diagIntro'))).toBeTruthy();
+    expect(await pressBack()).toBe(true);
+    expect(await screen.findByText(t('fr', 'switchProfile'))).toBeTruthy(); // retour aux réglages
+    expect(await pressBack()).toBe(true);
+    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy(); // accueil
+    expect(await pressBack()).toBe(false);
+  });
+
+  it('leçon: le retour physique quitte la conversation vers l\'accueil', async () => {
+    mockStore.set('kalam:state:v1', adult);
+    await boot();
+    await fireEvent.press(await screen.findByText(/▶ Continuer: /));
+    expect(await screen.findByText(t('fr', 'finish'))).toBeTruthy();
+    expect(await pressBack()).toBe(true);
+    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy();
+  });
+
+  it('révision et conversation à deux: retour vers l\'accueil', async () => {
+    mockStore.set('kalam:state:v1', JSON.stringify({ profile: 'adult', levels: { en: 'A1' }, uiLang: 'fr', cards: [newCard('restaurant:0', 0)], progress: initialProgress(localDay()) }));
+    await boot();
+    await fireEvent.press(await screen.findByText(new RegExp(`^${t('fr', 'review')} \\(1\\)`)));
+    expect(await screen.findByText(t('fr', 'reveal'))).toBeTruthy();
+    expect(await pressBack()).toBe(true);
+    await fireEvent.press(await screen.findByText(new RegExp(t('fr', 'duoTitle'))));
+    expect(await screen.findByText(t('fr', 'duoStart'))).toBeTruthy();
+    expect(await pressBack()).toBe(true);
+    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy();
+  });
+
+  it('enfant: histoire en cours → retour compte le temps comme le bouton; liste → aucun temps; espace parents → accueil enfant', async () => {
+    mockStore.set('kalam:state:v1', kidsState());
+    await boot();
+    await fireEvent.press(await screen.findByLabelText(t('fr', 'stories')));
+    await screen.findByLabelText(STORIES[0].title.fr);
+    expect(await pressBack()).toBe(true); // liste des histoires: 0 minute
+    expect(await screen.findByLabelText(t('fr', 'play'))).toBeTruthy();
+    await act(async () => {});
+    expect(saved().progress?.minutesToday ?? 0).toBe(0);
+    await fireEvent.press(screen.getByLabelText(t('fr', 'stories')));
+    await fireEvent.press(await screen.findByLabelText(STORIES[0].title.fr));
+    expect(await pressBack()).toBe(true); // histoire en cours: au moins une minute
+    expect(await screen.findByLabelText(`3 ${t('fr', 'stars')}`)).toBeTruthy();
+    await waitFor(() => expect(saved().progress.minutesToday).toBeGreaterThanOrEqual(1));
+    await fireEvent.press(screen.getByLabelText(t('fr', 'parents')));
+    expect(await screen.findByText(new RegExp(t('fr', 'gateTitle')))).toBeTruthy(); // portail parental affiché
+    expect(await pressBack()).toBe(true);
+    expect(await screen.findByLabelText(t('fr', 'stories'))).toBeTruthy();
+  });
+
+  it('enfant: fin d\'histoire puis retour physique: l\'histoire est validée (étoiles et « lue » conservées)', async () => {
+    mockStore.set('kalam:state:v1', kidsState());
+    await boot();
+    const first = STORIES[0];
+    await fireEvent.press(await screen.findByLabelText(t('fr', 'stories')));
+    await fireEvent.press(await screen.findByLabelText(first.title.fr));
+    for (let k = 0; k < first.sentences.length - 1; k++) await fireEvent.press(screen.getByText(t('fr', 'nextSentence')));
+    await fireEvent.press(screen.getByText(t('fr', 'finish')));
+    await screen.findByText(t('fr', 'storyDone'));
+    expect(await pressBack()).toBe(true);
+    expect(await screen.findByLabelText(`5 ${t('fr', 'stars')}`)).toBeTruthy();
+    await waitFor(() => expect(saved().kids.storiesRead).toEqual([first.id]));
+  });
+
+  it('enfant: jeu → retour physique: temps compté et accueil enfant; autocollants → accueil enfant', async () => {
+    mockStore.set('kalam:state:v1', kidsState());
+    await boot();
+    await fireEvent.press(await screen.findByLabelText(t('fr', 'play')));
+    await fireEvent.press(await screen.findByLabelText(KIDS_TOPICS[0].title.fr));
+    expect(await pressBack()).toBe(true);
+    expect(await screen.findByLabelText(t('fr', 'stickers'))).toBeTruthy();
+    await waitFor(() => expect(saved().progress.minutesToday).toBeGreaterThanOrEqual(1));
+    await fireEvent.press(screen.getByLabelText(t('fr', 'stickers')));
+    expect(await screen.findByText(`🌟 ${t('fr', 'stickers')}`)).toBeTruthy();
+    expect(await pressBack()).toBe(true);
+    expect(await screen.findByLabelText(t('fr', 'parents'))).toBeTruthy();
   });
 });

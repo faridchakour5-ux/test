@@ -5,9 +5,11 @@ import { KText } from '../components/KText';
 import { STICKERS } from '../domain/kids';
 import { UiLang, t } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
+import { useHardwareBack } from '../navigation/useHardwareBack';
 
 export function StickersScreen({ lang, stars, onBack }: { lang: UiLang; stars: number; onBack: () => void }) {
   const { colors, profile } = useTheme();
+  useHardwareBack(onBack);
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: 20, paddingTop: 56, gap: 16 }}>
       <BackButton lang={lang} onPress={onBack} />

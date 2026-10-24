@@ -11,6 +11,7 @@ import { REMINDER_TIMES, ReminderFailure, ReminderResult, ReminderSetting, timeL
 import { openAppSettings } from '../speech/openSettings';
 import { PaletteId } from '../theme/palettes';
 import { useTheme } from '../theme/ThemeProvider';
+import { useHardwareBack } from '../navigation/useHardwareBack';
 
 interface Props {
   lang: UiLang;
@@ -39,6 +40,7 @@ const REMINDER_PROBLEM: Record<ReminderFailure, StringKey> = {
 // Réglages (ados, adultes, seniors): tout ce qui n'a pas besoin d'être sur l'écran d'accueil.
 export function SettingsScreen({ lang, dailyGoal, onGoal, palette, onPalette, onLang, onSwitchProfile, onExport, onErase, onBack, reminder, reminderAvailable: available, onReminder, onDiagnostic }: Props) {
   const { colors, profile } = useTheme();
+  useHardwareBack(onBack);
   const [problem, setProblem] = useState<ReminderFailure | null>(null);
   const [busy, setBusy] = useState(false);
   const changeReminder = async (next: ReminderSetting) => {

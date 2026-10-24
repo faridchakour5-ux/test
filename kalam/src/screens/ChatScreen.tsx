@@ -22,6 +22,7 @@ import { FREE_LESSON_ID, FREE_TOPICS, FreeTopic, getFreeTopic } from '../domain/
 import { clearConversation, loadConversation, loadTopicId, saveConversation, saveTopicId } from '../state/conversations';
 import { AgeProfileId } from '../theme/profiles';
 import { useTheme } from '../theme/ThemeProvider';
+import { useHardwareBack } from '../navigation/useHardwareBack';
 
 const SAVE_DELAY_MS = 500;
 
@@ -239,6 +240,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
   const sendTyped = () => { if (!input.trim() || turn.phase === 'sending') return; const text = input; setInput(''); submit(text, false); };
   const finish = () => { stopAll(); onFinish(Math.max(1, Math.round((Date.now() - startedAt) / 60_000))); };
   const back = () => { stopAll(); onBack(); };
+  useHardwareBack(back); // bouton retour d'Android = bouton « Retour » de l'écran
 
   const phase = turn.phase;
   const busy = phase === 'sending';

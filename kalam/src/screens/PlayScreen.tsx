@@ -10,6 +10,7 @@ import { PronunciationPractice } from '../components/PronunciationPractice';
 import { KIDS_TOPICS, Round, STARS_PER_CORRECT, buildRounds, newlyUnlocked } from '../domain/kids';
 import { UiLang, pick, t } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
+import { useHardwareBack } from '../navigation/useHardwareBack';
 
 interface Props {
   lang: UiLang;
@@ -31,6 +32,7 @@ export function PlayScreen({ lang, stars, micAllowed, onCorrect, onExit }: Props
   const started = useRef<number>(0);
   const advance = useRef<ReturnType<typeof setTimeout> | null>(null);
   const minutes = () => Math.max(1, Math.round((Date.now() - started.current) / 60_000));
+  useHardwareBack(() => onExit(rounds ? minutes() : 0));
 
   const speak = (text: string) => { void tts.speak(text, { lang: 'en-US', rate: profile.speechRate }); };
   useEffect(() => () => { void tts.stop(); if (advance.current) clearTimeout(advance.current); }, []);

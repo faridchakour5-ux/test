@@ -15,8 +15,9 @@ Ce fichier dit, en mots simples, ce qui est fait, ce qui ne l'est pas, et ce que
 L'application a été regardée à l'écran dans un navigateur (rendu web, 390 px de large) pour juger la mise en page; le micro et la voix, eux, n'existent pas dans ce rendu.
 Le micro, la voix, la réponse en flux et le rappel quotidien (notification à l'heure choisie, même après un redémarrage) ne sont testés qu'avec des modules simulés. Sur un téléphone Android:
 1. Construisez le build de développement (`PUBLISHING.md`, section 6).
-2. Essayez une conversation vocale complète, une prononciation, et couper l'application en pleine écoute.
-3. Notez ce qui ne va pas et corrigez-le avant toute publication.
+2. Ouvrez Réglages → « 🩺 Diagnostic de l'appareil »: en quelques secondes, il vérifie le serveur, les voix (anglais et français), le micro et les rappels, et affiche pour chaque point ✓, ⚠ ou ✗ avec une explication. Les boutons « Entendre une phrase » et « Dire une phrase » testent la voix et le micro tout de suite.
+3. Essayez une conversation vocale complète, une prononciation, et couper l'application en pleine écoute.
+4. Notez ce qui ne va pas (une capture du diagnostic aide beaucoup) et corrigez-le avant toute publication.
 
 ## Ce que vous devez faire vous-même
 - Choisir l'identifiant d'application avant le premier envoi sur Google Play et le donner à EAS dans `KALAM_APP_ID` (aucun fichier à modifier, `PUBLISHING.md` section 2).

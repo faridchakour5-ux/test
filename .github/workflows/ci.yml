@@ -34,6 +34,8 @@ jobs:
       # Compilation réelle du bundle Android (Hermes), comme le fera EAS: détecte tout de suite un import natif cassé.
       - name: Bundle Android
         run: npx expo export --platform android --output-dir /tmp/kalam-android
+      - name: Bundle iOS
+        run: npx expo export --platform ios --output-dir /tmp/kalam-ios
       # Même compilation avec un identifiant d'application personnalisé et un build « production » correctement configuré.
       - name: Configuration de production (identifiant et serveur)
         run: >-

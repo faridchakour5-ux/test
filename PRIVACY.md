@@ -32,3 +32,10 @@ Accès et portabilité (bouton « Exporter mes données » : toutes vos données
 - Jamais de rappel dans le profil enfant. Le message est doux et sans culpabilisation; il n'y a qu'un rappel par jour.
 - Effacer les données (ou changer pour le profil enfant) arrête le rappel.
 
+
+## Diagnostic de l'appareil
+- Bouton « Diagnostic de l'appareil » dans les réglages (profils ados, adultes, seniors; jamais pour les enfants). Il vérifie le serveur, les voix, le micro et les rappels.
+- Seule requête réseau: `GET /health` vers le serveur du professeur, **sans aucune donnée de l'utilisateur**. Le test du micro garde le texte reconnu sur l'écran, sans l'enregistrer ni l'envoyer.
+
+## Garde-fous automatiques
+Un test (`kalam/src/privacy.test.ts`) échoue si quelqu'un ajoute un outil de suivi, de statistiques, de plantages à distance ou de publicité, une clé d'IA dans l'application, un appel réseau en dehors du client du professeur et du diagnostic, ou un champ supplémentaire dans les requêtes vers le professeur.

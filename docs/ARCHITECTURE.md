@@ -30,11 +30,14 @@ via un petit serveur : la clé de l'IA ne quitte jamais le serveur.
 | `kalam/src/speech/` | La voix (synthèse), le micro (reconnaissance) et le découpage du texte parlé |
 | `kalam/src/api/` | Le dialogue avec le serveur (réponse simple, réponse en flux, nouvelles tentatives) |
 | `kalam/src/state/` | L'état de l'app et sa sauvegarde sur l'appareil, l'export des données |
+| `kalam/src/notifications/` | Le rappel quotidien (notification locale, désactivé par défaut) |
+| `kalam/src/diagnostics/` | Le diagnostic de l'appareil : vérifie serveur, voix, micro et rappels en un geste |
 | `kalam/src/theme/` | Couleurs (palettes vérifiées pour la lisibilité), profils d'âge (enfant, adulte, senior) |
 | `kalam/src/i18n/` | Les textes de l'interface, un fichier par langue |
 | `kalam/src/util/` | Petits utilitaires (expressions régulières tolérantes) |
 | `backend/` | Le serveur : `backend/src/app.js` (routes), `backend/src/prompt.js` (consignes de l'IA), `backend/src/validate.js` (validation), `backend/src/pii.js` (données personnelles), `backend/src/rateLimit.js` (limites) |
 | `backend/test/` | Les tests du serveur, dont `backend/test/fakeServer.js` (vrai serveur, fausse IA) |
+| `kalam/app.config.js`, `kalam/scripts/appId.js` | Identifiant d'application réglable (`KALAM_APP_ID`) et contrôles de construction de production |
 | `.github/workflows/ci.yml` | La vérification automatique à chaque envoi de code |
 | `PRIVACY.md`, `PUBLISHING.md` | Confidentialité et mise en ligne |
 
@@ -92,10 +95,13 @@ Exemples : `kalam/src/domain/srs.ts` (révision espacée), `kalam/src/domain/lev
 | Accessibilité | `kalam/src/screens/accessibility.test.tsx` | Chaque bouton a un nom lisible, dans 5 langues × 3 profils |
 | Serveur | `backend/test/*.test.js` | Validation, limites, flux, journaux |
 | Sécurité du code | `kalam/src/security.test.ts` | Aucune clé ni adresse d'IA dans le code de l'app |
+| Confidentialité | `kalam/src/privacy.test.ts` | Aucun outil de suivi ou de publicité, réseau limité au professeur et au diagnostic, champs de requête fixés |
+| Déploiement du serveur | `backend/test/deploy.test.js` | Clé jamais dans le dépôt, serveur sans droits administrateur, santé vérifiée, budget actif |
 
-**Les tests eux-mêmes doivent être vérifiés.** Technique utilisée dans ce projet (« test de mutation » manuel) :
+**Les tests eux-mêmes doivent être vérifiés.** Technique utilisée dans ce projet (« test de mutation ») :
 casser volontairement le code à un endroit, relancer les tests, et vérifier qu'ils **échouent**. Un test qui passe
-quand le code est cassé ne protège de rien (plusieurs tests de ce projet ont été corrigés ainsi).
+quand le code est cassé ne protège de rien. L'outil Stryker le fait automatiquement (des centaines de cassures d'un coup) :
+les scores obtenus sont dans `docs/ETAT.md`, et chaque score faible a mené à de nouveaux tests, parfois à un vrai bug corrigé.
 
 Commandes : `cd kalam && npm test` (app), `npm run lint`, `npm run typecheck` ; `cd backend && npm test` (serveur).
 La CI (`.github/workflows/ci.yml`) les lance à chaque envoi.
@@ -122,7 +128,10 @@ sans espaces entre les mots (chinois) ou à écriture arabe demandent un traitem
 - **Un moteur JavaScript peut refuser une syntaxe** : une expression régulière Unicode non comprise planterait l'app au lancement. Voir `kalam/src/util/safeRegex.ts`.
 - **`fetch` n'est pas le même partout** : dans l'environnement de test d'Expo il est simulé. Le test de contrat utilise donc un vrai transport.
 - **Un enchaînement de commandes peut masquer un échec** : `commande | tail` renvoie le code de `tail`, pas celui de `commande`. Un push échoué est passé inaperçu une fois.
-- **Un nouveau jour n'est pas une nouvelle activité** : l'accueil montrait les minutes d'hier tant qu'on n'avait pas étudié aujourd'hui.
+- **Un nouveau jour n'est pas une nouvelle activité** : l'accueil montrait les minutes d'hier tant qu'on n'avait pas étudié aujourd'hui. Même piège avec la série de jours : elle restait affichée après un jour sauté (`currentStreak` dans `kalam/src/domain/progress.ts`).
+- **Rien ne doit attendre indéfiniment** : une liste de voix qui ne répond jamais bloquait tout le diagnostic. Chaque attente a un délai (`kalam/src/diagnostics/diagnostics.ts`).
+- **Un morceau réseau peut couper n'importe où** : même au milieu d'un retour à la ligne Windows (`kalam/src/api/sse.ts`). Les tests découpent donc le flux à chaque position possible.
+- **Regarder l'écran trouve ce que les tests ne voient pas** : le blocage du diagnostic n'est apparu qu'en l'affichant dans un navigateur.
 
 ## 9. Glossaire
 

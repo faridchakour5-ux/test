@@ -133,6 +133,7 @@ sans espaces entre les mots (chinois) ou à écriture arabe demandent un traitem
 - **Un nouveau jour n'est pas une nouvelle activité** : l'accueil montrait les minutes d'hier tant qu'on n'avait pas étudié aujourd'hui. Même piège avec la série de jours : elle restait affichée après un jour sauté (`currentStreak` dans `kalam/src/domain/progress.ts`).
 - **Rien ne doit attendre indéfiniment** : une liste de voix qui ne répond jamais bloquait tout le diagnostic. Chaque attente a un délai (`kalam/src/diagnostics/diagnostics.ts`).
 - **Un morceau réseau peut couper n'importe où** : même au milieu d'un retour à la ligne Windows (`kalam/src/api/sse.ts`). Les tests découpent donc le flux à chaque position possible.
+- **Sur Android récent, l'application passe sous les barres du système** : sans marge, les boutons du bas se cachent derrière la barre de navigation. `kalam/src/components/AppFrame.tsx` réserve ces marges pour tous les écrans (et ne double pas celles que les écrans prévoient déjà en haut).
 - **Regarder l'écran trouve ce que les tests ne voient pas** : le blocage du diagnostic n'est apparu qu'en l'affichant dans un navigateur.
 
 ## 9. Glossaire

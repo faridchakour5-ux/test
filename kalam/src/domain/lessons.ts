@@ -1,4 +1,4 @@
-// 30 leçons d'anglais organisées par situations (CEFR A1 -> B1), pas par listes de mots.
+// 34 leçons d'anglais organisées par situations (CEFR A1 -> B1), pas par listes de mots.
 import { UiLang } from '../i18n/strings';
 import { DEFAULT_TARGET, TargetLang, lessonKey } from './targets';
 import { LESSON_TITLES_TR, VOCAB_TR } from './translations';
@@ -76,6 +76,10 @@ export const LESSONS: Lesson[] = [
   L('news', 'B1', 'Les actualités', 'The news', 'الأخبار', 'You discuss a news story with a friend and give your view.', [['headline', 'gros titre'], ['according to', 'selon'], ['in the future', 'à l\'avenir'], ['it depends', 'ça dépend'], ['breaking news', 'dernières nouvelles'], ['journalist', 'journaliste']]),
   L('emergency', 'A2', 'Urgences', 'Emergencies', 'الطوارئ', 'You report an emergency on the phone calmly and clearly.', [['Help!', 'Au secours !'], ['ambulance', 'ambulance'], ['accident', 'accident'], ['call the police', 'appeler la police'], ['fire', 'incendie'], ['I need a doctor', 'J\'ai besoin d\'un médecin']]),
   L('goals', 'B1', 'Mes objectifs', 'My goals', 'أهدافي', 'You talk about your goals for next year.', [['goal', 'objectif'], ['improve', 's\'améliorer'], ['achieve', 'réussir à atteindre'], ['in the long run', 'à long terme'], ['dream', 'rêve'], ['step by step', 'pas à pas']]),
+  L('market', 'A1', 'Au marché', 'At the market', 'في السوق', 'You buy fruit and vegetables at a market stall.', [['vegetables', 'légumes'], ['a kilo of', 'un kilo de'], ['fresh', 'frais'], ['bag', 'sac'], ['How much is a kilo?', 'Combien coûte le kilo ?'], ['That is all, thank you', 'C\'est tout, merci']]),
+  L('sports', 'A2', 'Le sport', 'Sports', 'الرياضة', 'You talk about the sports you play and watch with a friend.', [['team', 'équipe'], ['match', 'match'], ['win', 'gagner'], ['lose', 'perdre'], ['training', 'entraînement'], ['I am a fan of', 'Je suis fan de']]),
+  L('holidays', 'A2', 'Les vacances', 'Holidays', 'العطلات', 'You tell a friend about your last holiday.', [['beach', 'plage'], ['suitcase', 'valise'], ['sightseeing', 'visite touristique'], ['I had a great time', 'J\'ai passé un super moment'], ['souvenir', 'souvenir'], ['book a trip', 'réserver un voyage']]),
+  L('technology', 'B1', 'La technologie', 'Technology', 'التكنولوجيا', 'You call a help desk to solve a problem with your phone.', [['password', 'mot de passe'], ['download', 'télécharger'], ['battery', 'batterie'], ['update', 'mise à jour'], ['Wi-Fi', 'Wi-Fi'], ['it does not work', 'ça ne marche pas']]),
   L('free', 'B1', 'Parle librement', 'Free talk', 'تحدث بحرية', 'Free conversation: the learner chooses the topic.', [['by the way', 'au fait'], ['actually', 'en fait'], ['I wonder if', 'je me demande si'], ['let me explain', 'laissez-moi expliquer'], ['to be honest', 'honnêtement'], ['what do you mean?', 'que veux-tu dire ?']]),
 ];
 

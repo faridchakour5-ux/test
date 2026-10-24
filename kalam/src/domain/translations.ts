@@ -3,7 +3,7 @@ export interface Tr { ar: string; es: string; zh: string }
 
 const T = (ar: string, es: string, zh: string): Tr => ({ ar, es, zh });
 
-// Mots et expressions des 30 leçons, indexés par leur forme anglaise.
+// Mots et expressions des 34 leçons, indexés par leur forme anglaise.
 export const VOCAB_TR: Record<string, Tr> = {
   'Hello': T('مرحبًا', 'Hola', '你好'),
   'My name is': T('اسمي', 'Me llamo', '我叫'),
@@ -185,6 +185,30 @@ export const VOCAB_TR: Record<string, Tr> = {
   'step by step': T('خطوة بخطوة', 'paso a paso', '一步一步'),
   'to be honest': T('بصراحة', 'sinceramente', '说实话'),
   'what do you mean?': T('ماذا تقصد؟', '¿qué quieres decir?', '你是什么意思？'),
+  'vegetables': T('الخضروات', 'verduras', '蔬菜'),
+  'a kilo of': T('كيلوغرام من', 'un kilo de', '一公斤'),
+  'fresh': T('طازج', 'fresco', '新鲜'),
+  'bag': T('كيس', 'bolsa', '袋子'),
+  'How much is a kilo?': T('بكم الكيلو؟', '¿Cuánto cuesta el kilo?', '一公斤多少钱？'),
+  'That is all, thank you': T('هذا كل شيء، شكرًا', 'Eso es todo, gracias', '就这些，谢谢'),
+  'team': T('فريق', 'equipo', '队伍'),
+  'match': T('مباراة', 'partido', '比赛'),
+  'win': T('يفوز', 'ganar', '赢'),
+  'lose': T('يخسر', 'perder', '输'),
+  'training': T('تدريب', 'entrenamiento', '训练'),
+  'I am a fan of': T('أنا من مشجعي', 'Soy fan de', '我是……的球迷'),
+  'beach': T('شاطئ', 'playa', '海滩'),
+  'suitcase': T('حقيبة سفر', 'maleta', '行李箱'),
+  'sightseeing': T('جولة سياحية', 'turismo', '观光'),
+  'I had a great time': T('قضيت وقتًا رائعًا', 'Lo pasé muy bien', '我玩得很开心'),
+  'souvenir': T('تذكار', 'recuerdo', '纪念品'),
+  'book a trip': T('يحجز رحلة', 'reservar un viaje', '预订旅行'),
+  'password': T('كلمة المرور', 'contraseña', '密码'),
+  'download': T('يحمّل', 'descargar', '下载'),
+  'battery': T('البطارية', 'batería', '电池'),
+  'update': T('تحديث', 'actualización', '更新'),
+  'Wi-Fi': T('الواي فاي', 'Wi-Fi', '无线网络'),
+  'it does not work': T('لا يعمل', 'no funciona', '不能用'),
 };
 
 export const LESSON_TITLES_TR: Record<string, { es: string; zh: string }> = {
@@ -218,6 +242,10 @@ export const LESSON_TITLES_TR: Record<string, { es: string; zh: string }> = {
   news: { es: 'Las noticias', zh: '新闻' },
   emergency: { es: 'Emergencias', zh: '紧急情况' },
   goals: { es: 'Mis objetivos', zh: '我的目标' },
+  market: { es: 'En el mercado', zh: '在市场' },
+  sports: { es: 'El deporte', zh: '运动' },
+  holidays: { es: 'Las vacaciones', zh: '假期' },
+  technology: { es: 'La tecnología', zh: '科技' },
 };
 
 // Mode enfant: mots (par id), titres de thèmes et d'histoires, phrases des histoires.

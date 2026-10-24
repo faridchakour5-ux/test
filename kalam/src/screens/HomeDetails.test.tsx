@@ -77,7 +77,7 @@ describe('accueil: leçons', () => {
     expect(screen.queryByText(`⭐ ${t('fr', 'recommended')}`)).toBeNull();
   });
 
-  it('« Toutes les leçons »: les 28 leçons, niveau pour les nouvelles, « ✓ Terminé » pour les faites; toucher une leçon l\'ouvre', async () => {
+  it('« Toutes les leçons »: toutes les leçons, niveau pour les nouvelles, « ✓ Terminé » pour les faites; toucher une leçon l\'ouvre', async () => {
     const onOpenLesson = jest.fn();
     await show(P({ completedLessons: [lessonKey('family', 'en')] }), { onOpenLesson });
     expect(screen.getByText(t('fr', 'allLessons'))).toBeTruthy();

@@ -4,9 +4,9 @@ import { CHALLENGE_POOL, CHALLENGE_XP, ChallengeId, addMinutes, addXp, applyChal
 import { newCard, review } from './srs';
 
 describe('lessons', () => {
-  it('contient 30 leçons uniques avec vocabulaire traduit dans toutes les langues', () => {
-    expect(LESSONS).toHaveLength(30);
-    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(30);
+  it('contient 34 leçons uniques avec vocabulaire traduit dans toutes les langues', () => {
+    expect(LESSONS).toHaveLength(34);
+    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(34);
     expect(LESSONS.filter((l) => l.level === 'A1').length).toBeGreaterThanOrEqual(8);
     expect(LESSONS.filter((l) => l.level === 'B1').length).toBeGreaterThanOrEqual(8);
     LESSONS.forEach((l) => {

@@ -104,6 +104,10 @@ describe('compatibilité des sauvegardes existantes', () => {
     emergency: ["Help!", "ambulance", "accident", "call the police"],
     goals: ["goal", "improve", "achieve", "in the long run"],
     free: ["by the way", "actually", "I wonder if", "let me explain"],
+    "market": ["vegetables", "a kilo of", "fresh", "bag"],
+    "sports": ["team", "match", "win", "lose"],
+    "holidays": ["beach", "suitcase", "sightseeing", "I had a great time"],
+    "technology": ["password", "download", "battery", "update"],
   };
   it('chaque leçon garde ses 4 premiers mots, dans le même ordre', () => {
     expect(Object.keys(FIRST_FOUR).sort()).toEqual(LESSONS.map((l) => l.id).sort());

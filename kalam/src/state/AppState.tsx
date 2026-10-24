@@ -5,6 +5,7 @@ import { DEFAULT_TARGET, TARGET_LANGS, TargetLang, isTargetLang, lessonKey } fro
 import { Card, review } from '../domain/srs';
 import { Consent, DailyLimit, grantMic, noConsent, revokeMic } from '../domain/parental';
 import { Progress, XP_PER_REVIEW, localDay, addMinutes, addXp, applyChallenge, completeLesson, initialProgress, noteLessonToday, normalizeProgress } from '../domain/progress';
+import { deviceUiLang } from '../i18n/deviceLanguage';
 import { UiLang } from '../i18n/strings';
 import { DEFAULT_PALETTE, PaletteId } from '../theme/palettes';
 import { AgeProfileId } from '../theme/profiles';
@@ -65,7 +66,7 @@ export function migrate(saved: Partial<Persisted> & { level?: Level | null }): P
   };
 }
 
-const initial = (): Persisted => ({ profile: null, targetLang: DEFAULT_TARGET, levels: {}, uiLang: 'fr', progress: initialProgress(todayStr()), cards: [], kids: initialKids(), palette: DEFAULT_PALETTE, reminder: defaultReminder(), reminderAsked: false });
+const initial = (): Persisted => ({ profile: null, targetLang: DEFAULT_TARGET, levels: {}, uiLang: deviceUiLang(), progress: initialProgress(todayStr()), cards: [], kids: initialKids(), palette: DEFAULT_PALETTE, reminder: defaultReminder(), reminderAsked: false });
 
 interface Ctx extends Persisted {
   ready: boolean;

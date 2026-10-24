@@ -7,6 +7,7 @@ import { KIDS_TOPICS, STORIES } from './domain/kids';
 import { newCard } from './domain/srs';
 import { pick, t } from './i18n/strings';
 import { resetGateLock } from './state/gateLock';
+import { deviceUiLang } from './i18n/deviceLanguage';
 
 const mockStore = new Map<string, string>();
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -363,5 +364,39 @@ describe('App: bouton retour physique d\'Android', () => {
     expect(await screen.findByText('Qui va apprendre ?')).toBeTruthy();
     await waitFor(() => expect(saved()).toMatchObject({ profile: null, targetLang: 'fr', levels: { en: 'A2' } }));
     expect(await pressBack()).toBe(false); // choix du profil: l'application peut se fermer
+  });
+});
+
+describe('App: langue au premier lancement', () => {
+  const device = deviceUiLang as unknown as jest.Mock;
+  afterEach(() => { device.mockImplementation(() => 'fr'); });
+
+  it('premier lancement: l\'interface suit la langue du téléphone (espagnol, arabe, chinois, anglais)', async () => {
+    for (const [lang, welcome] of [['es', t('es', 'welcome')], ['ar', t('ar', 'welcome')], ['zh', t('zh', 'welcome')], ['en', t('en', 'welcome')]] as const) {
+      device.mockImplementation(() => lang);
+      mockStore.clear();
+      await boot();
+      expect(await screen.findByText(welcome)).toBeTruthy();
+      await cleanup();
+    }
+  });
+
+  it('le choix enregistré prime toujours sur la langue du téléphone', async () => {
+    device.mockImplementation(() => 'es');
+    mockStore.set('kalam:state:v1', JSON.stringify({ profile: null, uiLang: 'fr' }));
+    await boot();
+    expect(await screen.findByText(t('fr', 'welcome'))).toBeTruthy();
+  });
+
+  it('changer de langue dans l\'app est sauvegardé, et persiste même si le téléphone change de langue', async () => {
+    device.mockImplementation(() => 'es');
+    await boot();
+    await screen.findByText(t('es', 'welcome'));
+    await fireEvent.press(screen.getByLabelText('English'));
+    await waitFor(() => expect(saved().uiLang).toBe('en'));
+    await cleanup();
+    device.mockImplementation(() => 'zh');
+    await boot();
+    expect(await screen.findByText(t('en', 'welcome'))).toBeTruthy();
   });
 });

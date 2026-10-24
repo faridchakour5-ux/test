@@ -22,6 +22,7 @@ import { ReviewScreen } from './src/screens/ReviewScreen';
 import { StickersScreen } from './src/screens/StickersScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { StoryScreen } from './src/screens/StoryScreen';
+import { DiagnosticScreen } from './src/screens/DiagnosticScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { ReminderResult, ReminderSetting, defaultReminder, disableReminder, enableReminder, remindersAvailable, timeLabel } from './src/notifications/reminders';
 import { reminderTexts, useReminderSync } from './src/notifications/useReminderSync';
@@ -34,6 +35,7 @@ type Route =
   | { name: 'lesson'; id: string }
   | { name: 'review'; session: Card[] }
   | { name: 'settings' }
+  | { name: 'diagnostic' }
   | { name: 'duo-setup' }
   | { name: 'duo'; names: [string, string]; topic: FreeTopic | null }
   | { name: 'story' }
@@ -110,7 +112,9 @@ function Root() {
     screen = <SettingsScreen lang={app.uiLang} dailyGoal={app.progress.dailyGoalMinutes} onGoal={app.setGoal}
       palette={app.palette} onPalette={app.setPalette} onLang={app.setUiLang}
       onSwitchProfile={() => { app.resetProfile(); home(); }} onExport={app.exportData}
-      onErase={() => { app.eraseAll(); home(); }} onBack={home} reminder={app.reminder} reminderAvailable={remindersAvailable()} onReminder={changeReminder} />;
+      onErase={() => { app.eraseAll(); home(); }} onBack={home} reminder={app.reminder} reminderAvailable={remindersAvailable()} onReminder={changeReminder} onDiagnostic={() => setRoute({ name: 'diagnostic' })} />;
+  } else if (route.name === 'diagnostic') {
+    screen = <DiagnosticScreen lang={app.uiLang} onBack={() => setRoute({ name: 'settings' })} />;
   } else if (route.name === 'duo-setup') {
     screen = <DuoSetupScreen lang={app.uiLang} onBack={home}
       onStart={(names, topic) => { void clearConversation(DUO_LESSON_ID).then(() => setRoute({ name: 'duo', names, topic })); }} />;

@@ -26,6 +26,7 @@ interface Props {
   reminder: ReminderSetting;
   reminderAvailable: boolean; // le module de notifications existe sur cet appareil
   onReminder: (next: ReminderSetting) => Promise<ReminderResult>;
+  onDiagnostic?: () => void; // ouvre le diagnostic de l'appareil (absent = pas de bouton)
 }
 
 const REMINDER_PROBLEM: Record<ReminderFailure, StringKey> = {
@@ -36,7 +37,7 @@ const REMINDER_PROBLEM: Record<ReminderFailure, StringKey> = {
 };
 
 // Réglages (ados, adultes, seniors): tout ce qui n'a pas besoin d'être sur l'écran d'accueil.
-export function SettingsScreen({ lang, dailyGoal, onGoal, palette, onPalette, onLang, onSwitchProfile, onExport, onErase, onBack, reminder, reminderAvailable: available, onReminder }: Props) {
+export function SettingsScreen({ lang, dailyGoal, onGoal, palette, onPalette, onLang, onSwitchProfile, onExport, onErase, onBack, reminder, reminderAvailable: available, onReminder, onDiagnostic }: Props) {
   const { colors, profile } = useTheme();
   const [problem, setProblem] = useState<ReminderFailure | null>(null);
   const [busy, setBusy] = useState(false);
@@ -106,6 +107,7 @@ export function SettingsScreen({ lang, dailyGoal, onGoal, palette, onPalette, on
       </Card>
 
       <KButton label={t(lang, 'switchProfile')} onPress={onSwitchProfile} />
+      {onDiagnostic && <KButton variant="secondary" label={`🩺 ${t(lang, 'diagnostic')}`} onPress={onDiagnostic} />}
 
       <Pressable accessibilityRole="button" onPress={async () => {
         try { await Share.share({ title: t(lang, 'exportTitle'), message: await onExport() }); }

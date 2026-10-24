@@ -138,6 +138,15 @@ describe('App: accueil et réglages', () => {
     expect(await screen.findByText(/▶ Continuer: /)).toBeTruthy();
   });
 
+  it('les réglages donnent accès au diagnostic de l\'appareil, et on en revient aux réglages', async () => {
+    await adult();
+    await fireEvent.press(screen.getByLabelText('Réglages'));
+    await fireEvent.press(await screen.findByText('🩺 Diagnostic de l\'appareil'));
+    expect(await screen.findByText(/Vérifie en quelques secondes/)).toBeTruthy();
+    await fireEvent.press(screen.getByText(/Retour/));
+    expect(await screen.findByText('Changer de profil')).toBeTruthy();
+  });
+
   it('changer la langue de l\'interface dans les réglages est appliqué partout et sauvegardé', async () => {
     await adult();
     await fireEvent.press(screen.getByLabelText('Réglages'));

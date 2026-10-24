@@ -1,16 +1,17 @@
 import { Alert, Linking, Share } from 'react-native';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { t } from '../i18n/strings';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { ReminderResult, ReminderSetting } from '../notifications/reminders';
 import { SettingsScreen } from './SettingsScreen';
 
-type H = Partial<{ onGoal: (g: 5 | 10 | 20) => void; onPalette: (p: string) => void; onLang: (l: string) => void; onSwitchProfile: () => void; onExport: () => Promise<string>; onErase: () => void; onBack: () => void; onReminder: (r: ReminderSetting) => Promise<ReminderResult>; reminder: ReminderSetting; reminderAvailable: boolean }>;
+type H = Partial<{ onGoal: (g: 5 | 10 | 20) => void; onPalette: (p: string) => void; onLang: (l: string) => void; onSwitchProfile: () => void; onExport: () => Promise<string>; onErase: () => void; onBack: () => void; onReminder: (r: ReminderSetting) => Promise<ReminderResult>; reminder: ReminderSetting; reminderAvailable: boolean; onDiagnostic: () => void }>;
 const show = (h: H = {}, goal: 5 | 10 | 20 = 10) => render(
   <ThemeProvider profileId="adult">
     <SettingsScreen lang="fr" dailyGoal={goal} onGoal={h.onGoal ?? jest.fn()} palette="violet" onPalette={(h.onPalette ?? jest.fn()) as never} onLang={(h.onLang ?? jest.fn()) as never}
       onSwitchProfile={h.onSwitchProfile ?? jest.fn()} onExport={h.onExport ?? (async () => '{}')} onErase={h.onErase ?? jest.fn()} onBack={h.onBack ?? jest.fn()}
-      reminder={h.reminder ?? { enabled: false, hour: 19, minute: 0 }} reminderAvailable={h.reminderAvailable ?? true} onReminder={h.onReminder ?? (async () => ({ ok: true }))} />
+      reminder={h.reminder ?? { enabled: false, hour: 19, minute: 0 }} reminderAvailable={h.reminderAvailable ?? true} onReminder={h.onReminder ?? (async () => ({ ok: true }))} onDiagnostic={h.onDiagnostic} />
   </ThemeProvider>,
 );
 
@@ -119,6 +120,19 @@ describe('SettingsScreen', () => {
       await show({ reminder: off, reminderAvailable: false });
       expect(screen.getByLabelText('Me rappeler chaque jour')).toHaveProp('disabled', true);
       expect(screen.getByText(/pas disponibles sur cet appareil/)).toBeTruthy();
+    });
+  });
+
+  describe('diagnostic de l\'appareil', () => {
+    it('bouton présent quand l\'accès est fourni, et il ouvre le diagnostic', async () => {
+      const onDiagnostic = jest.fn();
+      await show({ onDiagnostic });
+      await fireEvent.press(screen.getByText(`🩺 ${t('fr', 'diagnostic')}`));
+      expect(onDiagnostic).toHaveBeenCalledTimes(1);
+    });
+    it('absent quand l\'accès n\'est pas fourni', async () => {
+      await show();
+      expect(screen.queryByText(`🩺 ${t('fr', 'diagnostic')}`)).toBeNull();
     });
   });
 });

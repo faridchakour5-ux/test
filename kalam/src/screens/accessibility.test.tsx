@@ -14,6 +14,7 @@ import { DuoSetupScreen } from './DuoSetupScreen';
 import { ReviewScreen } from './ReviewScreen';
 import { SettingsScreen } from './SettingsScreen';
 import { newCard } from '../domain/srs';
+import { DiagnosticScreen } from './DiagnosticScreen';
 
 const noop = () => {};
 
@@ -28,6 +29,7 @@ const screens = (lang: UiLang): Record<string, React.ReactElement> => ({
   kidsHome: <KidsHomeScreen lang={lang} stars={5} minutesToday={0} dailyLimit={20} onStories={noop} onPlay={noop} onStickers={noop} onParents={noop} />,
   stickers: <StickersScreen lang={lang} stars={9} onBack={noop} />,
   duoSetup: <DuoSetupScreen lang={lang} onStart={noop} onBack={noop} />,
+  diagnostic: <DiagnosticScreen lang={lang} onBack={noop} deps={{ serverUrl: () => 'https://x.io', fetchImpl: (async () => ({ ok: true, status: 200, json: async () => ({ ok: true, configured: true }) })) as unknown as typeof fetch, hasVoice: async () => true, micAvailable: () => true, notificationsAvailable: () => true }} />,
   review: <ReviewScreen lang={lang} session={[newCard('restaurant:0', 0)]} onAnswer={noop} onExit={noop} />,
 });
 

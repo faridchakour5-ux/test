@@ -1,4 +1,9 @@
-import { SpeechEngine, createTts } from './tts';
+import { SpeechEngine, createTts as realCreateTts } from './tts';
+
+// Chaque lecture « muette » arme une minuterie de garde de plusieurs secondes: on arrête toutes les instances après chaque test.
+const created: ReturnType<typeof realCreateTts>[] = [];
+const createTts = (engine: SpeechEngine) => { const t = realCreateTts(engine); created.push(t); return t; };
+afterEach(async () => { for (const t of created.splice(0)) await t.stop(); });
 
 type Opts = { language?: string; voice?: string; rate?: number; onDone?: () => void; onStopped?: () => void; onError?: (e: unknown) => void };
 type Voice = { identifier: string; language: string; quality?: string };

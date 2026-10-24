@@ -9,7 +9,7 @@ import { Mascot } from '../components/Mascot';
 import { TargetPicker } from '../components/TargetPicker';
 import { WeekChart } from '../components/WeekChart';
 import { LESSONS, Level, recommendLessons } from '../domain/lessons';
-import { Progress, goalReached, lastDays, rollDay } from '../domain/progress';
+import { Progress, currentStreak, goalReached, lastDays, rollDay } from '../domain/progress';
 import { DEFAULT_TARGET, TargetLang, lessonKey } from '../domain/targets';
 import { UiLang, isRtl, t, tf } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
@@ -67,7 +67,7 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
         <LevelBadge lang={lang} xp={progress.xp} />
         <KText weight="600">{t(lang, 'goal')}: {progress.minutesToday}/{progress.dailyGoalMinutes} {t(lang, 'minutes')}</KText>
         {goalReached(progress) && <KText>{t(lang, 'goalReached')}</KText>}
-        <KText muted>{t(lang, 'streak')}: {progress.streak}</KText>
+        <KText muted>{t(lang, 'streak')}: {currentStreak(progress, today)}</KText>
       </Card>
 
       <ChallengeCard lang={lang} progress={progress} today={today} />

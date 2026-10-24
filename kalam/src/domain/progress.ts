@@ -29,6 +29,14 @@ export function rollDay(p: Progress, today: string): Progress {
   return p.today === today ? p : { ...p, today, minutesToday: 0 };
 }
 
+// Série à AFFICHER: la série sauvegardée n'est remise à 1 qu'à la prochaine activité, mais dès qu'un jour a été sauté
+// elle est déjà rompue. Active seulement si la dernière activité date d'aujourd'hui ou d'hier (rien n'est modifié).
+export function currentStreak(p: Progress, today: string): number {
+  if (!p.lastActiveDay || p.streak <= 0) return 0;
+  const gap = dayDiff(p.lastActiveDay, today);
+  return gap <= 1 ? p.streak : 0; // un écart négatif (horloge du téléphone reculée) ne fait pas perdre la série
+}
+
 export function addMinutes(p: Progress, minutes: number, today: string): Progress {
   const rolled = rollDay(p, today);
   const first = rolled.minutesToday === 0 && rolled.lastActiveDay !== today;

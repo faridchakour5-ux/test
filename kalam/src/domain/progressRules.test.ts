@@ -1,4 +1,5 @@
 import {
+  currentStreak,
   CHALLENGE_XP, HISTORY_DAYS, Progress, XP_PER_MINUTE, addMinutes, addXp, applyChallenge, challengeProgress, completeLesson, dailyChallenge,
   initialProgress, isChallengeDone, lastDays, lessonsDoneToday, levelFromXp, noteLessonToday, normalizeProgress, shiftDay, totalMinutes,
 } from './progress';
@@ -197,5 +198,29 @@ describe('défi du jour', () => {
     expect(claimed.xp).toBe(100 + CHALLENGE_XP);
     expect(claimed.challengeClaimedDay).toBe(D);
     expect(applyChallenge(claimed, D)).toBe(claimed); // jamais deux fois
+  });
+});
+
+describe('currentStreak (série affichée)', () => {
+  const p = (streak: number, lastActiveDay: string | null) => ({ ...initialProgress('2026-03-10'), streak, lastActiveDay });
+  it('aujourd\'hui et hier: la série est conservée', () => {
+    expect(currentStreak(p(5, '2026-03-10'), '2026-03-10')).toBe(5);
+    expect(currentStreak(p(5, '2026-03-09'), '2026-03-10')).toBe(5);
+  });
+  it('un jour sauté: rompue; nombreux jours: rompue', () => {
+    expect(currentStreak(p(5, '2026-03-08'), '2026-03-10')).toBe(0);
+    expect(currentStreak(p(5, '2025-01-01'), '2026-03-10')).toBe(0);
+  });
+  it('jamais pratiqué ou série nulle: zéro', () => {
+    expect(currentStreak(p(0, '2026-03-10'), '2026-03-10')).toBe(0);
+    expect(currentStreak(p(3, null), '2026-03-10')).toBe(0);
+  });
+  it('horloge reculée (dernière activité dans le futur): on garde la série', () => {
+    expect(currentStreak(p(4, '2026-03-12'), '2026-03-10')).toBe(4);
+  });
+  it('passage à l\'heure d\'été: hier reste hier', () => {
+    expect(currentStreak(p(2, '2026-03-28'), '2026-03-29')).toBe(2);
+    expect(currentStreak(p(2, '2026-03-29'), '2026-03-30')).toBe(2);
+    expect(currentStreak(p(2, '2026-10-24'), '2026-10-25')).toBe(2);
   });
 });

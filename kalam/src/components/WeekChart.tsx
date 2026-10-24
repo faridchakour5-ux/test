@@ -39,6 +39,7 @@ export function WeekChart({ lang, bars, goal, lessonsDone }: Props) {
           return (
             <View key={b.day} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end' }}>
               <View
+                testID={`bar-${b.day}`}
                 style={{
                   width: 18,
                   height: b.minutes > 0 ? Math.max(6, Math.round((b.minutes / scale) * BAR_MAX_HEIGHT)) : 3,

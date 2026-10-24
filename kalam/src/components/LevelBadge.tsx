@@ -23,7 +23,7 @@ export function LevelBadge({ lang, xp }: { lang: UiLang; xp: number }) {
         <KText size={13} muted>{info.xp} {t(lang, 'xpPoints')}</KText>
       </View>
       <View style={{ height: 10, borderRadius: 5, backgroundColor: colors.border, overflow: 'hidden' }}>
-        <View style={{ height: 10, width: `${Math.max(3, Math.round(info.fraction * 100))}%`, backgroundColor: colors.primary, borderRadius: 5 }} />
+        <View testID="level-fill" style={{ height: 10, width: `${Math.max(3, Math.round(info.fraction * 100))}%`, backgroundColor: colors.primary, borderRadius: 5 }} />
       </View>
     </View>
   );

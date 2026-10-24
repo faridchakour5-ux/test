@@ -86,6 +86,21 @@ describe('runDiagnostics', () => {
       expect(by(r, 'voice')).toEqual({ id: 'voice', status: 'fail', detail: 'none', missing: ['en-US', 'fr-FR'] });
       expect(overallStatus(r)).toBe('fail');
     });
+    it('une liste de voix qui ne répond jamais ne bloque pas le diagnostic: comptée « absente » au bout du délai, sans minuterie restante', async () => {
+      jest.useFakeTimers();
+      try {
+        const p = runDiagnostics(deps({ hasVoice: () => new Promise<boolean>(() => {}), timeoutMs: 2000 }));
+        await jest.advanceTimersByTimeAsync(1999);
+        let done = false; void p.then(() => { done = true; });
+        await jest.advanceTimersByTimeAsync(0);
+        expect(done).toBe(false);
+        await jest.advanceTimersByTimeAsync(4001); // une langue après l'autre
+        const r = await p;
+        expect(by(r, 'voice')).toEqual({ id: 'voice', status: 'fail', detail: 'none', missing: ['en-US', 'fr-FR'] });
+        expect(by(r, 'server').status).toBe('ok'); // le reste est quand même affiché
+        expect(jest.getTimerCount()).toBe(0);
+      } finally { jest.useRealTimers(); }
+    });
     it('une vérification qui plante compte comme « pas de voix » sans tout casser', async () => {
       const r = await runDiagnostics(deps({ hasVoice: async (l) => { if (l === 'fr-FR') throw new Error('x'); return true; } }));
       expect(by(r, 'voice')).toMatchObject({ status: 'warn', missing: ['fr-FR'] });

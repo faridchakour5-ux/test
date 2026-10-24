@@ -14,7 +14,7 @@ export interface CheckResult {
 export interface DiagnosticDeps {
   serverUrl: () => string; // peut lever une erreur si l'adresse est absente ou n'est pas en https
   fetchImpl: typeof fetch;
-  timeoutMs?: number;
+  timeoutMs?: number; // délai du test du serveur et de chaque test de voix (8 s par défaut)
   voiceLocales: string[]; // ex. ['en-US', 'fr-FR']
   hasVoice: (locale: string) => Promise<boolean>;
   micAvailable: () => boolean;
@@ -39,11 +39,18 @@ async function checkServer(d: DiagnosticDeps): Promise<CheckResult> {
   }
 }
 
+function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<T>((res) => { timer = setTimeout(() => res(fallback), ms); });
+  return Promise.race([p, timeout]).finally(() => { if (timer) clearTimeout(timer); });
+}
+
 async function checkVoice(d: DiagnosticDeps): Promise<CheckResult> {
   const missing: string[] = [];
   for (const locale of d.voiceLocales) {
     let ok = false;
-    try { ok = await d.hasVoice(locale); } catch { ok = false; }
+    // Une liste de voix qui ne répond jamais ne doit pas bloquer tout le diagnostic: sans réponse, on la compte « absente ».
+    try { ok = await withTimeout(d.hasVoice(locale), d.timeoutMs ?? 8000, false); } catch { ok = false; }
     if (!ok) missing.push(locale);
   }
   if (missing.length === 0) return { id: 'voice', status: 'ok' };

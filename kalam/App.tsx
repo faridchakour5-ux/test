@@ -25,6 +25,7 @@ import { StoryScreen } from './src/screens/StoryScreen';
 import { DiagnosticScreen } from './src/screens/DiagnosticScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { ReminderResult, ReminderSetting, defaultReminder, disableReminder, enableReminder, remindersAvailable, timeLabel } from './src/notifications/reminders';
+import { useHardwareBack } from './src/navigation/useHardwareBack';
 import { reminderTexts, useReminderSync } from './src/notifications/useReminderSync';
 import { AppStateProvider, useApp } from './src/state/AppState';
 import { AgeProfileId } from './src/theme/profiles';
@@ -56,6 +57,8 @@ function Root() {
   }, [app.uiLang]);
 
   useReminderSync(app.ready, app.reminder, app.uiLang, app.profile);
+  // Test de niveau: le retour d'Android revient au choix du profil (on s'est peut-être trompé), sans effacer ni niveau ni langue.
+  useHardwareBack(() => app.resetProfile(), app.ready && app.profile !== null && app.profile !== 'kids' && !app.level);
 
   if (!app.ready) return <View style={{ flex: 1, justifyContent: 'center' }}><ActivityIndicator /></View>;
 

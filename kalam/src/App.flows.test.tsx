@@ -354,4 +354,14 @@ describe('App: bouton retour physique d\'Android', () => {
     expect(await pressBack()).toBe(true);
     expect(await screen.findByLabelText(t('fr', 'parents'))).toBeTruthy();
   });
+
+  it('test de niveau: le retour physique revient au choix du profil; niveaux et langue apprise conservés', async () => {
+    mockStore.set('kalam:state:v1', JSON.stringify({ profile: 'adult', levels: { en: 'A2' }, targetLang: 'fr', uiLang: 'fr', progress: initialProgress(localDay()) }));
+    await boot();
+    expect(await screen.findByText('Elle ___ professeur.')).toBeTruthy(); // pas de niveau en français: test de niveau
+    expect(await pressBack()).toBe(true);
+    expect(await screen.findByText('Qui va apprendre ?')).toBeTruthy();
+    await waitFor(() => expect(saved()).toMatchObject({ profile: null, targetLang: 'fr', levels: { en: 'A2' } }));
+    expect(await pressBack()).toBe(false); // choix du profil: l'application peut se fermer
+  });
 });

@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 
-import { KIDS_TOPICS, STORIES } from '../domain/kids';
+import { KIDS_TOPICS, STORIES, buildRounds } from '../domain/kids';
 import { pick, t } from '../i18n/strings';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { PlayScreen } from './PlayScreen';
@@ -245,6 +245,29 @@ describe('contenu enfants', () => {
       expect(tp.items.length).toBeGreaterThanOrEqual(3);
       expect(new Set(tp.items.map((i) => i.id)).size).toBe(tp.items.length);
     }
+  });
+  it('identifiants uniques dans tous les thèmes; dans un thème, ni mot ni image en double (l\'enfant doit pouvoir les distinguer)', () => {
+    const ids = KIDS_TOPICS.flatMap((tp) => tp.items.map((i) => i.id));
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const tp of KIDS_TOPICS) {
+      expect(new Set(tp.items.map((i) => i.en)).size).toBe(tp.items.length);
+      expect(new Set(tp.items.map((i) => i.emoji)).size).toBe(tp.items.length);
+      for (const i of tp.items) for (const k of ['en', 'fr', 'ar', 'es', 'zh'] as const) expect(i[k].trim()).not.toBe('');
+      for (const lang of ['fr', 'en', 'ar', 'es', 'zh'] as const) expect(tp.title[lang].trim()).not.toBe('');
+    }
+  });
+  it('chaque thème fournit des manches complètes (3 choix distincts dont la bonne réponse)', () => {
+    for (const tp of KIDS_TOPICS) {
+      const rounds = buildRounds(tp.id);
+      expect(rounds.length).toBe(Math.min(5, tp.items.length));
+      for (const r of rounds) { expect(new Set(r.options.map((o) => o.id)).size).toBe(3); expect(r.options.map((o) => o.id)).toContain(r.target.id); }
+    }
+  });
+  it('au moins 8 thèmes et 7 histoires, titres traduits, identifiants d\'histoire uniques', () => {
+    expect(KIDS_TOPICS.length).toBeGreaterThanOrEqual(8);
+    expect(STORIES.length).toBeGreaterThanOrEqual(7);
+    expect(new Set(STORIES.map((x) => x.id)).size).toBe(STORIES.length);
+    for (const x of STORIES) for (const lang of ['fr', 'en', 'ar', 'es', 'zh'] as const) expect(x.title[lang].trim()).not.toBe('');
   });
   it('chaque histoire a des phrases traduites partout', () => {
     for (const s of STORIES) for (const sent of s.sentences) for (const k of ['en', 'fr', 'ar', 'es', 'zh'] as const) expect(sent[k].trim()).not.toBe('');

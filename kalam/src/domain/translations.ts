@@ -233,12 +233,26 @@ export const KIDS_ITEMS_TR: Record<string, { es: string; zh: string }> = {
   bread: { es: 'pan', zh: '面包' }, milk: { es: 'leche', zh: '牛奶' }, rice: { es: 'arroz', zh: '米饭' },
   egg: { es: 'huevo', zh: '鸡蛋' }, cheese: { es: 'queso', zh: '奶酪' }, pizza: { es: 'pizza', zh: '披萨' },
   one: { es: 'uno', zh: '一' }, two: { es: 'dos', zh: '二' }, three: { es: 'tres', zh: '三' }, four: { es: 'cuatro', zh: '四' }, five: { es: 'cinco', zh: '五' },
+  'house': { es: 'casa', zh: '房子' },
+  'bed': { es: 'cama', zh: '床' },
+  'door': { es: 'puerta', zh: '门' },
+  'lamp': { es: 'lámpara', zh: '灯' },
+  'key': { es: 'llave', zh: '钥匙' },
+  'teddy': { es: 'osito', zh: '小熊' },
+  'car': { es: 'coche', zh: '汽车' },
+  'bus': { es: 'autobús', zh: '公交车' },
+  'train': { es: 'tren', zh: '火车' },
+  'plane': { es: 'avión', zh: '飞机' },
+  'bike': { es: 'bicicleta', zh: '自行车' },
+  'boat': { es: 'barco', zh: '船' },
 };
 
 export const KIDS_TOPIC_TR: Record<string, { es: string; zh: string }> = {
   animals: { es: 'Animales', zh: '动物' }, fruits: { es: 'Frutas', zh: '水果' },
   colors: { es: 'Colores', zh: '颜色' }, numbers: { es: 'Números', zh: '数字' },
   body: { es: 'El cuerpo', zh: '身体' }, food: { es: 'Comida', zh: '食物' },
+  home: { es: 'La casa', zh: '家' },
+  vehicles: { es: 'Vehículos', zh: '交通工具' },
 };
 
 export const KIDS_STORY_TR: Record<string, { title: { es: string; zh: string }; sentences: { es: string; zh: string }[] }> = {
@@ -262,4 +276,18 @@ export const KIDS_STORY_TR: Record<string, { title: { es: string; zh: string }; 
     { es: 'Hoy hace sol.', zh: '今天是晴天。' }, { es: 'Voy al parque.', zh: '我去公园。' },
     { es: 'Veo un pájaro.', zh: '我看见一只小鸟。' }, { es: 'El pájaro dice hola.', zh: '小鸟说你好。' },
     { es: '¡Yo también digo hola!', zh: '我也说你好！' } ] },
+  'beach': { title: { es: 'En la playa', zh: '在海边' }, sentences: [
+    { es: 'Vamos a la playa.', zh: '我们去海边。' },
+    { es: 'El mar es azul.', zh: '大海是蓝色的。' },
+    { es: 'Juego en la arena.', zh: '我在沙子里玩。' },
+    { es: 'Veo un pez grande.', zh: '我看见一条大鱼。' },
+    { es: '¡Me encanta la playa!', zh: '我爱海边！' },
+  ] },
+  'bedtime': { title: { es: 'La hora de dormir', zh: '睡觉时间' }, sentences: [
+    { es: 'Es de noche.', zh: '现在是晚上。' },
+    { es: 'Me cepillo los dientes.', zh: '我刷牙。' },
+    { es: 'Abrazo a mi osito.', zh: '我抱着我的小熊。' },
+    { es: 'Mamá dice buenas noches.', zh: '妈妈说晚安。' },
+    { es: '¡Buenas noches, luna!', zh: '晚安，月亮！' },
+  ] },
 };

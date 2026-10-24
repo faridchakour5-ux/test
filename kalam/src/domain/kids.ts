@@ -56,6 +56,12 @@ export const KIDS_TOPICS: KidsTopic[] = [
     I('one', '⭐', 'one', 'un', 'واحد'), I('two', '⭐⭐', 'two', 'deux', 'اثنان'), I('three', '⭐⭐⭐', 'three', 'trois', 'ثلاثة'),
     I('four', '⭐⭐⭐⭐', 'four', 'quatre', 'أربعة'), I('five', '⭐⭐⭐⭐⭐', 'five', 'cinq', 'خمسة'),
   ]),
+  TOPIC('home', '🏠', 'La maison', 'Home', 'البيت', [
+    I('house', '🏠', 'house', 'maison', 'بيت'), I('bed', '🛏️', 'bed', 'lit', 'سرير'), I('door', '🚪', 'door', 'porte', 'باب'), I('lamp', '💡', 'lamp', 'lampe', 'مصباح'), I('key', '🔑', 'key', 'clé', 'مفتاح'), I('teddy', '🧸', 'teddy bear', 'nounours', 'دبدوب'),
+  ]),
+  TOPIC('vehicles', '🚗', 'Véhicules', 'Vehicles', 'مركبات', [
+    I('car', '🚗', 'car', 'voiture', 'سيارة'), I('bus', '🚌', 'bus', 'bus', 'حافلة'), I('train', '🚆', 'train', 'train', 'قطار'), I('plane', '✈️', 'plane', 'avion', 'طائرة'), I('bike', '🚲', 'bike', 'vélo', 'دراجة'), I('boat', '⛵', 'boat', 'bateau', 'قارب'),
+  ]),
 ];
 
 export const getTopic = (id: string) => KIDS_TOPICS.find((t) => t.id === id);
@@ -136,6 +142,20 @@ export const STORIES: Story[] = [
     ['I see a bird.', 'Je vois un oiseau.', 'أرى طائرًا.'],
     ['The bird says hello.', 'L\'oiseau dit bonjour.', 'يقول الطائر مرحبًا.'],
     ['I say hello too!', 'Moi aussi je dis bonjour !', 'وأنا أيضًا أقول مرحبًا!'],
+  ]),
+  ST('beach', '🏖️', 'À la plage', 'At the beach', 'على الشاطئ', [
+    ['We go to the beach.', 'Nous allons à la plage.', 'نذهب إلى الشاطئ.'],
+    ['The sea is blue.', 'La mer est bleue.', 'البحر أزرق.'],
+    ['I play in the sand.', 'Je joue dans le sable.', 'ألعب في الرمل.'],
+    ['I see a big fish.', 'Je vois un gros poisson.', 'أرى سمكة كبيرة.'],
+    ['I love the beach!', 'J\'aime la plage !', 'أحب الشاطئ!'],
+  ]),
+  ST('bedtime', '🌙', 'L\'heure de dormir', 'Bedtime', 'وقت النوم', [
+    ['It is night.', 'Il fait nuit.', 'إنه الليل.'],
+    ['I brush my teeth.', 'Je me brosse les dents.', 'أنظّف أسناني.'],
+    ['I hug my teddy bear.', 'Je serre mon nounours.', 'أحضن دبدوبي.'],
+    ['Mom says good night.', 'Maman dit bonne nuit.', 'تقول لي أمي: تصبح على خير.'],
+    ['Good night, moon!', 'Bonne nuit, la lune !', 'تصبح على خير يا قمر!'],
   ]),
 ];
 

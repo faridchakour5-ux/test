@@ -70,3 +70,10 @@ describe('i18n', () => {
     }
   });
 });
+
+describe('chiffres de l\'interface arabe', () => {
+  it('chiffres occidentaux partout (0-9), comme le reste de l\'écran: pas de mélange avec les chiffres arabes-indiens', () => {
+    const mixed = Object.entries(ar).filter(([, v]) => /[٠-٩۰-۹]/.test(String(v))).map(([k]) => k);
+    expect(mixed).toEqual([]);
+  });
+});

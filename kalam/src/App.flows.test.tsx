@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
-import { BackHandler } from 'react-native';
+import { AppState, BackHandler } from 'react-native';
 import App from '../App';
 import { initialProgress, localDay } from './domain/progress';
 import { KIDS_TOPICS, STORIES } from './domain/kids';
@@ -137,6 +137,20 @@ describe('App: limite de temps de l\'enfant', () => {
     expect(await screen.findByText(`🌟 ${t('fr', 'stickers')}`)).toBeTruthy();
     await fireEvent.press(screen.getByText(/Retour/));
     expect(await screen.findByLabelText(t('fr', 'parents'))).toBeTruthy();
+  });
+
+  it('application restée ouverte après minuit: les minutes d\'hier ne bloquent plus l\'enfant au retour au premier plan', async () => {
+    let handler: ((s: string) => void) | undefined;
+    jest.spyOn(AppState, 'addEventListener').mockImplementation(((_e: string, h: (s: string) => void) => { handler = h; return { remove: () => {} }; }) as never);
+    mockStore.set('kalam:state:v1', kidsState({}, { dailyLimit: 10 }, { minutesToday: 10 }));
+    await boot();
+    expect(await screen.findByText(t('fr', 'timeUpTitle'))).toBeTruthy();
+    const real = Date.now();
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(real + 36 * 3_600_000); // un jour et demi plus tard
+    await act(async () => { handler?.('active'); });
+    expect(screen.queryByText(t('fr', 'timeUpTitle'))).toBeNull();
+    expect(screen.getByLabelText(t('fr', 'play'))).toBeTruthy();
+    clock.mockRestore();
   });
 
   it('avec du temps restant: le temps restant est annoncé et les jeux marchent', async () => {

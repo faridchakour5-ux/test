@@ -299,3 +299,48 @@ describe('durée maximale et repli hors ligne', () => {
     await q;
   });
 });
+
+describe('nouvel essai quand le moteur est occupé', () => {
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  it('un seul nouvel essai, qui réussit si le moteur se libère', async () => {
+    const f = fakeModule();
+    const p = createRecognizer(f.mod, 5).listenOnce();
+    await flush();
+    f.emit('error', { error: 'busy' });
+    await sleep(30);
+    expect(f.started).toHaveLength(2);
+    f.emit('result', { results: [{ transcript: 'hello' }] });
+    f.emit('end');
+    await expect(p).resolves.toEqual({ ok: true, transcript: 'hello' });
+  });
+  it('encore occupé au second essai: échec « busy », pas de troisième essai', async () => {
+    const f = fakeModule();
+    const p = createRecognizer(f.mod, 5).listenOnce();
+    await flush();
+    f.emit('error', { error: 'busy' });
+    await sleep(30);
+    f.emit('error', { error: 'too-many-requests' });
+    await expect(p).resolves.toEqual({ ok: false, reason: 'busy' });
+    await sleep(30);
+    expect(f.started).toHaveLength(2);
+  });
+  it('annulé pendant la pause: pas de nouvel essai', async () => {
+    const f = fakeModule();
+    const r = createRecognizer(f.mod, 20);
+    const p = r.listenOnce();
+    await flush();
+    f.emit('error', { error: 'busy' });
+    r.cancel();
+    await expect(p).resolves.toEqual({ ok: false, reason: 'cancelled' });
+    await sleep(50);
+    expect(f.started).toHaveLength(1);
+  });
+  it('sans délai configuré (par défaut): aucun nouvel essai', async () => {
+    const f = fakeModule();
+    const p = createRecognizer(f.mod).listenOnce();
+    await flush();
+    f.emit('error', { error: 'busy' });
+    await expect(p).resolves.toEqual({ ok: false, reason: 'busy' });
+    expect(f.started).toHaveLength(1);
+  });
+});

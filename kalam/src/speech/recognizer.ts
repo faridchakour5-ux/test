@@ -36,7 +36,8 @@ export interface RecModule {
   addListener(name: string, cb: (e: any) => void): Sub;
 }
 
-export function createRecognizer(mod: RecModule | null) {
+// busyRetryMs: pause avant l'unique nouvel essai quand le moteur répond « occupé » (0 = pas de nouvel essai).
+export function createRecognizer(mod: RecModule | null, busyRetryMs = 0) {
   let cancelActive: (() => void) | null = null;
   let seq = 0; // numéro de la demande d'écoute la plus récente (une demande plus ancienne, encore en attente de permission, s'efface)
 
@@ -135,7 +136,14 @@ export function createRecognizer(mod: RecModule | null) {
     if (!perm.granted) return { ok: false, reason: perm.canAskAgain === false ? 'permission-blocked' : 'permission' };
 
     const o = { lang: options.lang ?? 'en-US', patienceMs: options.patienceMs ?? 2200, maxMs: options.maxMs ?? 20_000, onPartial: options.onPartial };
-    const first = await attempt(false, o);
+    let first = await attempt(false, o);
+    // Android: « occupé » vient souvent d'une session précédente qui se ferme encore. Un seul nouvel essai après une courte pause
+    // (sauf si une demande plus récente ou une annulation a pris la place pendant la pause).
+    if (!first.ok && first.reason === 'busy' && busyRetryMs > 0) {
+      await new Promise((r) => setTimeout(r, busyRetryMs));
+      if (mine !== seq) return { ok: false, reason: 'cancelled' };
+      first = await attempt(false, o);
+    }
     // Repli hors ligne si le service en ligne est injoignable.
     if (!first.ok && first.reason === 'network' && mod.supportsOnDeviceRecognition?.()) {
       return attempt(true, o);
@@ -158,7 +166,7 @@ function getReal() {
   } catch {
     mod = null;
   }
-  real = createRecognizer(mod);
+  real = createRecognizer(mod, 500);
   return real;
 }
 

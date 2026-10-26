@@ -23,9 +23,10 @@ export function normalizeCards(v: unknown): Card[] {
   const out: Card[] = [];
   for (const c of v as Partial<Card>[]) {
     if (!c || typeof c !== 'object' || typeof c.key !== 'string' || !c.key || seen.has(c.key)) continue;
-    if (!isNum(c.ease) || !isNum(c.intervalDays) || !isNum(c.due) || c.intervalDays < 0 || c.ease < 1.3 || c.ease > 5) continue;
+    if (!isNum(c.ease) || !isNum(c.intervalDays) || !isNum(c.due) || c.intervalDays < 0 || c.ease < 1.3) continue;
     seen.add(c.key);
-    out.push({ key: c.key, ease: c.ease, intervalDays: c.intervalDays, due: c.due });
+    // Une facilité trop haute (anciennes versions sans plafond) est ramenée au plafond: la carte et son avancement sont gardés.
+    out.push({ key: c.key, ease: Math.min(c.ease, 5), intervalDays: c.intervalDays, due: c.due });
   }
   return out;
 }
@@ -37,7 +38,9 @@ export function normalizeConsent(v: unknown): Consent {
   if (c.micAllowed === true && isNum(c.grantedAt) && c.grantedAt > 0) {
     return { micAllowed: true, grantedAt: c.grantedAt, version: isNum(c.version) ? c.version : CONSENT_VERSION };
   }
-  return { ...noConsent(), version: isNum(c.version) ? c.version : CONSENT_VERSION };
+  // Refusé (ou consentement invalide): on garde la date d'un ancien consentement RETIRÉ, conservée « pour preuve » (voir revokeMic).
+  const proof = c.micAllowed === false && isNum(c.grantedAt) && c.grantedAt > 0 ? c.grantedAt : null;
+  return { ...noConsent(), grantedAt: proof, version: isNum(c.version) ? c.version : CONSENT_VERSION };
 }
 
 const LIMITS: DailyLimit[] = [10, 20, 30, null];
@@ -45,8 +48,10 @@ const LIMITS: DailyLimit[] = [10, 20, 30, null];
 export function normalizeKids(v: unknown, defaults: { stars: number; storiesRead: string[]; consent: Consent; dailyLimit: DailyLimit }) {
   const k = (v && typeof v === 'object' && !Array.isArray(v) ? v : {}) as Record<string, unknown>;
   return {
-    stars: isNum(k.stars) && k.stars >= 0 ? Math.floor(k.stars) : defaults.stars,
-    storiesRead: Array.isArray(k.storiesRead) ? [...new Set((k.storiesRead as unknown[]).filter((x): x is string => typeof x === 'string'))] : defaults.storiesRead,
+    stars: isNum(k.stars) && k.stars >= 0 ? Math.min(Math.floor(k.stars), 1_000_000) : defaults.stars, // plafond: une valeur absurde ne fait pas déborder l'écran
+    storiesRead: Array.isArray(k.storiesRead)
+      ? [...new Set((k.storiesRead as unknown[]).filter((x): x is string => typeof x === 'string' && x.length > 0 && x.length <= 64))].slice(0, 200)
+      : defaults.storiesRead,
     consent: normalizeConsent(k.consent),
     dailyLimit: (LIMITS as unknown[]).includes(k.dailyLimit) ? (k.dailyLimit as DailyLimit) : defaults.dailyLimit,
   };

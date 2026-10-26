@@ -251,7 +251,7 @@ describe('App: mode enfant', () => {
       jest.useFakeTimers({ doNotFake: ['Date', 'nextTick', 'queueMicrotask', 'setImmediate', 'clearImmediate'] });
       await boot();
       await fireEvent.press(await screen.findByLabelText('Parents'));
-      for (let i = 0; i < 3; i++) await fireEvent.press(await screen.findByLabelText('26'));
+      for (let i = 0; i < 3; i++) await fireEvent.press(await screen.findByLabelText('35'));
       expect(await screen.findByText(/Trop d'essais/)).toBeTruthy();
       await fireEvent.press(screen.getByLabelText('36')); // bonne réponse, mais pendant la pause
       expect(screen.queryAllByText('Effacer toutes les données')).toHaveLength(0);
@@ -265,7 +265,7 @@ describe('App: mode enfant', () => {
     it('quitter puis rouvrir l\'espace parents ne remet pas les essais à zéro', async () => {
       await boot();
       await fireEvent.press(await screen.findByLabelText('Parents'));
-      for (let i = 0; i < 3; i++) await fireEvent.press(await screen.findByLabelText('26'));
+      for (let i = 0; i < 3; i++) await fireEvent.press(await screen.findByLabelText('35'));
       await screen.findByText(/Trop d'essais/);
       await fireEvent.press(screen.getByLabelText('Retour'));
       await fireEvent.press(await screen.findByLabelText('Parents'));
@@ -276,7 +276,7 @@ describe('App: mode enfant', () => {
       await boot();
       await fireEvent.press(await screen.findByLabelText('Parents'));
       expect(await screen.findByText(/combien font 6 × 6/)).toBeTruthy();
-      await fireEvent.press(screen.getByLabelText('26')); // fausse réponse
+      await fireEvent.press(screen.getByLabelText('35')); // fausse réponse
       expect(await screen.findByText('Mauvaise réponse. Réessayez.')).toBeTruthy();
       expect(screen.queryAllByText('Effacer toutes les données')).toHaveLength(0);
     });

@@ -7,9 +7,9 @@ import { t } from '../i18n/strings';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { ParentsScreen } from './ParentsScreen';
 
-// Math.random à 0 → question 6 × 6 = 36, propositions [26, 46, 35, 36] (ordre fixe).
+// Math.random à 0 → question 6 × 6 = 36, propositions [35, 37, 36, 46] (mélange fixé par le hasard figé).
 const RIGHT = '36';
-const WRONG = '26';
+const WRONG = '35';
 
 type H = Partial<React.ComponentProps<typeof ParentsScreen>>;
 const show = (h: H = {}) => render(
@@ -28,7 +28,7 @@ describe('portail parental', () => {
   it('derrière le portail: question d\'adulte, quatre réponses, aucun réglage visible', async () => {
     await show();
     expect(screen.getByText(new RegExp(`${t('fr', 'gateIntro').replace(/\s/g, ' ')} 6 × 6`))).toBeTruthy();
-    for (const o of ['26', '46', '35', '36']) expect(screen.getByLabelText(o)).toBeTruthy();
+    for (const o of ['35', '37', '36', '46']) expect(screen.getByLabelText(o)).toBeTruthy();
     expect(screen.queryByLabelText(t('fr', 'micConsentTitle'))).toBeNull();
     expect(screen.queryByText(t('fr', 'eraseTitle'))).toBeNull();
   });

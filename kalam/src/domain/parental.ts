@@ -7,6 +7,15 @@ export interface ParentalGate {
 
 type Rng = () => number;
 
+function shuffled<T>(items: T[], rng: Rng): T[] {
+  const a = [...items];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.min(i, Math.floor(rng() * (i + 1)));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 // Question d'adulte (multiplication) à choix multiples: un jeune enfant ne la réussira pas par hasard
 // de façon répétée, et aucun clavier n'est nécessaire.
 export function makeGate(rng: Rng = Math.random): ParentalGate {
@@ -14,9 +23,10 @@ export function makeGate(rng: Rng = Math.random): ParentalGate {
   const b = 6 + Math.floor(rng() * 4);
   const answer = a * b;
   const wrong = new Set<number>();
-  const candidates = [answer - 10, answer + 10, answer - 1, answer + 1, answer + 2, answer - 2, answer + 7, answer - 7];
+  const candidates = shuffled([answer - 10, answer + 10, answer - 1, answer + 1, answer + 2, answer - 2, answer + 7, answer - 7], rng);
   for (const c of candidates) { if (c > 0 && c !== answer && wrong.size < 3) wrong.add(c); }
-  const options = [...wrong, answer].sort((x, y) => ((x * 7919) % 13) - ((y * 7919) % 13) || x - y);
+  // Mauvaises réponses et ordre tirés au hasard à chaque question: la place de la bonne réponse ne peut pas s'apprendre par cœur.
+  const options = shuffled([...wrong, answer], rng);
   return { question: { a, b }, options, answer };
 }
 

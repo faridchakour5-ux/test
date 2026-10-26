@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 type KeepAwake = { activateKeepAwakeAsync(tag?: string): Promise<void>; deactivateKeepAwake(tag?: string): Promise<void> };
 
@@ -16,10 +16,11 @@ function load(): KeepAwake | null {
 
 // Pendant la conversation mains libres, l'écran ne doit pas s'éteindre: un écran éteint coupe le micro et l'écoute.
 // On rend l'écran à son réglage normal dès que le mode s'arrête ou que l'écran se ferme.
-export function useKeepAwakeWhile(active: boolean): void {
+export function useKeepAwakeWhile(active: boolean, loader: () => KeepAwake | null = load): void {
+  const loaderRef = useRef(loader); // le chargeur ne change pas en cours de route (il ne sert qu'aux tests)
   useEffect(() => {
     if (!active) return;
-    const mod = load();
+    const mod = loaderRef.current();
     if (!mod) return;
     mod.activateKeepAwakeAsync(TAG).catch(() => { /* sans effet grave: l'écran suivra le réglage du téléphone */ });
     return () => { mod.deactivateKeepAwake(TAG).catch(() => { /* idem */ }); };

@@ -43,4 +43,11 @@ describe('écran maintenu allumé pendant le mode mains libres', () => {
     await view.unmount();
     expect(mockActivate).toHaveBeenCalled();
   });
+  it('module natif absent: l\'écran reste utilisable, sans erreur', async () => {
+    function P() { useKeepAwakeWhile(true, () => null); return null; }
+    const view = await render(<P />);
+    await view.unmount();
+    expect(mockActivate).not.toHaveBeenCalled();
+    expect(mockDeactivate).not.toHaveBeenCalled();
+  });
 });

@@ -3,6 +3,7 @@ import React from 'react';
 import { DiagnosticDeps } from '../diagnostics/diagnostics';
 import { UI_LANGS, t, tf } from '../i18n/strings';
 import { PROBLEM_TEXT } from '../speech/problems';
+import appJson from '../../app.json';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { DiagnosticScreen } from './DiagnosticScreen';
 
@@ -35,6 +36,11 @@ describe('écran de diagnostic', () => {
     expect(screen.getByText(t('fr', 'diagVoiceOk'))).toBeTruthy();
     expect(screen.getByText(t('fr', 'diagMicOk'))).toBeTruthy();
     expect(screen.getByText(t('fr', 'diagNotifOk'))).toBeTruthy();
+  });
+
+  it('affiche la version de Kalam et du système, pour les captures d\'écran de support', async () => {
+    await show();
+    expect(screen.getByText(new RegExp(`^Kalam ${appJson.expo.version.replace(/\./g, '\\.')} · `))).toBeTruthy();
   });
 
   it('un message de vérification en cours s\'affiche avant le résultat', async () => {

@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView } from 'react-native';
+import { Platform, ScrollView } from 'react-native';
+import appJson from '../../app.json';
 import { resolveApiUrl } from '../api/teacher';
 import { BackButton } from '../components/BackButton';
 import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
 import { KText } from '../components/KText';
+import { versionLine } from '../diagnostics/versionInfo';
 import { CHECK_LABEL, CheckResult, CheckStatus, DiagnosticDeps, messageFor, overallStatus, runDiagnostics } from '../diagnostics/diagnostics';
 import { StringKey, UiLang, t, tf } from '../i18n/strings';
 import { remindersAvailable } from '../notifications/reminders';
@@ -97,6 +99,8 @@ export function DiagnosticScreen({ lang, onBack, deps }: Props) {
         {heard?.text && <KText accessibilityLiveRegion="polite">{tf(lang, 'diagHeard', { text: heard.text })}</KText>}
         {heard?.problem && <KText accessibilityLiveRegion="polite" style={{ color: colors.danger }}>{t(lang, heard.problem)}</KText>}
       </Card>
+
+      <KText muted size={14} selectable>{versionLine(appJson.expo.version, Platform.OS, Platform.Version)}</KText>
     </ScrollView>
   );
 }

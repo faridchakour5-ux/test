@@ -273,6 +273,12 @@ export const KIDS_ITEMS_TR: Record<string, { es: string; zh: string }> = {
   'plane': { es: 'avión', zh: '飞机' },
   'bike': { es: 'bicicleta', zh: '自行车' },
   'boat': { es: 'barco', zh: '船' },
+  'book': { es: 'libro', zh: '书' },
+  'pencil': { es: 'lápiz', zh: '铅笔' },
+  'bag': { es: 'mochila', zh: '书包' },
+  'scissors': { es: 'tijeras', zh: '剪刀' },
+  'paint': { es: 'pintura', zh: '颜料' },
+  'clock': { es: 'reloj', zh: '时钟' },
 };
 
 export const KIDS_TOPIC_TR: Record<string, { es: string; zh: string }> = {
@@ -281,6 +287,7 @@ export const KIDS_TOPIC_TR: Record<string, { es: string; zh: string }> = {
   body: { es: 'El cuerpo', zh: '身体' }, food: { es: 'Comida', zh: '食物' },
   home: { es: 'La casa', zh: '家' },
   vehicles: { es: 'Vehículos', zh: '交通工具' },
+  school: { es: 'La escuela', zh: '学校' },
 };
 
 export const KIDS_STORY_TR: Record<string, { title: { es: string; zh: string }; sentences: { es: string; zh: string }[] }> = {

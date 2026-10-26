@@ -62,6 +62,9 @@ export const KIDS_TOPICS: KidsTopic[] = [
   TOPIC('vehicles', '🚗', 'Véhicules', 'Vehicles', 'مركبات', [
     I('car', '🚗', 'car', 'voiture', 'سيارة'), I('bus', '🚌', 'bus', 'bus', 'حافلة'), I('train', '🚆', 'train', 'train', 'قطار'), I('plane', '✈️', 'plane', 'avion', 'طائرة'), I('bike', '🚲', 'bike', 'vélo', 'دراجة'), I('boat', '⛵', 'boat', 'bateau', 'قارب'),
   ]),
+  TOPIC('school', '🎒', "L'école", 'School', 'المدرسة', [
+    I('book', '📖', 'book', 'livre', 'كتاب'), I('pencil', '✏️', 'pencil', 'crayon', 'قلم رصاص'), I('bag', '🎒', 'school bag', 'cartable', 'حقيبة'), I('scissors', '✂️', 'scissors', 'ciseaux', 'مقص'), I('paint', '🎨', 'paint', 'peinture', 'طلاء'), I('clock', '⏰', 'clock', 'horloge', 'ساعة'),
+  ]),
 ];
 
 export const getTopic = (id: string) => KIDS_TOPICS.find((t) => t.id === id);

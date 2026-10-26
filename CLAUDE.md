@@ -31,6 +31,7 @@ Lire d'abord `docs/ETAT.md` (état et tâches du propriétaire), puis `docs/ARCH
 - RNTL 14: `await render`, `await unmount`, `cleanup` en `afterEach`; `void fireEvent.press` si le gestionnaire ne se termine jamais.
 - Tests de synthèse vocale: arrêter chaque instance créée en fin de test.
 - Les tests de contenu doivent se déduire des données, pas de nombres figés.
+- Un test ne doit pas dépendre de l'ordre: vérifier avec `npx jest --randomize --seed=N` (espions remis à zéro, `jest.resetModules()` après `doMock`).
 
 ## Ce que seul le propriétaire peut faire
 Essai sur un vrai téléphone Android (Réglages → Diagnostic), `KALAM_APP_ID` et `EXPO_PUBLIC_API_URL` dans EAS, relecture des traductions par des locuteurs natifs. Détails dans `docs/ETAT.md` et `PUBLISHING.md`.

@@ -4,6 +4,11 @@ name: Publier la politique de confidentialité
 # L'adresse obtenue (https://<compte>.github.io/<dépôt>/privacy.html) se colle dans la Play Console.
 on:
   workflow_dispatch:
+    inputs:
+      allow_draft:
+        description: "Publier même si PRIVACY.md est encore marqué BROUILLON (essai seulement)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -25,7 +30,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node kalam/scripts/privacyPage.js PRIVACY.md site/privacy.html
+      - run: node kalam/scripts/privacyPage.js PRIVACY.md site/privacy.html ${{ inputs.allow_draft && '--allow-draft' || '' }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

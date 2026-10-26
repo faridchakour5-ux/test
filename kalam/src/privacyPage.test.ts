@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
+import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-const { markdownToHtml, page } = require('../scripts/privacyPage');
+const { markdownToHtml, page, isDraft } = require('../scripts/privacyPage');
 
 describe('page web de la politique de confidentialité', () => {
   it('titres, listes, gras et code', () => {
@@ -20,5 +21,23 @@ describe('page web de la politique de confidentialité', () => {
     expect(html).toContain('Aucune publicité');
     expect(html).not.toMatch(/<script|https?:\/\//i);
     expect((html.match(/<h2>/g) ?? []).length).toBe((md.match(/^## /gm) ?? []).length);
+  });
+  it('un texte encore marqué BROUILLON n\'est pas publié par erreur (sauf --allow-draft)', () => {
+    expect(isDraft('# Politique (BROUILLON — à valider)')).toBe(true);
+    expect(isDraft('# Politique de confidentialité')).toBe(false);
+    const dir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'kalam-priv-'));
+    const src = path.join(dir, 'P.md');
+    const out = path.join(dir, 'site', 'privacy.html');
+    fs.writeFileSync(src, '# Politique (BROUILLON)\n\n- un point');
+    const script = path.join(__dirname, '..', 'scripts', 'privacyPage.js');
+    const refused = spawnSync('node', [script, src, out], { encoding: 'utf8' });
+    expect(refused.status).toBe(1);
+    expect(refused.stderr).toContain('BROUILLON');
+    expect(fs.existsSync(out)).toBe(false);
+    const allowed = spawnSync('node', [script, src, out, '--allow-draft'], { encoding: 'utf8' });
+    expect(allowed.status).toBe(0);
+    expect(fs.existsSync(out)).toBe(true);
+    fs.writeFileSync(src, '# Politique de confidentialité\n\n- un point');
+    expect(spawnSync('node', [script, src, out], { encoding: 'utf8' }).status).toBe(0);
   });
 });

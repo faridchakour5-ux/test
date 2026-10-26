@@ -115,6 +115,19 @@ jobs:
           KALAM_KEYSTORE_PASSWORD: testpass1
           KALAM_KEY_ALIAS: test
           KALAM_KEY_PASSWORD: testpass1
+      # Manifeste FINAL (fusionné avec celui des bibliothèques): ce que Google Play verra vraiment. On affiche la liste complète
+      # des permissions et on refuse toute permission sensible.
+      - name: Manifeste fusionné (permissions réelles)
+        run: |
+          m=$(find android/app/build -path '*merged_manifests/release*' -name AndroidManifest.xml | head -1)
+          test -n "$m" || { echo "::error::manifeste fusionné introuvable"; exit 1; }
+          echo "Manifeste: $m"
+          grep -o 'uses-permission[^>]*android:name="[^"]*"' "$m" | grep -o 'android:name="[^"]*"' | sort -u | tee /tmp/perms.txt
+          for bad in READ_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE SYSTEM_ALERT_WINDOW CAMERA ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION READ_CONTACTS READ_PHONE_STATE READ_SMS SEND_SMS RECORD_AUDIO_BACKGROUND FOREGROUND_SERVICE_MICROPHONE; do
+            if grep -q "permission.$bad\"" /tmp/perms.txt; then echo "::error::permission interdite dans le manifeste final: $bad"; exit 1; fi
+          done
+          grep -q 'permission.RECORD_AUDIO"' /tmp/perms.txt
+          grep -q 'permission.INTERNET"' /tmp/perms.txt
       - name: Le .aab est signé par la clé de publication (pas par celle de débogage)
         run: |
           ls -l android/app/build/outputs/bundle/release/*.aab

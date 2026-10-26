@@ -3,7 +3,7 @@ export interface Tr { ar: string; es: string; zh: string }
 
 const T = (ar: string, es: string, zh: string): Tr => ({ ar, es, zh });
 
-// Mots et expressions des 34 leçons, indexés par leur forme anglaise.
+// Mots et expressions des leçons, indexés par leur forme anglaise.
 export const VOCAB_TR: Record<string, Tr> = {
   'Hello': T('مرحبًا', 'Hola', '你好'),
   'My name is': T('اسمي', 'Me llamo', '我叫'),

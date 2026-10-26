@@ -22,7 +22,10 @@ export function useKeepAwakeWhile(active: boolean, loader: () => KeepAwake | nul
     if (!active) return;
     const mod = loaderRef.current();
     if (!mod) return;
-    mod.activateKeepAwakeAsync(TAG).catch(() => { /* sans effet grave: l'écran suivra le réglage du téléphone */ });
-    return () => { mod.deactivateKeepAwake(TAG).catch(() => { /* idem */ }); };
+    let closed = false;
+    const release = () => { mod.deactivateKeepAwake(TAG).catch(() => { /* sans effet grave: l'écran suivra le réglage du téléphone */ }); };
+    // Si le mode s'arrête avant la fin de l'activation, on relâche aussi une fois l'activation terminée (sinon l'écran resterait allumé).
+    mod.activateKeepAwakeAsync(TAG).then(() => { if (closed) release(); }, () => { /* idem */ });
+    return () => { closed = true; release(); };
   }, [active]);
 }

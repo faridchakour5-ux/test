@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, render } from '@testing-library/react-native';
+import { act, cleanup, render } from '@testing-library/react-native';
 import { useKeepAwakeWhile } from './useKeepAwakeWhile';
 
 const mockActivate = jest.fn();
@@ -49,5 +49,14 @@ describe('écran maintenu allumé pendant le mode mains libres', () => {
     await view.unmount();
     expect(mockActivate).not.toHaveBeenCalled();
     expect(mockDeactivate).not.toHaveBeenCalled();
+  });
+  it('arrêt du mode avant la fin de l\'activation: l\'écran est quand même relâché une fois l\'activation terminée', async () => {
+    let finish: () => void = () => {};
+    mockActivate.mockImplementation(() => new Promise<void>((resolve) => { finish = resolve; }));
+    const view = await render(<Probe on />);
+    await view.rerender(<Probe on={false} />);
+    expect(mockDeactivate).toHaveBeenCalledTimes(1); // relâché tout de suite
+    await act(async () => { finish(); });
+    expect(mockDeactivate).toHaveBeenCalledTimes(2); // et encore une fois après l'activation tardive
   });
 });

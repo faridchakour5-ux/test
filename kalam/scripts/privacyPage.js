@@ -40,11 +40,20 @@ ${body}
 `;
 }
 
-module.exports = { markdownToHtml, page, esc };
+// Un texte encore marqué « BROUILLON » n'est pas publié par erreur sur une adresse publique (sauf demande explicite).
+const isDraft = (md) => /BROUILLON/i.test(md);
+
+module.exports = { markdownToHtml, page, esc, isDraft };
 
 if (require.main === module) {
-  const [src, dest] = process.argv.slice(2);
-  if (!src || !dest) { console.error('Usage: node scripts/privacyPage.js PRIVACY.md site/privacy.html'); process.exit(2); }
+  const args = process.argv.slice(2);
+  const allowDraft = args.includes('--allow-draft');
+  const [src, dest] = args.filter((a) => !a.startsWith('--'));
+  if (!src || !dest) { console.error('Usage: node scripts/privacyPage.js PRIVACY.md site/privacy.html [--allow-draft]'); process.exit(2); }
+  if (isDraft(fs.readFileSync(src, 'utf8')) && !allowDraft) {
+    console.error('PRIVACY.md est encore marqué « BROUILLON »: faites-le valider, retirez la mention, puis relancez (ou lancez le workflow avec « allow_draft » pour un essai).');
+    process.exit(1);
+  }
   fs.mkdirSync(require('path').dirname(dest), { recursive: true });
   fs.writeFileSync(dest, page(fs.readFileSync(src, 'utf8')));
   console.log(`ok: ${dest}`);

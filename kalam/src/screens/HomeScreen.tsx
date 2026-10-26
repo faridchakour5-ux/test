@@ -46,7 +46,14 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
       <View style={{ flexDirection: rtl ? 'row-reverse' : 'row', alignItems: 'center', gap: 16 }}>
         <Mascot mood={goalReached(progress) ? 'cheer' : 'happy'} size={profile.id === 'kids' ? 120 : 72} />
         <View style={{ flex: 1 }}>
-          <KText size={28} weight="800" accessibilityRole="header">Kalam · {level}</KText>
+          {/* « Kalam » puis le niveau dans une pastille: avec de gros caractères (seniors), le niveau passe à la ligne entier au lieu de couper « · A1 » */}
+          <View accessible accessibilityRole="header" accessibilityLabel={`Kalam · ${level}`}
+            style={{ flexDirection: rtl ? 'row-reverse' : 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 10, rowGap: 4 }}>
+            <KText size={28} weight="800">Kalam</KText>
+            <View style={{ borderWidth: 2, borderColor: colors.primary, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 2 }}>
+              <KText size={16} weight="800">{level}</KText>
+            </View>
+          </View>
           <KText muted>{t(lang, 'hello')}</KText>
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel={t(lang, 'settings')} onPress={onSettings}

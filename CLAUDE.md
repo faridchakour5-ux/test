@@ -14,6 +14,8 @@ Lire d'abord `docs/ETAT.md` (état et tâches du propriétaire), puis `docs/ARCH
 
 ## Vérifier avant de pousser (dans `kalam/`)
 - `npx tsc --noEmit && npx eslint . && npx jest`
+- Toujours la suite COMPLÈTE (`npx jest`), jamais seulement un dossier: un changement d'écran casse des tests de parcours ailleurs (`App.integration.test.tsx`, `App.flows.test.tsx`).
+- Changement visuel: reconstruire le rendu web dans une copie (`expo export --platform web`, `react-native-web` n'est pas une dépendance du projet) et regarder une capture, y compris en profil senior (gros caractères) sur 360×640.
 - Serveur: `cd backend && npm test`
 - La CI rejoue les tests dans 3 fuseaux horaires et compile le bundle Android.
 

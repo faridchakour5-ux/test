@@ -64,3 +64,16 @@ Chaque réponse du serveur porte un en-tête `X-Request-Id`, repris dans le jour
 ## 10. Rappel quotidien (notifications)
 Le rappel est une notification locale (`expo-notifications`), sans serveur. Il fonctionne dans le build de développement et le build de production, pas dans Expo Go sur Android. À essayer sur un vrai téléphone: activer le rappel, choisir une heure proche, fermer l'application, attendre la notification, puis redémarrer le téléphone et vérifier qu'il sonne encore le lendemain. Sur Android 13 et plus, l'autorisation « Notifications » est demandée à l'activation; sur certains téléphones, l'économiseur de batterie peut retarder la notification de quelques minutes (c'est voulu: pas d'alarme exacte, pas de permission sensible).
 
+
+## 11. Envoi automatique sur Google Play (GitHub Actions, sans EAS)
+Le fichier `.github/workflows/play-release.yml` construit le `.aab` signé avec VOTRE clé et l'envoie sur Google Play. Il se lance seulement à la main (Actions > « Envoi sur Google Play » > Run workflow) et s'arrête tout de suite, en listant ce qui manque, tant que les secrets ne sont pas là. Rien de secret n'est dans le dépôt, et rien ne doit passer par un chat.
+
+**À faire une seule fois, par vous (l'API de Google Play ne peut pas le faire):**
+1. Play Console: créer l'application (identifiant = votre `KALAM_APP_ID`), remplir « Sécurité des données », classification du contenu, public cible (voir `kalam/store/listing.md`), puis envoyer à la main un premier `.aab` en test interne (le `.aab` du job `android-aab` de la CI ou un build EAS). Activer « Signature d'application par Google Play » (par défaut): votre clé ci-dessous n'est alors qu'une clé d'envoi, remplaçable en cas de perte.
+2. Créer la clé d'envoi sur VOTRE ordinateur (Java requis), puis la sauvegarder en lieu sûr (perte = démarches de réinitialisation auprès de Google):
+   `keytool -genkeypair -v -storetype PKCS12 -keystore kalam-upload.jks -alias kalam -keyalg RSA -keysize 2048 -validity 10000`
+3. Play Console > Configuration > Accès à l'API: créer un compte de service avec le droit « Publier des versions », télécharger sa clé JSON.
+4. GitHub > Settings > Secrets and variables > Actions, créer ces secrets: `KALAM_APP_ID`, `EXPO_PUBLIC_API_URL` (https), `KALAM_KEYSTORE_BASE64` (résultat de `base64 -w0 kalam-upload.jks`), `KALAM_KEYSTORE_PASSWORD`, `KALAM_KEY_ALIAS` (`kalam`), `KALAM_KEY_PASSWORD`, `PLAY_SERVICE_ACCOUNT_JSON` (contenu du fichier JSON).
+5. Facultatif mais conseillé: Settings > Environments > `play-release` > exiger votre approbation avant chaque envoi.
+
+**À chaque version:** lancer le workflow en donnant un numéro de version plus grand que le précédent (le premier envoi manuel vaut souvent 1: mettez 2, puis 3...), la piste (`internal` pour commencer) et l'état `draft` (la version attend votre validation dans la Play Console). Les tests, le lint et la vérification des types passent avant la construction. Le script `kalam/scripts/signRelease.js` (testé) échoue plutôt que de signer en mode débogage si le projet natif change de forme.

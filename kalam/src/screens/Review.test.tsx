@@ -1,5 +1,5 @@
 import { AppState, AppStateStatus } from 'react-native';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 import { newCard } from '../domain/srs';
 import { ThemeProvider } from '../theme/ThemeProvider';
@@ -48,6 +48,37 @@ describe('ReviewScreen en arrière-plan', () => {
     // AVANT d'afficher la réponse: seul l'écran lui-même (pas le composant de prononciation) écoute l'arrière-plan
     mockStopVoice.mockClear();
     handler('background');
+    expect(mockStopVoice).toHaveBeenCalled();
+  });
+});
+
+describe('ReviewScreen: appuis rapides et sortie', () => {
+  afterEach(async () => { await cleanup(); });
+  const showTwo = async (onAnswer: jest.Mock) => {
+    await render(<ThemeProvider profileId="adult"><ReviewScreen lang="fr" target="en" session={[newCard('restaurant:0', 0), newCard('restaurant:1', 0)]} onAnswer={onAnswer} onExit={jest.fn()} /></ThemeProvider>);
+    await fireEvent.press(screen.getByText('Voir la réponse'));
+  };
+  it('un double appui rapide sur une réponse ne note la carte qu\'UNE fois (pas de calendrier appliqué deux fois)', async () => {
+    const onAnswer = jest.fn();
+    await showTwo(onAnswer);
+    const good = screen.getByText('Bien');
+    await act(async () => { void fireEvent.press(good); void fireEvent.press(good); }); // deux appuis dans le même instant
+    expect(onAnswer).toHaveBeenCalledTimes(1);
+    expect(onAnswer.mock.calls[0][0]).toBe('restaurant:0');
+  });
+  it('la carte suivante peut ensuite être notée normalement', async () => {
+    const onAnswer = jest.fn();
+    await showTwo(onAnswer);
+    await fireEvent.press(screen.getByText('Bien'));
+    await fireEvent.press(screen.getByText('Voir la réponse'));
+    await fireEvent.press(screen.getByText('Bien'));
+    expect(onAnswer.mock.calls.map((c) => c[0])).toEqual(['restaurant:0', 'restaurant:1']);
+  });
+  it('quitter l\'écran coupe la phrase en cours de lecture', async () => {
+    const view = await render(<ThemeProvider profileId="adult"><ReviewScreen lang="fr" target="en" session={[newCard('restaurant:0', 0)]} onAnswer={jest.fn()} onExit={jest.fn()} /></ThemeProvider>);
+    await fireEvent.press(screen.getByText('Voir la réponse'));
+    mockStopVoice.mockClear();
+    await view.unmount();
     expect(mockStopVoice).toHaveBeenCalled();
   });
 });

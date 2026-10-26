@@ -19,7 +19,7 @@ export function StickersScreen({ lang, stars, onBack }: { lang: UiLang; stars: n
         {STICKERS.map((s) => {
           const open = stars >= s.stars;
           return (
-            <View key={s.id} accessible accessibilityLabel={open ? s.id : `${s.stars - stars} ${t(lang, 'stars')} ${t(lang, 'locked')}`}
+            <View key={s.id} accessible accessibilityLabel={open ? `${t(lang, 'stickers')} ${s.emoji}` : `${s.stars - stars} ${t(lang, 'stars')} ${t(lang, 'locked')}`}
               style={{ width: '30%', minHeight: 110, borderRadius: profile.radius, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
               <KText size={open ? 48 : 36}>{open ? s.emoji : '🔒'}</KText>
               {!open && <KText size={13} muted>{s.stars} ⭐</KText>}

@@ -47,4 +47,28 @@ describe('PronunciationPractice', () => {
     expect(mockListen).not.toHaveBeenCalled();
     expect(mockCancel).toHaveBeenCalled();
   });
+
+  it('le module de reconnaissance qui plante: le bouton se réactive (jamais bloqué sur « écoute »), avec un message', async () => {
+    mockListen.mockRejectedValue(new Error('service indisponible'));
+    const onResult = jest.fn();
+    await render(ui(onResult));
+    await fireEvent.press(screen.getByLabelText('Dis-le'));
+    await waitFor(() => expect(screen.getByLabelText('Dis-le')).not.toBeDisabled());
+    expect(onResult).not.toHaveBeenCalled();
+    mockListen.mockResolvedValue({ ok: true, transcript: 'good morning' });
+    await fireEvent.press(screen.getByLabelText('Dis-le')); // on peut réessayer tout de suite
+    await waitFor(() => expect(onResult).toHaveBeenCalledTimes(1));
+  });
+
+  it('écran quitté PENDANT l\'écoute: aucun résultat n\'est enregistré pour un écran déjà fermé', async () => {
+    let finish: (r: unknown) => void = () => {};
+    mockListen.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+    const onResult = jest.fn();
+    const view = await render(ui(onResult));
+    void fireEvent.press(screen.getByLabelText('Dis-le'));
+    await waitFor(() => expect(mockListen).toHaveBeenCalled());
+    await view.unmount();
+    await act(async () => { finish({ ok: true, transcript: 'good morning' }); });
+    expect(onResult).not.toHaveBeenCalled();
+  });
 });

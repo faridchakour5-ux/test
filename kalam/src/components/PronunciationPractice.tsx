@@ -50,7 +50,13 @@ export function PronunciationPractice({ lang, expected, onResult, target = DEFAU
     setListening(true); setOutcome(null); setHeardLive('');
     await tts.stop(); // le micro ne doit pas capter la voix de l'application
     if (!mounted.current) return; // écran quitté pendant l'arrêt de la voix: on n'ouvre pas le micro
-    const r = await listenOnce({ lang: TARGET_LOCALE[target], patienceMs: profile.speechPatienceMs, maxMs: 10_000, onPartial: setHeardLive });
+    let r: Awaited<ReturnType<typeof listenOnce>>;
+    try {
+      r = await listenOnce({ lang: TARGET_LOCALE[target], patienceMs: profile.speechPatienceMs, maxMs: 10_000, onPartial: (p) => { if (mounted.current) setHeardLive(p); } });
+    } catch {
+      r = { ok: false, reason: 'error' }; // le micro ne doit jamais rester bloqué sur « écoute » (le bouton se réactive)
+    }
+    if (!mounted.current) return; // écran quitté pendant l'écoute: aucun résultat n'est enregistré
     setListening(false);
     setHeardLive('');
     if (!r.ok) {

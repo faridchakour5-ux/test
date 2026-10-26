@@ -1,6 +1,6 @@
 import { tts } from '../speech/tts';
 import { useStopInBackground } from '../speech/useStopInBackground';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
@@ -28,7 +28,8 @@ export function ReviewScreen({ lang, session, onAnswer, onExit, target = DEFAULT
   useHardwareBack(onExit);
   const { colors, profile } = useTheme();
   // La séance est figée au départ: répondre ne la modifie pas pendant qu'on la parcourt.
-  const queue = useMemo(() => session, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [queue] = useState(() => session);
+  useEffect(() => () => { void tts.stop(); }, []); // quitter l'écran coupe la phrase en cours
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [good, setGood] = useState(0);
@@ -36,11 +37,14 @@ export function ReviewScreen({ lang, session, onAnswer, onExit, target = DEFAULT
   const finished = index >= queue.length;
   const current = finished ? undefined : vocabForKey(queue[index].key);
 
+  const answeredIndex = useRef(-1);
   const answer = (a: Answer) => {
+    if (answeredIndex.current === index) return; // double appui rapide: la même carte ne reçoit pas deux notes
+    answeredIndex.current = index;
     onAnswer(queue[index].key, ANSWER_QUALITY[a]);
     if (a === 'good' || a === 'easy') setGood((g) => g + 1);
     setRevealed(false);
-    setIndex(index + 1);
+    setIndex((i) => i + 1);
   };
 
   const speak = (text: string) => { void tts.speak(text, { lang: TARGET_LOCALE[target], rate: profile.speechRate }); };

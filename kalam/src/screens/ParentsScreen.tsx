@@ -46,7 +46,8 @@ export function ParentsScreen({ lang, kids, minutesToday, onMic, onLimit, onSwit
   // Quand la pause se termine, on réactive les boutons.
   useEffect(() => {
     if (!locked) return;
-    const id = setTimeout(() => setNow(clock()), Math.max(0, lock.lockedUntil - clock()) + 50);
+    // Fin de la pause: les boutons se réactivent et l'ancien message « mauvaise réponse » disparaît (la question n'a pas été répondue).
+    const id = setTimeout(() => { setNow(clock()); setWrong(false); }, Math.max(0, lock.lockedUntil - clock()) + 50);
     return () => clearTimeout(id);
   }, [locked, lock.lockedUntil]);
 

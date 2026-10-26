@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, I18nManager, View } from 'react-native';
 import { buildReviewSession } from './src/domain/deck';
 import { LESSONS, getLesson } from './src/domain/lessons';
+import { STARS_PER_STORY } from './src/domain/kids';
 import { Card } from './src/domain/srs';
 import { timeIsUp } from './src/domain/parental';
 import { localDay } from './src/domain/progress';
@@ -103,7 +104,7 @@ function Root() {
     if (route.name === 'story' && !timeUp) {
       screen = <StoryScreen lang={app.uiLang}
         onExit={(m) => { if (m > 0) app.logSession(m); home(); }}
-        onFinish={(id, m) => { app.markStoryRead(id); app.addStars(2); app.logSession(m); home(); }} />;
+        onFinish={(id, m) => { app.markStoryRead(id); app.addStars(STARS_PER_STORY); app.logSession(m); home(); }} />;
     } else if (route.name === 'play' && !timeUp) {
       screen = <PlayScreen lang={app.uiLang} stars={app.kids.stars} micAllowed={app.kids.consent.micAllowed}
         onCorrect={() => app.addStars(1)} onExit={(m) => { if (m > 0) app.logSession(m); home(); }} />;

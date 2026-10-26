@@ -198,3 +198,4 @@ export function newlyUnlocked(before: number, after: number): Sticker[] {
 
 // Une bonne réponse = 1 étoile. Jamais de retrait d'étoiles: pas de punition.
 export const STARS_PER_CORRECT = 1;
+export const STARS_PER_STORY = 2; // étoiles gagnées en finissant une histoire (écran de fin et attribution utilisent la même valeur)

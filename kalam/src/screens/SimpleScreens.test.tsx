@@ -78,6 +78,9 @@ describe('accueil enfant', () => {
   });
 });
 
+// Nom lisible par un lecteur d'écran (langue de l'interface + l'image), jamais l'identifiant interne.
+const unlockedLabel = (s: { emoji: string }) => `${t('fr', 'stickers')} ${s.emoji}`;
+
 describe('autocollants', () => {
   const lockedLabel = (need: number, stars: number) => `${need - stars} ${t('fr', 'stars')} ${t('fr', 'locked')}`;
   const stickers = (stars: number, onBack = jest.fn()) => render(<ThemeProvider profileId="kids"><StickersScreen lang="fr" stars={stars} onBack={onBack} /></ThemeProvider>);
@@ -91,18 +94,25 @@ describe('autocollants', () => {
 
   it('exactement au seuil: l\'autocollant est ouvert; juste en dessous: verrouillé', async () => {
     await stickers(STICKERS[0].stars);
-    expect(screen.getByLabelText(STICKERS[0].id)).toBeTruthy();
+    expect(screen.getByLabelText(unlockedLabel(STICKERS[0]))).toBeTruthy();
     expect(screen.getByText(STICKERS[0].emoji)).toBeTruthy();
     expect(screen.getByLabelText(lockedLabel(STICKERS[1].stars, STICKERS[0].stars))).toBeTruthy();
     await cleanup();
     await stickers(STICKERS[0].stars - 1);
-    expect(screen.queryByLabelText(STICKERS[0].id)).toBeNull();
+    expect(screen.queryByLabelText(unlockedLabel(STICKERS[0]))).toBeNull();
     expect(screen.getByLabelText(lockedLabel(STICKERS[0].stars, STICKERS[0].stars - 1))).toBeTruthy();
+  });
+
+  it('libellés pour lecteur d\'écran: jamais l\'identifiant interne, un libellé distinct par autocollant', async () => {
+    await stickers(1000);
+    const labels = STICKERS.map((s) => unlockedLabel(s));
+    expect(new Set(labels).size).toBe(STICKERS.length);
+    for (const s of STICKERS) expect(screen.queryByLabelText(s.id)).toBeNull();
   });
 
   it('beaucoup d\'étoiles: tout est ouvert', async () => {
     await stickers(1000);
-    for (const s of STICKERS) { expect(screen.getByLabelText(s.id)).toBeTruthy(); expect(screen.getByText(s.emoji)).toBeTruthy(); }
+    for (const s of STICKERS) { expect(screen.getByLabelText(unlockedLabel(s))).toBeTruthy(); expect(screen.getByText(s.emoji)).toBeTruthy(); }
     expect(screen.queryByText('🔒')).toBeNull();
   });
 

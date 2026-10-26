@@ -126,7 +126,7 @@ export function PlayScreen({ lang, stars, micAllowed, onCorrect, onExit }: Props
       </View>
       {solved && micAllowed && (
         <View style={{ alignSelf: 'stretch', gap: 12 }}>
-          <PronunciationPractice lang={lang} expected={round.target.en} />
+          <PronunciationPractice key={round.target.id} lang={lang} expected={round.target.en} />
           <KButton label={t(lang, 'nextSentence')} onPress={next} />
         </View>
       )}

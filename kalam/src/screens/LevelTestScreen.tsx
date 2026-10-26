@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Card } from '../components/Card';
 import { KButton } from '../components/KButton';
@@ -22,9 +22,12 @@ export function LevelTestScreen({ lang, target = DEFAULT_TARGET, onDone }: Props
   const questions = PLACEMENTS[target];
   const q = questions[index];
 
+  const finished = useRef(false); // un double appui sur la dernière réponse (ou sur « Passer ») ne valide le test qu'une fois
+  const finish = (level: Level) => { if (finished.current) return; finished.current = true; onDone(level); };
   const choose = (i: number) => {
+    if (finished.current) return;
     const next = [...answers, i];
-    if (index + 1 >= questions.length) onDone(scorePlacement(next, target));
+    if (index + 1 >= questions.length) finish(scorePlacement(next, target));
     else { setAnswers(next); setIndex(index + 1); }
   };
 
@@ -56,7 +59,7 @@ export function LevelTestScreen({ lang, target = DEFAULT_TARGET, onDone }: Props
           ))}
         </View>
       </Card>
-      <KButton variant="secondary" label={t(lang, 'skipTest')} onPress={() => onDone('A1')} />
+      <KButton variant="secondary" label={t(lang, 'skipTest')} onPress={() => finish('A1')} />
     </ScrollView>
   );
 }

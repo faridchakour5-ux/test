@@ -59,6 +59,8 @@ describe('portail parental', () => {
     await act(async () => { jest.advanceTimersByTime(2_000); });
     jest.useRealTimers();
     expect(screen.getByLabelText(RIGHT)).not.toBeDisabled();
+    expect(screen.queryByText(t('fr', 'gateWrong'))).toBeNull(); // l'ancien « mauvaise réponse » ne revient pas à la fin de la pause
+    expect(screen.queryByText(t('fr', 'gateLocked'))).toBeNull();
     await unlock();
     expect(screen.getByLabelText(t('fr', 'micConsentTitle'))).toBeTruthy();
   });

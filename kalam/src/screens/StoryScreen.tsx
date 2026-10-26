@@ -6,7 +6,7 @@ import { BackButton } from '../components/BackButton';
 import { KButton } from '../components/KButton';
 import { KText } from '../components/KText';
 import { Mascot } from '../components/Mascot';
-import { STORIES, Story } from '../domain/kids';
+import { STARS_PER_STORY, STORIES, Story } from '../domain/kids';
 import { UiLang, t } from '../i18n/strings';
 import { useTheme } from '../theme/ThemeProvider';
 import { useHardwareBack } from '../navigation/useHardwareBack';
@@ -53,7 +53,7 @@ export function StoryScreen({ lang, onFinish, onExit }: Props) {
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 }}>
         <Mascot mood="cheer" size={200} />
         <KText size={30} weight="800" style={{ textAlign: 'center' }}>{t(lang, 'storyDone')}</KText>
-        <KText size={22}>+2 ⭐</KText>
+        <KText size={22}>+{STARS_PER_STORY} ⭐</KText>
         <KButton label={t(lang, 'back')} onPress={() => onFinish(story.id, minutes())} />
       </View>
     );

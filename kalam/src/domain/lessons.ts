@@ -92,7 +92,7 @@ export const getLesson = (id: string): Lesson | undefined => LESSONS.find((l) =>
 // Leçons conseillées: celles du niveau de l'apprenant non encore faites, puis du niveau suivant.
 export function recommendLessons(level: Level, completed: string[], n = 3, target: TargetLang = DEFAULT_TARGET): Lesson[] {
   const order: Level[] = ['A1', 'A2', 'B1'];
-  const start = order.indexOf(level);
+  const start = Math.max(0, order.indexOf(level)); // niveau inconnu (sauvegarde abîmée): on repart de A1, jamais de « B1 seulement »
   const todo = (l: Lesson) => !completed.includes(lessonKey(l.id, target)) && l.id !== 'free';
   const result: Lesson[] = [];
   for (const lvl of order.slice(start)) {

@@ -84,3 +84,16 @@ describe('typographie française', () => {
     expect(bad).toEqual([]);
   });
 });
+
+describe('repli des textes', () => {
+  it('pick: un texte vide compte comme absent (jamais un titre vide à l\'écran)', () => {
+    expect(pick({ fr: 'Bonjour', en: '', es: 'Hola' }, 'en')).toBe('Bonjour');
+    expect(pick({ fr: 'Bonjour', en: 'Hello', es: '' }, 'es')).toBe('Hello');
+    expect(pick({ fr: '', en: '' }, 'zh')).toBe('');
+    expect(pick({ fr: 'Bonjour', zh: '你好' }, 'zh')).toBe('你好');
+  });
+  it('t: clé inconnue = la clé elle-même (jamais « undefined »); langue inconnue = français', () => {
+    expect(t('fr', 'cléInexistante' as never)).toBe('cléInexistante');
+    expect(t('xx' as never, 'back')).toBe(t('fr', 'back'));
+  });
+});

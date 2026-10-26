@@ -21,6 +21,18 @@ describe('identifiant d\'application réglable (KALAM_APP_ID)', () => {
   });
 });
 
+describe('mots réservés de Java dans l\'identifiant', () => {
+  it('refusés avec le nom du mot fautif (Android les rejette seulement à la construction native)', () => {
+    for (const bad of ['com.example.new', 'com.kalam.class', 'package.kalam.app', 'com.kalam.Public', 'com.static.app', 'com.kalam.null']) {
+      expect(() => resolveAppId(bad, 'x.y')).toThrow(/mot réservé de Java/);
+    }
+    expect(() => resolveAppId('com.example.new', 'x.y')).toThrow(/« new »/);
+  });
+  it('un mot réservé n\'est refusé que s\'il est une partie entière (« newsletter », « classroom » restent valides)', () => {
+    for (const ok of ['com.kalam.newsletter', 'com.classroom.app', 'com.kalam.interfaces', 'fr.exemple.kalam']) expect(resolveAppId(ok, 'x.y')).toBe(ok);
+  });
+});
+
 describe('app.config.js', () => {
   const base = appJson.expo as unknown as Record<string, any>;
   const old = process.env.KALAM_APP_ID;

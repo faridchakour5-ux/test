@@ -118,3 +118,11 @@ describe('compatibilité des sauvegardes existantes', () => {
     for (const l of LESSONS) expect([l.id, l.vocab.slice(0, 4).map((v) => v.en)]).toEqual([l.id, FIRST_FOUR[l.id]]);
   });
 });
+
+describe('recommendLessons: niveau inconnu', () => {
+  it('niveau abîmé (sauvegarde corrompue): on repart de A1, jamais de « B1 seulement »', () => {
+    const r = recommendLessons('Z9' as never, [], 3, 'en');
+    expect(r).toHaveLength(3);
+    expect(r.every((l) => l.level === 'A1')).toBe(true);
+  });
+});

@@ -17,7 +17,7 @@ const STRINGS: Record<UiLang, Record<StringKey, string>> = { fr, en, ar, es, zh 
 export const RTL_LANGS: UiLang[] = ['ar'];
 export const isRtl = (lang: UiLang) => RTL_LANGS.includes(lang);
 // Repli sur le français puis l'anglais si une langue venait à manquer d'un texte.
-export const t = (lang: UiLang, key: StringKey): string => STRINGS[lang]?.[key] ?? fr[key] ?? key;
+export const t = (lang: UiLang, key: StringKey): string => STRINGS[lang]?.[key] || fr[key] || en[key] || key;
 
 // Texte avec variables: « {target} » est remplacé par la valeur fournie.
 export function tf(lang: UiLang, key: StringKey, vars: Record<string, string>): string {
@@ -26,5 +26,5 @@ export function tf(lang: UiLang, key: StringKey, vars: Record<string, string>): 
 
 // Choisit le texte d'un contenu multilingue (titres, traductions) avec repli sûr.
 export function pick<T extends Partial<Record<UiLang, string>>>(obj: T, lang: UiLang): string {
-  return obj[lang] ?? obj.en ?? obj.fr ?? '';
+  return obj[lang] || obj.en || obj.fr || ''; // un texte vide compte comme absent (jamais un titre vide à l'écran)
 }

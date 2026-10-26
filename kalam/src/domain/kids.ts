@@ -82,7 +82,7 @@ type Rng = () => number;
 function shuffle<T>(arr: T[], rng: Rng): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
+    const j = Math.min(i, Math.floor(rng() * (i + 1))); // un générateur qui renverrait exactement 1 ne doit pas sortir du tableau
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -91,7 +91,7 @@ function shuffle<T>(arr: T[], rng: Rng): T[] {
 export function buildRounds(topicId: string, count = 5, rng: Rng = Math.random): Round[] {
   const topic = getTopic(topicId);
   if (!topic) return [];
-  const targets = shuffle(topic.items, rng).slice(0, Math.min(count, topic.items.length));
+  const targets = shuffle(topic.items, rng).slice(0, Math.max(0, Math.min(count, topic.items.length)));
   return targets.map((target) => {
     const distractors = shuffle(topic.items.filter((i) => i.id !== target.id), rng).slice(0, 2);
     return { target, options: shuffle([target, ...distractors], rng) };

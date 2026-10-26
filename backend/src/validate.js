@@ -25,10 +25,11 @@ export function validateChat(body) {
   }
   if (messages.length === 0) return { error: 'invalid messages' };
   for (const m of messages) {
-    if (!m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > MAX_CHARS) {
-      return { error: 'invalid message' };
-    }
+    if (!m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim()) return { error: 'invalid message' };
+    // Un message de l'APPRENANT trop long est refusé; une réponse du PROFESSEUR (écrite par nous, jusqu'à ~1200 caractères) est
+    // simplement coupée: sinon, dès qu'une réponse dépasse la limite, toute la suite de la conversation serait refusée.
+    if (m.role === 'user' && m.content.length > MAX_CHARS) return { error: 'invalid message' };
   }
   if (messages[messages.length - 1].role !== 'user') return { error: 'last message must be from user' };
-  return { value: { ageProfile, level, scenario, uiLang, targetLang, messages: messages.map(({ role, content }) => ({ role, content })) } };
+  return { value: { ageProfile, level, scenario, uiLang, targetLang, messages: messages.map(({ role, content }) => ({ role, content: role === 'assistant' ? content.slice(0, MAX_CHARS) : content })) } };
 }

@@ -4,6 +4,14 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
+# Un nouvel envoi sur la même branche annule la vérification précédente encore en cours (économise des minutes).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   app:
     runs-on: ubuntu-latest
@@ -134,4 +142,5 @@ jobs:
           ls -l android/app/build/outputs/bundle/release/*.aab
           jarsigner -verify -verbose -certs android/app/build/outputs/bundle/release/app-release.aab | tee /tmp/js.txt | tail -3
           grep -q "CN=CI test" /tmp/js.txt
-          ! grep -q "Android Debug" /tmp/js.txt
+          # (une négation « ! cmd » n'arrête jamais un script bash en mode -e: on teste explicitement)
+          if grep -q "Android Debug" /tmp/js.txt; then echo "::error::le .aab est signé avec la clé de débogage"; exit 1; fi

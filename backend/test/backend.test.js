@@ -60,7 +60,8 @@ test('le prompt enseigne la bonne langue et donne l\'exemple dans cette langue',
   const fr = buildSystemPrompt({ ageProfile: 'adult', level: 'A1', targetLang: 'fr', uiLang: 'en' });
   assert.match(fr, /French conversation teacher/);
   assert.match(fr, /always reply in French/);
-  assert.match(fr, /je suis allé au marché/);
+  assert.match(fr, /je vais au marché/); // A1: présent seulement
+  assert.match(buildSystemPrompt({ ageProfile: 'adult', level: 'B1', targetLang: 'fr', uiLang: 'en' }), /je suis allé au marché/);
   assert.doesNotMatch(fr, /always reply in English/);
   const en = buildSystemPrompt({ ageProfile: 'adult', level: 'A1', targetLang: 'en', uiLang: 'fr' });
   assert.match(en, /English conversation teacher/);

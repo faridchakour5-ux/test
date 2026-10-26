@@ -79,3 +79,19 @@ describe('consentement et temps', () => {
     expect(minutesLeft(null, 5)).toBeNull();
   });
 });
+
+describe('buildRounds: entrées limites', () => {
+  it('nombre de manches négatif ou nul: aucune manche (pas « tout sauf la dernière »)', () => {
+    expect(buildRounds('animals', -1)).toEqual([]);
+    expect(buildRounds('animals', 0)).toEqual([]);
+  });
+  it('un générateur aléatoire qui renvoie exactement 1 ne produit jamais d\'élément vide', () => {
+    const rounds = buildRounds('animals', 5, () => 1);
+    expect(rounds).toHaveLength(5);
+    for (const r of rounds) {
+      expect(r.options).toHaveLength(3);
+      for (const o of r.options) expect(o?.id).toBeTruthy();
+      expect(r.options.map((o) => o.id)).toContain(r.target.id);
+    }
+  });
+});

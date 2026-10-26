@@ -22,6 +22,9 @@ on:
         type: choice
         options: [draft, completed]
 
+permissions:
+  contents: read
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -39,6 +42,11 @@ jobs:
       KALAM_KEY_PASSWORD: ${{ secrets.KALAM_KEY_PASSWORD }}
       KALAM_VERSION_CODE: ${{ inputs.version_code }}
     steps:
+      - name: Numéro de version valide (entier positif sans zéro au début)
+        env:
+          VC: ${{ inputs.version_code }}
+        run: |
+          if ! printf '%s' "$VC" | grep -Eq '^[1-9][0-9]{0,9}$' || [ "$VC" -gt 2100000000 ]; then echo "::error::version_code invalide: « $VC » (entier de 1 à 2100000000, sans zéro au début)"; exit 1; fi
       - name: Vérifier que les secrets sont présents
         env:
           KEYSTORE_B64: ${{ secrets.KALAM_KEYSTORE_BASE64 }}

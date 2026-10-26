@@ -123,11 +123,14 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
       // Le budget quotidien ne compte que les requêtes valides, celles qui coûtent vraiment un appel à l'IA.
       if (!takeBudget()) return send(res, 503, { error: 'daily budget reached' });
 
+      // La conversation commence par le salut du professeur (réponse à la consigne d'ouverture): l'API demande un premier message de
+      // l'apprenant, on remet donc la consigne d'ouverture devant (l'historique fenêtré peut aussi commencer par le professeur).
+      const history = clean.messages[0]?.role === 'assistant' ? [{ role: 'user', content: OPENING_PROMPT }, ...clean.messages] : clean.messages;
       const params = {
         model,
         max_tokens: value.ageProfile === 'kids' ? 150 : 300,
         system: buildSystemPrompt(value),
-        messages: clean.messages,
+        messages: history,
       };
 
       if (streaming) return await streamReply(req, res, params);

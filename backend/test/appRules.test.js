@@ -307,3 +307,16 @@ test('limite de débit derrière un proxy: une adresse falsifiée à gauche ne c
     assert.equal((await hit('forgé-3, 8.8.8.8')).status, 200);
   });
 });
+
+test('historique qui commence par le salut du professeur: la consigne d\'ouverture est remise devant (l\'API exige un premier message de l\'apprenant)', async () => {
+  const calls = [];
+  const client = { messages: { create: async (p) => { calls.push(p); return { content: [{ type: 'text', text: 'ok' }] }; } } };
+  await withServer({ client }, async (base) => {
+    const body = { ...valid, messages: [{ role: 'assistant', content: 'Hello! Welcome.' }, { role: 'user', content: 'Hi' }] };
+    assert.equal((await post(base, '/chat', body)).status, 200);
+    assert.deepEqual(calls[0].messages.map((m) => m.role), ['user', 'assistant', 'user']);
+    assert.equal(calls[0].messages[0].content, OPENING_PROMPT);
+    await post(base, '/chat', valid); // un historique qui commence déjà par l'apprenant n'est pas modifié
+    assert.deepEqual(calls[1].messages, [{ role: 'user', content: 'Hi' }]);
+  });
+});

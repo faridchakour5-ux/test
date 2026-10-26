@@ -11,6 +11,8 @@ Ce fichier dit, en mots simples, ce qui est fait, ce qui ne l'est pas, et ce que
 - Diagnostic de l'appareil dans les réglages (serveur, voix, micro, rappels).
 - Rappel quotidien facultatif (notification locale, désactivé par défaut, jamais pour les enfants).
 - Données seulement sur le téléphone; export et effacement (RGPD). Aucune clé d'API dans l'application: seul le serveur (`backend/`) parle à l'IA.
+- Android (.aab): la CI compile le vrai fichier `.aab` avec Gradle, le signe avec une clé jetable et vérifie la signature; elle contrôle aussi le manifeste (seulement INTERNET et RECORD_AUDIO). Un workflow manuel (`.github/workflows/play-release.yml`) sait l'envoyer sur Google Play avec VOTRE clé et VOTRE compte de service (secrets GitHub, `PUBLISHING.md` section 11); il ne fait rien sans eux.
+- Fiche Google Play prête: textes, 5 captures 1080×1920, icône 512×512, visuel 1024×500 (`kalam/store/`).
 - Chaque envoi de code relance les tests, le lint et la vérification des types (`.github/workflows/ci.yml`), en trois fuseaux horaires pour la série de jours.
 - Solidité des tests mesurée par « test de mutation » (on casse le code exprès et on compte les cassures détectées): révision espacée 97 %, progression 95 %, prononciation 94 %, reconnaissance vocale 92 %, relecture de sauvegarde 95 %, portail parental 87 %, découpage des phrases 85 %, synthèse vocale 76 %, client réseau 88 %, messages d'erreur vocaux 100 %, leçons 93 %, stockage local 91 %, tour de parole vocal 100 %, flux de réponse 91 %, serveur 89 % (validation et consignes des professeurs à 100 %). L'application elle-même (navigation, parcours enfant, sauvegarde) est à 78–89 %, le défi du jour à 85 %. L'écran de conversation est à 64 %. Les écrans (portail parental, jeu et histoires des enfants, révision, accueils, réglages) sont à 56–63 %: ce qui reste est surtout du style visuel (couleurs, tailles), que ce genre de test ne peut pas juger. Les autres cas restants sont surtout des doubles protections équivalentes.
 
@@ -23,6 +25,7 @@ Le micro, la voix, la réponse en flux et le rappel quotidien (notification à l
 4. Notez ce qui ne va pas (une capture du diagnostic aide beaucoup) et corrigez-le avant toute publication.
 
 ## Ce que vous devez faire vous-même
+- Play Console (à la main, une seule fois): créer l'application, remplir les déclarations, envoyer le premier `.aab`; créer la clé d'envoi et le compte de service, ajouter les secrets GitHub (`PUBLISHING.md` section 11).
 - Choisir l'identifiant d'application avant le premier envoi sur Google Play et le donner à EAS dans `KALAM_APP_ID` (aucun fichier à modifier, `PUBLISHING.md` section 2).
 - Déployer le serveur et donner son adresse à EAS (`PUBLISHING.md`, sections 1 et 2).
 - Cible: Android seulement (.aab, Google Play); iOS est reporté.

@@ -338,7 +338,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
             <KText size={13} muted>{t(lang, 'duoTurn')}</KText>
             {duo.names.map((n, i) => (
               <Pressable key={i} accessibilityRole="radio" accessibilityState={{ checked: speaker === i }} accessibilityLabel={`${t(lang, 'duoTurn')} ${n}`} onPress={() => setSpeaker(i as 0 | 1)}
-                style={{ flex: 1, minHeight: profile.minTouchSize, borderRadius: profile.radius, alignItems: 'center', justifyContent: 'center', borderWidth: speaker === i ? 3 : 1, borderColor: speaker === i ? colors.primary : colors.border, backgroundColor: colors.surface }}>
+                style={{ flex: 1, minWidth: 0, minHeight: profile.minTouchSize, borderRadius: profile.radius, alignItems: 'center', justifyContent: 'center', borderWidth: speaker === i ? 3 : 1, borderColor: speaker === i ? colors.primary : colors.border, backgroundColor: colors.surface }}>
                 <KText weight="800">{speaker === i ? '▶ ' : ''}{n}</KText>
               </Pressable>
             ))}
@@ -357,19 +357,22 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
             </View>
           </>
         )}
-        <TextInput
-          maxFontSizeMultiplier={profile.maxSystemFontScale}
-          value={input}
-          onChangeText={setInput}
-          placeholder={t(lang, 'typeHere')}
-          placeholderTextColor={colors.textMuted}
-          maxLength={500}
-          accessibilityLabel={t(lang, 'typeHere')}
-          onSubmitEditing={sendTyped}
-          editable={!busy}
-          style={{ minHeight: profile.minTouchSize, borderRadius: profile.radius, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16, color: colors.text, backgroundColor: colors.surface, fontSize: profile.fontScale * 16 }}
-        />
-        <KButton label={t(lang, 'send')} onPress={sendTyped} />
+        {/* Champ et « Envoyer » sur une même ligne: sur un petit téléphone avec de gros caractères, la zone des messages garde de la place */}
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'stretch' }}>
+          <TextInput
+            maxFontSizeMultiplier={profile.maxSystemFontScale}
+            value={input}
+            onChangeText={setInput}
+            placeholder={t(lang, 'typeHere')}
+            placeholderTextColor={colors.textMuted}
+            maxLength={500}
+            accessibilityLabel={t(lang, 'typeHere')}
+            onSubmitEditing={sendTyped}
+            editable={!busy}
+            style={{ flex: 1, minWidth: 0, minHeight: profile.minTouchSize, borderRadius: profile.radius, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16, color: colors.text, backgroundColor: colors.surface, fontSize: profile.fontScale * 16 }}
+          />
+          <View style={{ justifyContent: 'center' }}><KButton label={t(lang, 'send')} onPress={sendTyped} /></View>
+        </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <View style={{ flex: 1 }}><KButton variant="secondary" label={t(lang, 'finish')} onPress={finish} /></View>
           {messages.length > 0 && <View style={{ flex: 1 }}><KButton variant="secondary" label={t(lang, 'newChat')} onPress={() => { void newConversation(); }} /></View>}

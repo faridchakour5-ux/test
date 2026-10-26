@@ -22,8 +22,10 @@ describe('adresse du serveur', () => {
     expect(resolveApiUrl('HTTPS://api.kalam.app/v1/', false)).toBe('HTTPS://api.kalam.app/v1');
     for (const u of ['http://api.kalam.app', 'https://', 'https:// x', 'ftp://x', ' https://x.io', 'x https://y.io', '']) expect(() => resolveApiUrl(u, false)).toThrow(TeacherError);
   });
-  it('développement: tout est accepté tel quel', () => {
-    expect(resolveApiUrl('http://localhost:8787/', true)).toBe('http://localhost:8787/');
+  it('développement: http et n\'importe quel hôte acceptés; la barre finale est retirée (sinon « //chat » donne 404)', () => {
+    expect(resolveApiUrl('http://localhost:8787/', true)).toBe('http://localhost:8787');
+    expect(resolveApiUrl('http://192.168.1.5:8787///', true)).toBe('http://192.168.1.5:8787');
+    expect(resolveApiUrl('http://localhost:8787', true)).toBe('http://localhost:8787');
   });
   it('l\'erreur de configuration porte le bon type et n\'est pas réessayable', () => {
     try { resolveApiUrl('http://x', false); } catch (e) { expect(e).toMatchObject({ kind: 'config', retryable: false, name: 'TeacherError' }); expect((e as Error).message).toMatch(/https/); }
@@ -271,5 +273,35 @@ describe('askTeacherStream: requête, erreurs et temporisations', () => {
       releaseRead(); // le réseau finit par signaler la coupure
       expect(await p).toEqual({ text: 'a', partial: true });
     } finally { jest.useRealTimers(); }
+  });
+});
+
+describe('corrections issues d\'une revue de code', () => {
+  it('le délai couvre aussi la lecture du corps: un serveur qui envoie les en-têtes puis se tait donne « timeout », pas un écran bloqué', async () => {
+    const fetchImpl = jest.fn().mockImplementation((_url: string, init: { signal: AbortSignal }) => Promise.resolve({
+      ok: true, status: 200,
+      json: () => new Promise((_, reject) => init.signal.addEventListener('abort', () => reject(Object.assign(new Error('a'), { name: 'AbortError' })))),
+    }));
+    const e = await fail(askTeacher(R(), { fetchImpl: as(fetchImpl), timeoutMs: 30, retries: 0, sleep: async () => {} }));
+    expect(e).toMatchObject({ kind: 'timeout', retryable: true });
+  });
+  it('corps illisible (pas de délai dépassé): toujours « server »', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => { throw new SyntaxError('x'); } });
+    const e = await fail(askTeacher(R(), { fetchImpl: as(fetchImpl), retries: 0, sleep: async () => {} }));
+    expect(e).toMatchObject({ kind: 'server' });
+  });
+  it('flux: le dernier évènement « done » sans ligne vide finale compte (réponse complète, pas « partielle »)', async () => {
+    const chunks = [sse({ delta: 'Hello' }), 'data: {"done":true}\n'];
+    const r = await askTeacherStream(R(), { fetchImpl: as(jest.fn().mockResolvedValue(streamRes(chunks))), sleep: async () => {}, onDelta: () => {} });
+    expect(r).toEqual({ text: 'Hello', partial: false });
+  });
+  it('flux sans lecture au fil de l\'eau: même chose avec le texte entier', async () => {
+    const res = { ok: true, status: 200, body: undefined, text: async () => `${sse({ delta: 'Hi' })}data: {"done":true}` };
+    const r = await askTeacherStream(R(), { fetchImpl: as(jest.fn().mockResolvedValue(res)), sleep: async () => {}, onDelta: () => {} });
+    expect(r).toEqual({ text: 'Hi', partial: false });
+  });
+  it('un évènement qui porte du texte ET « done » est complet', async () => {
+    const r = await askTeacherStream(R(), { fetchImpl: as(jest.fn().mockResolvedValue(streamRes([sse({ delta: 'Bye!', done: true })]))), sleep: async () => {}, onDelta: () => {} });
+    expect(r).toEqual({ text: 'Bye!', partial: false });
   });
 });

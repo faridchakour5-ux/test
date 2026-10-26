@@ -12,7 +12,7 @@ export function useStopInBackground(extra?: () => void): void {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') return;
       void tts.stop();
-      cancelListening();
+      cancelListening({ background: true });
       latest.current?.();
     });
     return () => sub.remove();

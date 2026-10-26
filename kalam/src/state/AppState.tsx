@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { cardsForLesson } from '../domain/deck';
 import { Level } from '../domain/lessons';
 import { DEFAULT_TARGET, TARGET_LANGS, TargetLang, isTargetLang, lessonKey } from '../domain/targets';
@@ -105,8 +105,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       .finally(() => { setReady(true); });
   }, []);
 
+  // Pendant l'effacement (droit RGPD), aucune écriture ne doit « ressusciter » des données.
+  const erasing = useRef(false);
   const update = useCallback((fn: (s: Persisted) => Persisted) => {
-    setState((prev) => { const next = fn(prev); void save(KEY, next); return next; });
+    setState((prev) => { const next = fn(prev); if (!erasing.current) void save(KEY, next); return next; });
   }, []);
 
   const value: Ctx = {
@@ -135,7 +137,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setMicConsent: (on) => update((s) => ({ ...s, kids: { ...s.kids, consent: on ? grantMic(s.kids.consent, Date.now()) : revokeMic(s.kids.consent) } })),
     setKidsLimit: (dailyLimit) => update((s) => ({ ...s, kids: { ...s.kids, dailyLimit } })),
     // Droit à l'effacement (RGPD): on remet tout à zéro, y compris le consentement.
-    eraseAll: () => { void clearAllKalamData(); setState(initial()); }, // le rappel s'arrête de lui-même: useReminderSync le voit repasser à « désactivé »
+    // Deux passes: une écriture lancée juste avant l'effacement ne doit pas survivre (le rappel s'arrête de lui-même, voir ci-dessous).
+    eraseAll: () => {
+      erasing.current = true;
+      setState(initial());
+      void clearAllKalamData().then(() => clearAllKalamData()).catch(() => {}).finally(() => { erasing.current = false; });
+    }, // le rappel s'arrête de lui-même: useReminderSync le voit repasser à « désactivé »
     // Droit à la portabilité (RGPD): renvoie toutes les données de l'appareil en JSON lisible.
     exportData: async () => buildExport(state, await loadAllConversations()),
     reviewCard: (key, quality) => update((s) => ({

@@ -53,3 +53,21 @@ describe('createSentenceSplitter', () => {
     expect(s.flush()).toEqual([]);
   });
 });
+
+describe('guillemets fermants et « No. »', () => {
+  it('un guillemet ou une parenthèse fermants collés à la ponctuation ne fusionnent plus les phrases', () => {
+    expect(run(['He said "Hello there." Then we left the house.'])).toEqual(['He said "Hello there."', 'Then we left the house.']);
+    expect(run(['She was happy (really happy!) Then it rained a lot.'])).toEqual(['She was happy (really happy!)', 'Then it rained a lot.']);
+    expect(run(['Is it big? "Yes, it is big." Good for us all.'])).toEqual(['Is it big? "Yes, it is big."', 'Good for us all.']); // « Is it big? » est trop courte seule (12 caractères au moins)
+  });
+  it('« No. » est une vraie fin de phrase dans un dialogue', () => {
+    expect(run(['Is it a big house? No. It is a small house.'])).toEqual(['Is it a big house?', 'No. It is a small house.']);
+  });
+  it('les abréviations et les nombres restent protégés', () => {
+    expect(run(['Dr. Smith lives at number 3.5 near here.'])).toEqual(['Dr. Smith lives at number 3.5 near here.']);
+    expect(run(['It costs 3. 5 more apples are needed.'])).toEqual(['It costs 3. 5 more apples are needed.']);
+  });
+  it('le guillemet arrive dans le morceau suivant: pas de coupure trop tôt', () => {
+    expect(run(['He said "Hello there.', '" Then we left the house.'])).toEqual(['He said "Hello there."', 'Then we left the house.']);
+  });
+});

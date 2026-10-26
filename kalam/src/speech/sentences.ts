@@ -1,19 +1,23 @@
 // Découpe un texte qui arrive par morceaux en phrases complètes, prêtes à être lues à voix haute.
 // On ne coupe pas sur les abréviations (Mr., Dr.…), les nombres (3.5) ni les phrases trop courtes.
 
-const ABBREVIATIONS = new Set(['mr', 'mrs', 'ms', 'dr', 'st', 'vs', 'etc', 'eg', 'ie', 'no']);
+// (« no » n'y est pas: « No. » est une vraie réponse en fin de phrase dans un dialogue.)
+const ABBREVIATIONS = new Set(['mr', 'mrs', 'ms', 'dr', 'st', 'vs', 'etc', 'eg', 'ie']);
 const MIN_LENGTH = 12; // évite de lire « Hi! » puis « How are you? » comme deux blocs hachés
 
 function endsSentence(text: string, i: number): boolean {
   const ch = text[i];
   if (ch !== '.' && ch !== '!' && ch !== '?') return false;
-  const next = text[i + 1];
+  // Guillemets et parenthèses fermants collés à la ponctuation (« Hello.\" Then… »): on regarde après eux.
+  let j = i + 1;
+  while (j < text.length && /[)"'”’]/.test(text[j])) j++;
+  const next = text[j];
   if (next === undefined) return false; // on ne sait pas encore: la suite peut arriver
   if (!/\s/.test(next)) return false; // « 3.5 », « e.g. » collé, URL…
   if (ch === '.') {
     const before = text.slice(0, i).match(/([A-Za-z]+)$/)?.[1]?.toLowerCase();
     if (before && ABBREVIATIONS.has(before)) return false;
-    if (/\d$/.test(text.slice(0, i)) && /^\s*\d/.test(text.slice(i + 1))) return false;
+    if (/\d$/.test(text.slice(0, i)) && /^\s*\d/.test(text.slice(j))) return false;
   }
   return true;
 }

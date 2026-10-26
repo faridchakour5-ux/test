@@ -39,6 +39,7 @@ export interface RecModule {
 // busyRetryMs: pause avant l'unique nouvel essai quand le moteur répond « occupé » (0 = pas de nouvel essai).
 export function createRecognizer(mod: RecModule | null, busyRetryMs = 0) {
   let cancelActive: (() => void) | null = null;
+  let askingPermission = false; // la boîte « autoriser le micro » du système est ouverte (elle fait passer l'app en arrière-plan)
   let seq = 0; // numéro de la demande d'écoute la plus récente (une demande plus ancienne, encore en attente de permission, s'efface)
 
   const isAvailable = (): boolean => {
@@ -127,7 +128,8 @@ export function createRecognizer(mod: RecModule | null, busyRetryMs = 0) {
       perm = await mod.getPermissionsAsync();
       if (!perm.granted) {
         if (perm.canAskAgain === false) return { ok: false, reason: 'permission-blocked' };
-        perm = await mod.requestPermissionsAsync();
+        askingPermission = true;
+        try { perm = await mod.requestPermissionsAsync(); } finally { askingPermission = false; }
       }
     } catch {
       return { ok: false, reason: 'error' };
@@ -151,7 +153,9 @@ export function createRecognizer(mod: RecModule | null, busyRetryMs = 0) {
     return first;
   }
 
-  return { isAvailable, listenOnce, cancel: () => { seq++; cancelActive?.(); } };
+  // `background`: l'app passe en arrière-plan. Pendant la boîte d'autorisation du micro, ce passage est NORMAL (la boîte appartient au
+  // système): on ne doit pas annuler la demande, sinon le premier appui sur le micro ne fait rien après « Autoriser ».
+  return { isAvailable, listenOnce, cancel: (opts?: { background?: boolean }) => { if (opts?.background && askingPermission) return; seq++; cancelActive?.(); } };
 }
 
 // ---------- Instance réelle (chargée à la demande) ----------
@@ -172,4 +176,4 @@ function getReal() {
 
 export const isSpeechInputAvailable = () => getReal().isAvailable();
 export const listenOnce = (o?: ListenOptions) => getReal().listenOnce(o);
-export const cancelListening = () => getReal().cancel();
+export const cancelListening = (opts?: { background?: boolean }) => getReal().cancel(opts);

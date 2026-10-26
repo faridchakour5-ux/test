@@ -31,3 +31,27 @@ describe('createSseParser', () => {
     expect(parse(['data: {"delta":"a"}'])).toEqual([]);
   });
 });
+
+describe('fin du flux (end)', () => {
+  const collect = () => { const got: unknown[] = []; return { got, p: createSseParser((e) => got.push(e)) }; };
+  it('un dernier évènement complet sans ligne vide finale est émis', () => {
+    const { got, p } = collect();
+    p.feed('data: {"delta":"a"}\n\ndata: {"done":true}\n');
+    expect(got).toEqual([{ delta: 'a' }]);
+    p.end();
+    expect(got).toEqual([{ delta: 'a' }, { done: true }]);
+  });
+  it('un reste incomplet ou illisible est ignoré, sans erreur; end() est répétable', () => {
+    const { got, p } = collect();
+    p.feed('data: {"delta":"a"');
+    p.end();
+    p.end();
+    expect(got).toEqual([]);
+  });
+  it('rien en attente: end() ne fait rien', () => {
+    const { got, p } = collect();
+    p.feed('data: {"delta":"a"}\n\n');
+    p.end();
+    expect(got).toEqual([{ delta: 'a' }]);
+  });
+});

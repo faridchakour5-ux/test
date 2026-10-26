@@ -365,3 +365,50 @@ describe('nouvel essai quand le moteur est occupé', () => {
     expect(f.started).toHaveLength(1);
   });
 });
+
+describe('passage en arrière-plan pendant la boîte d\'autorisation du micro', () => {
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  it('la boîte du système (qui met l\'app en arrière-plan) n\'annule plus la demande: l\'écoute démarre après « Autoriser »', async () => {
+    let allow: (v: { granted: boolean }) => void = () => {};
+    const f = fakeModule({ getPermissionsAsync: async () => ({ granted: false, canAskAgain: true }), requestPermissionsAsync: () => new Promise((resolve) => { allow = resolve; }) });
+    const r = createRecognizer(f.mod);
+    const p = r.listenOnce();
+    await flush();
+    r.cancel({ background: true }); // l'app passe en arrière-plan pendant la boîte
+    allow({ granted: true });
+    await flush();
+    expect(f.started).toHaveLength(1);
+    f.emit('result', { results: [{ transcript: 'hello' }] });
+    f.emit('end');
+    await expect(p).resolves.toEqual({ ok: true, transcript: 'hello' });
+  });
+  it('une vraie annulation (bouton arrêter, autre écran) pendant la boîte annule toujours la demande', async () => {
+    let allow: (v: { granted: boolean }) => void = () => {};
+    const f = fakeModule({ getPermissionsAsync: async () => ({ granted: false, canAskAgain: true }), requestPermissionsAsync: () => new Promise((resolve) => { allow = resolve; }) });
+    const r = createRecognizer(f.mod);
+    const p = r.listenOnce();
+    await flush();
+    r.cancel();
+    allow({ granted: true });
+    await expect(p).resolves.toEqual({ ok: false, reason: 'cancelled' });
+    expect(f.started).toHaveLength(0);
+  });
+  it('en arrière-plan sans boîte ouverte (appel entrant, verrouillage): l\'écoute est coupée comme avant', async () => {
+    const f = fakeModule();
+    const r = createRecognizer(f.mod);
+    const p = r.listenOnce();
+    await flush();
+    r.cancel({ background: true });
+    await expect(p).resolves.toEqual({ ok: false, reason: 'cancelled' });
+    expect(f.mod.abort).toHaveBeenCalled();
+    await sleep(1);
+  });
+  it('après la boîte, le drapeau est relâché: l\'arrière-plan suivant annule de nouveau', async () => {
+    const f = fakeModule({ getPermissionsAsync: async () => ({ granted: false, canAskAgain: true }), requestPermissionsAsync: async () => ({ granted: true }) });
+    const r = createRecognizer(f.mod);
+    const p = r.listenOnce();
+    await flush();
+    r.cancel({ background: true });
+    await expect(p).resolves.toEqual({ ok: false, reason: 'cancelled' });
+  });
+});

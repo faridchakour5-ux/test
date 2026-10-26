@@ -170,6 +170,13 @@ export const STORIES: Story[] = [
     ['I draw with a pencil.', 'Je dessine avec un crayon.', 'أرسم بقلم الرصاص.'],
     ['I like school!', "J'aime l'école !", 'أحب المدرسة!'],
   ]),
+  ST('garden', '🌻', 'Au jardin', 'In the garden', 'في الحديقة', [
+    ['I go to the garden.', 'Je vais au jardin.', 'أذهب إلى الحديقة.'],
+    ['I see a red flower.', 'Je vois une fleur rouge.', 'أرى زهرة حمراء.'],
+    ['A bee is on the flower.', 'Une abeille est sur la fleur.', 'نحلة على الزهرة.'],
+    ['I water the plants.', "J'arrose les plantes.", 'أسقي النباتات.'],
+    ['The garden is so pretty!', 'Le jardin est si joli !', 'ما أجمل الحديقة!'],
+  ]),
 ];
 
 export const getStory = (id: string) => STORIES.find((s) => s.id === id);

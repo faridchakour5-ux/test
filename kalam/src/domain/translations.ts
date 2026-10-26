@@ -366,4 +366,11 @@ export const KIDS_STORY_TR: Record<string, { title: { es: string; zh: string }; 
     { es: 'Dibujo con un lápiz.', zh: '我用铅笔画画。' },
     { es: '¡Me gusta la escuela!', zh: '我喜欢学校！' },
   ] },
+  'garden': { title: { es: 'En el jardín', zh: '在花园里' }, sentences: [
+    { es: 'Voy al jardín.', zh: '我去花园。' },
+    { es: 'Veo una flor roja.', zh: '我看见一朵红花。' },
+    { es: 'Una abeja está en la flor.', zh: '一只蜜蜂在花上。' },
+    { es: 'Riego las plantas.', zh: '我给植物浇水。' },
+    { es: '¡Qué bonito es el jardín!', zh: '花园真漂亮！' },
+  ] },
 };

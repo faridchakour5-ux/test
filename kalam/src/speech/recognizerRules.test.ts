@@ -29,7 +29,7 @@ const flush = async () => { for (let i = 0; i < 6; i++) await Promise.resolve();
 describe('codes d\'erreur du moteur de reconnaissance', () => {
   const cases: [string | undefined, string][] = [
     ['not-allowed', 'permission'], ['service-not-allowed', 'permission'], ['language-not-supported', 'language'],
-    ['busy', 'busy'], ['no-speech', 'no-speech'], ['speech-timeout', 'no-speech'], ['aborted', 'cancelled'],
+    ['busy', 'busy'], ['too-many-requests', 'busy'], ['no-speech', 'no-speech'], ['speech-timeout', 'no-speech'], ['aborted', 'cancelled'],
     ['audio-capture', 'error'], ['inconnu', 'error'], [undefined, 'error'],
   ];
   for (const [code, reason] of cases) {

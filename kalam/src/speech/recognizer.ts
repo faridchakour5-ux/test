@@ -82,7 +82,7 @@ export function createRecognizer(mod: RecModule | null) {
         if (cancelled || code === 'aborted') return finish({ ok: false, reason: 'cancelled' });
         if (code === 'not-allowed' || code === 'service-not-allowed') return finish({ ok: false, reason: 'permission' });
         if (code === 'language-not-supported') return finish({ ok: false, reason: 'language' });
-        if (code === 'busy') return finish(withBest('busy'));
+        if (code === 'busy' || code === 'too-many-requests') return finish(withBest('busy')); // Android envoie « too-many-requests » (absent des types): même cas, le moteur est saturé
         if (code === 'network') return finish(withBest('network'));
         if (code === 'no-speech' || code === 'speech-timeout') return finish(withBest('no-speech'));
         finish(withBest('error'));

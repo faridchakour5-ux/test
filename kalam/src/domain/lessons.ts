@@ -1,4 +1,4 @@
-// 34 leçons d'anglais organisées par situations (CEFR A1 -> B1), pas par listes de mots.
+// 36 leçons d'anglais organisées par situations (CEFR A1 -> B1), pas par listes de mots.
 import { UiLang } from '../i18n/strings';
 import { DEFAULT_TARGET, TargetLang, lessonKey } from './targets';
 import { LESSON_TITLES_TR, VOCAB_TR } from './translations';
@@ -80,6 +80,8 @@ export const LESSONS: Lesson[] = [
   L('sports', 'A2', 'Le sport', 'Sports', 'الرياضة', 'You talk about the sports you play and watch with a friend.', [['team', 'équipe'], ['match', 'match'], ['win', 'gagner'], ['lose', 'perdre'], ['training', 'entraînement'], ['I am a fan of', 'Je suis fan de']]),
   L('holidays', 'A2', 'Les vacances', 'Holidays', 'العطلات', 'You tell a friend about your last holiday.', [['beach', 'plage'], ['suitcase', 'valise'], ['sightseeing', 'visite touristique'], ['I had a great time', 'J\'ai passé un super moment'], ['souvenir', 'souvenir'], ['book a trip', 'réserver un voyage']]),
   L('technology', 'B1', 'La technologie', 'Technology', 'التكنولوجيا', 'You call a help desk to solve a problem with your phone.', [['password', 'mot de passe'], ['download', 'télécharger'], ['battery', 'batterie'], ['update', 'mise à jour'], ['Wi-Fi', 'Wi-Fi'], ['it does not work', 'ça ne marche pas']]),
+  L('invitation', 'A2', 'Une invitation', 'An invitation', 'دعوة', 'You invite a friend to your birthday party and talk about what to bring.', [['invite', 'inviter'], ['party', 'fête'], ['gift', 'cadeau'], ['Are you free on Saturday?', 'Es-tu libre samedi ?'], ['I would love to come', 'Je viendrais avec plaisir'], ['bring', 'apporter']]),
+  L('environment', 'B1', 'L\'environnement', 'The environment', 'البيئة', 'You discuss how to protect the environment with a colleague.', [['recycle', 'recycler'], ['pollution', 'pollution'], ['energy', 'énergie'], ['waste', 'déchets'], ['climate change', 'changement climatique'], ['save water', 'économiser l\'eau']]),
   L('free', 'B1', 'Parle librement', 'Free talk', 'تحدث بحرية', 'Free conversation: the learner chooses the topic.', [['by the way', 'au fait'], ['actually', 'en fait'], ['I wonder if', 'je me demande si'], ['let me explain', 'laissez-moi expliquer'], ['to be honest', 'honnêtement'], ['what do you mean?', 'que veux-tu dire ?']]),
 ];
 

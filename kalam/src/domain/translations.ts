@@ -209,6 +209,17 @@ export const VOCAB_TR: Record<string, Tr> = {
   'update': T('تحديث', 'actualización', '更新'),
   'Wi-Fi': T('الواي فاي', 'Wi-Fi', '无线网络'),
   'it does not work': T('لا يعمل', 'no funciona', '不能用'),
+  'invite': T('يدعو', 'invitar', '邀请'),
+  'gift': T('هدية', 'regalo', '礼物'),
+  'Are you free on Saturday?': T('هل أنت متفرغ يوم السبت؟', '¿Estás libre el sábado?', '你周六有空吗？'),
+  'I would love to come': T('يسعدني أن آتي', 'Me encantaría ir', '我很乐意去'),
+  'bring': T('يحضر', 'traer', '带来'),
+  'recycle': T('يعيد التدوير', 'reciclar', '回收'),
+  'pollution': T('التلوث', 'contaminación', '污染'),
+  'energy': T('الطاقة', 'energía', '能源'),
+  'waste': T('النفايات', 'residuos', '垃圾'),
+  'climate change': T('تغيّر المناخ', 'cambio climático', '气候变化'),
+  'save water': T('يوفّر الماء', 'ahorrar agua', '节约用水'),
 };
 
 export const LESSON_TITLES_TR: Record<string, { es: string; zh: string }> = {
@@ -246,6 +257,8 @@ export const LESSON_TITLES_TR: Record<string, { es: string; zh: string }> = {
   sports: { es: 'El deporte', zh: '运动' },
   holidays: { es: 'Las vacaciones', zh: '假期' },
   technology: { es: 'La tecnología', zh: '科技' },
+  invitation: { es: 'Una invitación', zh: '邀请' },
+  environment: { es: 'El medio ambiente', zh: '环境' },
 };
 
 // Mode enfant: mots (par id), titres de thèmes et d'histoires, phrases des histoires.

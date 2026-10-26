@@ -10,8 +10,9 @@ import { DiagnosticScreen } from './DiagnosticScreen';
 const mockSpeak = jest.fn();
 const mockStop = jest.fn();
 const mockListen = jest.fn();
+const mockCancel = jest.fn();
 jest.mock('../speech/tts', () => ({ tts: { speak: (...a: unknown[]) => mockSpeak(...a), stop: (...a: unknown[]) => mockStop(...a), hasVoice: async () => true } }));
-jest.mock('../speech/recognizer', () => ({ isSpeechInputAvailable: () => true, cancelListening: jest.fn(), listenOnce: (...a: unknown[]) => mockListen(...a) }));
+jest.mock('../speech/recognizer', () => ({ isSpeechInputAvailable: () => true, cancelListening: (...a: unknown[]) => mockCancel(...a), listenOnce: (...a: unknown[]) => mockListen(...a) }));
 
 const okFetch = (over: Record<string, unknown> = {}) => jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true, configured: true, ...over }) }) as unknown as typeof fetch;
 const deps = (over: Partial<DiagnosticDeps> = {}): Partial<DiagnosticDeps> => ({
@@ -120,6 +121,27 @@ describe('écran de diagnostic', () => {
     mockListen.mockResolvedValue({ ok: false, reason: 'cancelled' });
     await fireEvent.press(screen.getByText(`🎤 ${t('fr', 'diagTestMic')}`));
     expect(screen.queryByText(t('fr', PROBLEM_TEXT['permission-blocked']))).toBeNull();
+  });
+
+  it('quitter l\'écran coupe le micro et la voix (rien ne reste ouvert)', async () => {
+    await show();
+    mockStop.mockClear();
+    await cleanup(); // l'écran se ferme
+    expect(mockCancel).toHaveBeenCalled();
+    expect(mockStop).toHaveBeenCalled();
+  });
+
+  it('« Relancer » plusieurs fois de suite: seul le dernier résultat est affiché', async () => {
+    let calls = 0;
+    const slowFirst = jest.fn().mockImplementation(() => {
+      const n = ++calls;
+      return new Promise((resolve) => setTimeout(() => resolve({ ok: true, status: 200, json: async () => ({ ok: true, configured: n !== 1 }) }), n === 1 ? 60 : 5));
+    });
+    await show(deps({ fetchImpl: slowFirst as unknown as typeof fetch }));
+    await fireEvent.press(screen.getByText(t('fr', 'diagRun')));
+    await act(async () => { await new Promise((r) => setTimeout(r, 120)); });
+    // la 1re vérification (serveur sans clé, lente) ne doit pas écraser la 2e (tout va bien)
+    expect(screen.getByText(`✓ ${t('fr', 'diagAllOk')}`)).toBeTruthy();
   });
 
   it('retour', async () => {

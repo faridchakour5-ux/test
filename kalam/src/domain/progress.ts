@@ -41,7 +41,11 @@ export function addMinutes(p: Progress, minutes: number, today: string): Progres
   const rolled = rollDay(p, today);
   const first = rolled.minutesToday === 0 && rolled.lastActiveDay !== today;
   let streak = rolled.streak;
-  if (first) streak = rolled.lastActiveDay && dayDiff(rolled.lastActiveDay, today) === 1 ? streak + 1 : 1;
+  if (first) {
+    const gap = rolled.lastActiveDay ? dayDiff(rolled.lastActiveDay, today) : null;
+    // Horloge du téléphone reculée (écart négatif): la série affichée est conservée, on ne la remet pas à 1 (voir currentStreak).
+    streak = gap === 1 ? streak + 1 : gap !== null && gap < 0 ? Math.max(1, streak) : 1;
+  }
   const history = pruneHistory({ ...(rolled.history ?? {}), [today]: (rolled.history?.[today] ?? 0) + minutes }, today);
   return { ...rolled, minutesToday: rolled.minutesToday + minutes, streak, lastActiveDay: today, history, xp: (rolled.xp ?? 0) + Math.max(0, minutes) * XP_PER_MINUTE };
 }

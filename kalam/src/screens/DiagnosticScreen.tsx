@@ -11,7 +11,8 @@ import { CHECK_LABEL, CheckResult, CheckStatus, DiagnosticDeps, messageFor, over
 import { StringKey, UiLang, t, tf } from '../i18n/strings';
 import { remindersAvailable } from '../notifications/reminders';
 import { PROBLEM_TEXT, problemFromListen } from '../speech/problems';
-import { isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
+import { cancelListening, isSpeechInputAvailable, listenOnce } from '../speech/recognizer';
+import { useStopInBackground } from '../speech/useStopInBackground';
 import { tts } from '../speech/tts';
 import { useTheme } from '../theme/ThemeProvider';
 import { useHardwareBack } from '../navigation/useHardwareBack';
@@ -37,19 +38,22 @@ export function DiagnosticScreen({ lang, onBack, deps }: Props) {
   const [results, setResults] = useState<CheckResult[] | null>(null);
   const [heard, setHeard] = useState<{ text?: string; problem?: StringKey } | null>(null);
   const [testing, setTesting] = useState(false);
+  useStopInBackground(() => { setTesting(false); }); // micro et voix coupés quand l'app passe en arrière-plan
   const mounted = useRef(true);
   const depsRef = useRef(deps);
 
+  const runId = useRef(0);
   const run = useCallback(async () => {
+    const mine = ++runId.current; // « Relancer » deux fois de suite: seul le dernier résultat compte
     setResults(null);
     const r = await runDiagnostics({ ...realDeps(), ...depsRef.current });
-    if (mounted.current) setResults(r);
+    if (mounted.current && mine === runId.current) setResults(r);
   }, []);
 
   useEffect(() => {
     mounted.current = true;
     void Promise.resolve().then(run);
-    return () => { mounted.current = false; };
+    return () => { mounted.current = false; cancelListening(); void tts.stop(); }; // quitter l'écran coupe micro et voix
   }, [run]);
 
   const testVoice = () => { void tts.speak(SAMPLE, { lang: 'en-US', rate: 1 }); };

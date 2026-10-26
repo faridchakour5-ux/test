@@ -46,13 +46,12 @@ function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
 }
 
 async function checkVoice(d: DiagnosticDeps): Promise<CheckResult> {
-  const missing: string[] = [];
-  for (const locale of d.voiceLocales) {
-    let ok = false;
-    // Une liste de voix qui ne répond jamais ne doit pas bloquer tout le diagnostic: sans réponse, on la compte « absente ».
-    try { ok = await withTimeout(d.hasVoice(locale), d.timeoutMs ?? 8000, false); } catch { ok = false; }
-    if (!ok) missing.push(locale);
-  }
+  // Toutes les langues en même temps: le délai total reste celui d'UNE vérification (8 s), pas la somme.
+  // Une liste de voix qui ne répond jamais ne doit pas bloquer tout le diagnostic: sans réponse, on la compte « absente ».
+  const found = await Promise.all(d.voiceLocales.map(async (locale) => {
+    try { return await withTimeout(d.hasVoice(locale), d.timeoutMs ?? 8000, false); } catch { return false; }
+  }));
+  const missing = d.voiceLocales.filter((_, i) => !found[i]);
   if (missing.length === 0) return { id: 'voice', status: 'ok' };
   if (missing.length === d.voiceLocales.length) return { id: 'voice', status: 'fail', detail: 'none', missing };
   return { id: 'voice', status: 'warn', detail: 'partial', missing };

@@ -335,6 +335,19 @@ describe('ChatScreen: conversation à deux', () => {
     expect(mockAsk.mock.calls[1][0].messages.at(-1)).toEqual({ role: 'user', content: '[Léo] Me too' });
   });
 
+  it('écoute en cours et changement de joueur pendant l\'écoute: la phrase est attribuée à celui qui est actif à la fin, pas à celui du début', async () => {
+    mockAsk.mockResolvedValue('Nice!');
+    let finish: (r: unknown) => void = () => {};
+    mockListen.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+    await setupDuo();
+    await fireEvent.press(screen.getByText('🎤 Parler')); // Sara commence à parler…
+    await waitFor(() => expect(mockListen).toHaveBeenCalledTimes(1));
+    await fireEvent.press(screen.getByLabelText('Au tour de Léo')); // …puis on passe la main à Léo avant la fin
+    await act(async () => { finish({ ok: true, transcript: 'Me too' }); });
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
+    expect(mockAsk.mock.calls[0][0].messages.at(-1)).toEqual({ role: 'user', content: '[Léo] Me too' });
+  });
+
   it('affiche le prénom au-dessus du message, sans montrer les crochets', async () => {
     await setupDuo();
     await type('Hello everybody');

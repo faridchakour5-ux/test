@@ -94,7 +94,7 @@ describe('runDiagnostics', () => {
         let done = false; void p.then(() => { done = true; });
         await jest.advanceTimersByTimeAsync(0);
         expect(done).toBe(false);
-        await jest.advanceTimersByTimeAsync(4001); // une langue après l'autre
+        await jest.advanceTimersByTimeAsync(2); // les langues sont vérifiées en même temps: un seul délai, pas la somme
         const r = await p;
         expect(by(r, 'voice')).toEqual({ id: 'voice', status: 'fail', detail: 'none', missing: ['en-US', 'fr-FR'] });
         expect(by(r, 'server').status).toBe('ok'); // le reste est quand même affiché

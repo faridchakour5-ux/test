@@ -31,6 +31,16 @@ describe('série de jours (streak)', () => {
     p = addMinutes(p, 5, '2026-03-13'); // le 12 manqué
     expect(p.streak).toBe(1);
   });
+  it('horloge du téléphone reculée: la série affichée n\'est pas perdue à l\'activité suivante', () => {
+    let p = addMinutes(P(), 5, D);
+    p = addMinutes(p, 5, '2026-03-11');
+    p = addMinutes(p, 5, '2026-03-12');
+    expect(p.streak).toBe(3);
+    expect(currentStreak(p, '2026-03-11')).toBe(3); // l'accueil montre 3…
+    const after = addMinutes({ ...p, minutesToday: 0 }, 5, '2026-03-11'); // …et l'activité suivante ne la remet pas à 1
+    expect(after.streak).toBe(3);
+    expect(addMinutes({ ...p, minutesToday: 0 }, 5, '2026-03-12').streak).toBe(3);
+  });
   it('la série traverse un changement de mois et d\'année', () => {
     let p = addMinutes(P({ today: '2025-12-31' }), 5, '2025-12-31');
     p = addMinutes(p, 5, '2026-01-01');

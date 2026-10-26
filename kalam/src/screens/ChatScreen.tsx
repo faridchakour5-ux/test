@@ -187,6 +187,10 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
     void requestReply(next);
   }, [requestReply, duo, speaker]);
 
+  // L'écoute en cours doit appeler la DERNIÈRE version de « submit » (le joueur actif en mode à deux peut changer pendant l'écoute).
+  const submitRef = useRef(submit);
+  useEffect(() => { submitRef.current = submit; });
+
   // Phase d'écoute: démarrée à chaque nouvelle prise de parole (bouton micro ou mains libres).
   // On suit `listenId` et pas seulement la phase: React peut regrouper plusieurs étapes rapides.
   useEffect(() => {
@@ -201,10 +205,10 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
       if (listenSeq.current === myListen) listening.current = false;
       if (!mounted.current || myToken !== token.current) return;
       setPartial('');
-      if (r.ok) submit(r.transcript, true);
+      if (r.ok) submitRef.current(r.transcript, true);
       else if (r.reason !== 'cancelled') dispatch({ type: 'HEARD_FAIL', problem: problemFromListen(r.reason) });
     })();
-  }, [turn.listenId, turn.phase, profile.speechPatienceMs, submit, locale]);
+  }, [turn.listenId, turn.phase, profile.speechPatienceMs, locale]);
 
   const stopAll = () => {
     token.current++;

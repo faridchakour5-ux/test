@@ -210,6 +210,20 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
     })();
   }, [turn.listenId, turn.phase, profile.speechPatienceMs, locale]);
 
+  const turnRef = useRef(turn);
+  useEffect(() => { turnRef.current = turn; });
+
+  // Coupe le micro et la voix SEULEMENT (une réponse en route continue: ouvrir l'exercice ou réécouter une phrase ne doit pas l'annuler).
+  const stopSpeechAndMic = () => {
+    token.current++;
+    listening.current = false;
+    listenSeq.current++;
+    cancelListening();
+    void tts.stop();
+    setPartial('');
+    if (turnRef.current.phase === 'listening' || turnRef.current.phase === 'speaking') dispatch({ type: 'STOP' });
+  };
+
   const stopAll = () => {
     token.current++;
     listening.current = false;
@@ -221,7 +235,13 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
     dispatch({ type: 'STOP' });
   };
 
-  useStopInBackground(stopAll); // micro, voix et requête coupés dès que l'app passe en arrière-plan
+  // Micro, voix et requête coupés dès que l'app passe en arrière-plan. Si on attendait la réponse du professeur, le message de
+  // l'apprenant resterait sans réponse: on propose alors « Réessayer » à son retour (sinon deux messages de suite partiraient).
+  useStopInBackground(() => {
+    const waiting = turnRef.current.phase === 'sending' && messagesRef.current.at(-1)?.role === 'user';
+    stopAll();
+    if (waiting) dispatch({ type: 'SEND_FAIL', problem: 'offline' });
+  });
 
   const retrySend = () => {
     const last = messagesRef.current;
@@ -232,6 +252,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
 
   const newConversation = async () => {
     stopAll();
+    setSpeaker(0); // mode à deux: la nouvelle conversation recommence avec la première personne
     setMessages([]);
     messagesRef.current = [];
     await clearConversation(lesson.id);
@@ -242,8 +263,9 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
 
   const chooseTopic = (t: FreeTopic) => { setTopic(t); void saveTopicId(lesson.id, t.id); };
 
-  const sendTyped = () => { if (!input.trim() || turn.phase === 'sending') return; const text = input; setInput(''); submit(text, false); };
-  const finish = () => { stopAll(); onFinish(Math.max(1, Math.round((Date.now() - startedAt) / 60_000))); };
+  const sendTyped = () => { if (!input.trim() || turn.phase === 'sending') return; stopSpeechAndMic(); const text = input; setInput(''); submit(text, false); };
+  // Terminer sans avoir rien dit ne compte pas comme une séance (0 minute: ni leçon réussie, ni série, ni points).
+  const finish = () => { stopAll(); const spoke = messagesRef.current.some((m) => m.role === 'user'); onFinish(spoke ? Math.max(1, Math.round((Date.now() - startedAt) / 60_000)) : 0); };
   const back = () => { stopAll(); onBack(); };
   useHardwareBack(back); // bouton retour d'Android = bouton « Retour » de l'écran
   useKeepAwakeWhile(turn.handsFree); // mains libres: l'écran ne s'éteint pas (il couperait l'écoute)
@@ -268,7 +290,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
       </View>
 
       <ScrollView ref={scroller} contentContainerStyle={{ padding: 24, gap: 12 }} onContentSizeChange={scrollEnd}>
-        {lesson.vocab.length > 0 && <Pressable accessibilityRole="button" accessibilityState={{ expanded: showPractice }} onPress={() => { stopAll(); setShowPractice((v) => !v); }} style={{ minHeight: profile.minTouchSize, justifyContent: 'center' }}>
+        {lesson.vocab.length > 0 && <Pressable accessibilityRole="button" accessibilityState={{ expanded: showPractice }} onPress={() => { stopSpeechAndMic(); setShowPractice((v) => !v); }} style={{ minHeight: profile.minTouchSize, justifyContent: 'center' }}>
           <KText weight="600" style={{ color: colors.primary }}>🎯 {t(lang, 'practice')} {showPractice ? '▲' : '▼'}</KText>
         </Pressable>}
         {showPractice && lesson.vocab.length > 0 && (
@@ -277,7 +299,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {lesson.vocab.map((v) => (
                 <Pressable key={v.en} accessibilityRole="button" accessibilityLabel={`${targetText(v, target)}, ${meaning(v, lang, target)}`} accessibilityState={{ selected: practiceItem?.en === v.en }}
-                  onPress={() => { stopAll(); setPracticeItem(v); void tts.speak(targetText(v, target), { lang: locale, rate: profile.speechRate }); }}
+                  onPress={() => { stopSpeechAndMic(); setPracticeItem(v); void tts.speak(targetText(v, target), { lang: locale, rate: profile.speechRate }); }}
                   style={{ minHeight: 48, paddingHorizontal: 12, borderRadius: profile.radius, justifyContent: 'center', borderWidth: practiceItem?.en === v.en ? 3 : 1, borderColor: practiceItem?.en === v.en ? colors.primary : colors.border }}>
                   <KText weight="600">{targetText(v, target)}</KText>
                   <KText size={12} muted>{meaning(v, lang, target)}</KText>
@@ -314,7 +336,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
               <KText style={{ color: m.role === 'user' ? colors.onPrimary : colors.text }}>{m.content}</KText>
             )}
             {m.role === 'assistant' && (
-              <Pressable accessibilityRole="button" accessibilityLabel={t(lang, 'listen')} onPress={() => { stopAll(); void tts.speak(m.content, { lang: locale, rate: profile.speechRate }); }} style={{ minHeight: 44, justifyContent: 'center' }}>
+              <Pressable accessibilityRole="button" accessibilityLabel={t(lang, 'listen')} onPress={() => { stopSpeechAndMic(); void tts.speak(m.content, { lang: locale, rate: profile.speechRate }); }} style={{ minHeight: 44, justifyContent: 'center' }}>
                 <KText weight="600" style={{ color: colors.primary }}>🔊 {t(lang, 'listen')}</KText>
               </Pressable>
             )}

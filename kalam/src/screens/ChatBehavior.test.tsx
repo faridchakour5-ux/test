@@ -74,6 +74,8 @@ describe('conversation: fin et sortie', () => {
     let clock = 10_000_000;
     jest.spyOn(Date, 'now').mockImplementation(() => clock);
     const { onFinish } = await setup();
+    await type('Hello teacher'); // sans un seul message de l'apprenant, la séance ne compte pas (voir le test suivant)
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
     mockCancel.mockClear(); mockStop.mockClear();
     await fireEvent.press(screen.getByText(t('fr', 'finish')));
     expect(onFinish).toHaveBeenLastCalledWith(1);
@@ -85,6 +87,26 @@ describe('conversation: fin et sortie', () => {
     clock += 40 * 60_000;
     await fireEvent.press(screen.getByText(t('fr', 'finish')));
     expect(onFinish).toHaveBeenLastCalledWith(43);
+  });
+
+  it('« Terminer » sans avoir rien dit: 0 minute (ni leçon réussie, ni série, ni points gagnés en ouvrant puis fermant)', async () => {
+    const { onFinish } = await setup();
+    await fireEvent.press(screen.getByText(t('fr', 'finish')));
+    expect(onFinish).toHaveBeenLastCalledWith(0);
+  });
+
+  it('envoyer un message écrit PENDANT l\'écoute coupe le micro (il ne reste jamais ouvert derrière), puis la réponse suit', async () => {
+    mockListen.mockImplementation(() => new Promise(() => {})); // l'écoute ne se termine pas d'elle-même
+    await setup();
+    await fireEvent.press(screen.getByText('🎤 Parler'));
+    await waitFor(() => expect(screen.getByText(/Arrêter/)).toBeTruthy());
+    mockCancel.mockClear(); mockStop.mockClear();
+    await type('I changed my mind');
+    expect(mockCancel).toHaveBeenCalled();
+    expect(mockStop).toHaveBeenCalled();
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
+    expect(mockAsk.mock.calls[0][0].messages.at(-1)).toEqual({ role: 'user', content: 'I changed my mind' });
+    expect(screen.queryByText(/Arrêter$/)).toBeNull();
   });
 
   it('« Retour » quitte sans compter de minutes et coupe voix et micro', async () => {

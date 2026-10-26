@@ -9,6 +9,7 @@ import { Mascot } from '../components/Mascot';
 import { TargetPicker } from '../components/TargetPicker';
 import { WeekChart } from '../components/WeekChart';
 import { LESSONS, Level, recommendLessons } from '../domain/lessons';
+import { FREE_LESSON_ID } from '../domain/freeTopics';
 import { Progress, currentStreak, goalReached, lastDays, rollDay } from '../domain/progress';
 import { DEFAULT_TARGET, TargetLang, lessonKey } from '../domain/targets';
 import { UiLang, isRtl, t, tf } from '../i18n/strings';
@@ -39,7 +40,7 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
   const rtl = isRtl(lang);
   const recommended = recommendLessons(level, progress.completedLessons, 3, target);
   // La prochaine leçon conseillée; à défaut (tout est fait), la conversation libre.
-  const next = recommended[0] ?? LESSONS.find((l) => l.id === 'free');
+  const next = recommended[0] ?? LESSONS.find((l) => l.id === FREE_LESSON_ID);
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: 24, paddingTop: 64, gap: 16 }}>

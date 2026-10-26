@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, Share, Switch, View } from 'react-native';
 import { BackButton } from '../components/BackButton';
 import { Card } from '../components/Card';
@@ -43,6 +43,8 @@ export function SettingsScreen({ lang, dailyGoal, onGoal, palette, onPalette, on
   useHardwareBack(onBack);
   const [problem, setProblem] = useState<ReminderFailure | null>(null);
   const [busy, setBusy] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const exportingNow = useRef(false); // garde immédiate (l'état n'est mis à jour qu'au rendu suivant)
   const changeReminder = async (next: ReminderSetting) => {
     if (busy) return;
     setBusy(true);
@@ -83,7 +85,7 @@ export function SettingsScreen({ lang, dailyGoal, onGoal, palette, onPalette, on
           <Switch
             accessibilityLabel={t(lang, 'reminderToggle')}
             value={reminder.enabled}
-            disabled={busy || !available}
+            disabled={busy || (!available && !reminder.enabled)} // un rappel déjà activé doit toujours pouvoir être éteint
             onValueChange={(on) => { void changeReminder({ ...reminder, enabled: on }); }}
           />
         </View>
@@ -112,9 +114,13 @@ export function SettingsScreen({ lang, dailyGoal, onGoal, palette, onPalette, on
       <KButton label={t(lang, 'switchProfile')} onPress={onSwitchProfile} />
       {onDiagnostic && <KButton variant="secondary" label={`🩺 ${t(lang, 'diagnostic')}`} onPress={onDiagnostic} />}
 
-      <Pressable accessibilityRole="button" onPress={async () => {
+      <Pressable accessibilityRole="button" accessibilityState={{ busy: exporting }} onPress={async () => {
+        if (exportingNow.current) return; // double appui: un seul partage à la fois
+        exportingNow.current = true;
+        setExporting(true);
         try { await Share.share({ title: t(lang, 'exportTitle'), message: await onExport() }); }
         catch { Alert.alert(t(lang, 'exportFailed')); }
+        finally { exportingNow.current = false; setExporting(false); }
       }} style={{ minHeight: profile.minTouchSize, alignItems: 'center', justifyContent: 'center' }}>
         <KText muted weight="600">{t(lang, 'exportMine')}</KText>
       </Pressable>

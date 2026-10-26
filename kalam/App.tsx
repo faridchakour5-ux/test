@@ -134,12 +134,12 @@ function Root() {
   } else if (route.name === 'duo') {
     // Conversation à deux: deux personnes, le professeur anime. Jamais disponible en mode enfant (branche ci-dessus).
     screen = <ChatScreen duo={{ names: route.names }} target={app.targetLang} lang={app.uiLang} lesson={duoLesson(route.names[0], route.names[1], route.topic)} level={app.level} ageProfile={app.profile}
-      onBack={home} onFinish={(m) => { app.logSession(m); home(); }} />;
+      onBack={home} onFinish={(m) => { if (m > 0) app.logSession(m); home(); }} />;
   } else if (route.name === 'review') {
     screen = <ReviewScreen target={app.targetLang} lang={app.uiLang} session={route.session} onAnswer={app.reviewCard} onExit={home} />;
   } else if (route.name === 'lesson' && getLesson(route.id)) {
     screen = <ChatScreen target={app.targetLang} lang={app.uiLang} lesson={getLesson(route.id) ?? LESSONS[0]} level={app.level} ageProfile={app.profile}
-      onBack={home} onFinish={(m) => { app.logSession(m, route.id); home(); }} />;
+      onBack={home} onFinish={(m) => { if (m > 0) app.logSession(m, route.id); home(); }} />;
   } else {
     screen = <HomeScreen lang={app.uiLang} level={app.level} progress={app.progress}
       onOpenLesson={(id) => setRoute({ name: 'lesson', id })}

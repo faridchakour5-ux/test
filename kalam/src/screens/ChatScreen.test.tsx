@@ -492,6 +492,25 @@ describe('ChatScreen: app en arrière-plan', () => {
     expect(screen.getByLabelText('Conversation mains libres')).toHaveProp('value', false);
   });
 
+  it('pendant qu\'on attend la réponse: la requête est coupée et « Réessayer » est proposé (pas de message laissé sans réponse)', async () => {
+    mockAsk.mockImplementation(() => new Promise(() => {})); // la réponse n'arrive jamais
+    await setup();
+    await type('Hello teacher');
+    await waitFor(() => expect(mockAsk).toHaveBeenCalled());
+    await act(async () => { handler('background'); });
+    expect(await screen.findByText('Réessayer')).toBeTruthy();
+    mockAsk.mockResolvedValue('Welcome back!');
+    await fireEvent.press(screen.getByText('Réessayer'));
+    await waitFor(() => expect(mockAsk).toHaveBeenCalledTimes(2));
+    expect(mockAsk.mock.calls[1][0].messages.at(-1)).toEqual({ role: 'user', content: 'Hello teacher' });
+  });
+
+  it('en arrière-plan sans attente de réponse: aucun « Réessayer » inutile', async () => {
+    await setup();
+    await act(async () => { handler('background'); });
+    expect(screen.queryByText('Réessayer')).toBeNull();
+  });
+
   it('revenir au premier plan ne relance rien', async () => {
     await setup();
     mockStop.mockClear();

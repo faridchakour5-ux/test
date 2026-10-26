@@ -107,6 +107,8 @@ describe('App: changer de langue apprise', () => {
     await fireEvent.press(await screen.findByText('Passer'));
     await screen.findByLabelText(/Kalam\s·\sA1/);
     await fireEvent.press(screen.getAllByLabelText('Se présenter')[0]);
+    await fireEvent.changeText(await screen.findByPlaceholderText('Écrivez votre message…'), 'Bonjour'); // sans rien dire, la leçon ne compte pas
+    await fireEvent.press(screen.getByText('Envoyer'));
     await fireEvent.press(await screen.findByText('Terminer la leçon'));
     await waitFor(() => {
       const s = saved();

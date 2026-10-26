@@ -1,5 +1,5 @@
 import { Alert, Linking, Share } from 'react-native';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { t } from '../i18n/strings';
 import { ThemeProvider } from '../theme/ThemeProvider';
@@ -38,6 +38,32 @@ describe('SettingsScreen', () => {
     expect(screen.queryByLabelText('Océan')).toBeNull();
     expect(screen.getByLabelText('English')).toBeTruthy();
     expect(screen.getByLabelText('20 min')).toBeTruthy();
+  });
+  it('rappels indisponibles sur cet appareil mais un rappel déjà activé: on peut toujours l\'éteindre', async () => {
+    const onReminder = jest.fn(async () => ({ ok: true as const }));
+    await show({ reminder: { enabled: true, hour: 19, minute: 0 }, reminderAvailable: false, onReminder });
+    const sw = screen.getByLabelText(t('fr', 'reminderToggle'));
+    expect(sw).toHaveProp('disabled', false);
+    await fireEvent(sw, 'valueChange', false);
+    expect(onReminder).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }));
+  });
+  it('rappels indisponibles et pas activé: l\'interrupteur reste désactivé (rien à éteindre)', async () => {
+    await show({ reminder: { enabled: false, hour: 19, minute: 0 }, reminderAvailable: false });
+    expect(screen.getByLabelText(t('fr', 'reminderToggle'))).toHaveProp('disabled', true);
+  });
+  it('double appui sur « Exporter »: un seul partage à la fois', async () => {
+    let release: (v: string) => void = () => {};
+    const onExport = jest.fn(() => new Promise<string>((r) => { release = r; }));
+    const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
+    await show({ onExport });
+    const btn = screen.getByText('Exporter mes données');
+    await act(async () => { void fireEvent.press(btn); void fireEvent.press(btn); });
+    expect(onExport).toHaveBeenCalledTimes(1);
+    await act(async () => { release('{}'); });
+    await waitFor(() => expect(share).toHaveBeenCalledTimes(1));
+    void fireEvent.press(btn); // après la fin, on peut exporter de nouveau (sans attendre: l'export est de nouveau en cours)
+    await waitFor(() => expect(onExport).toHaveBeenCalledTimes(2));
+    await act(async () => { release('{}'); });
   });
   it('change l\'objectif quotidien, la langue et la palette', async () => {
     const onGoal = jest.fn(); const onLang = jest.fn(); const onPalette = jest.fn();

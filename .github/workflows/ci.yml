@@ -34,6 +34,20 @@ jobs:
       # Compilation réelle du bundle Android (Hermes), comme le fera EAS: détecte tout de suite un import natif cassé.
       - name: Bundle Android
         run: npx expo export --platform android --output-dir /tmp/kalam-android
+      # Manifeste Android réel (ce que verra Google Play): seules les permissions voulues, les autres explicitement retirées.
+      - name: Manifeste Android (permissions)
+        run: |
+          rm -rf /tmp/kalam-native && mkdir -p /tmp/kalam-native/app
+          tar --exclude=./node_modules --exclude=./android --exclude=./ios -cf - . | tar -xf - -C /tmp/kalam-native/app
+          ln -s "$PWD/node_modules" /tmp/kalam-native/app/node_modules
+          cd /tmp/kalam-native/app && npx expo prebuild --platform android --no-install
+          node -e "
+          const m=require('fs').readFileSync('android/app/src/main/AndroidManifest.xml','utf8');
+          const kept=[...m.matchAll(/<uses-permission android:name=\"([^\"]+)\"\/>/g)].map(x=>x[1]).sort();
+          const want=['android.permission.INTERNET','android.permission.RECORD_AUDIO'];
+          if (JSON.stringify(kept)!==JSON.stringify(want)) { console.error('permissions inattendues', kept); process.exit(1); }
+          if (!/allowBackup=\"false\"/.test(m)) { console.error('allowBackup doit être false'); process.exit(1); }
+          console.log('ok', kept.join(' '))"
       # Même compilation avec un identifiant d'application personnalisé et un build « production » correctement configuré.
       - name: Configuration de production (identifiant et serveur)
         run: >-

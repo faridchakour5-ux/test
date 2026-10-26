@@ -51,6 +51,7 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
       stream = await client.messages.create({ ...params, stream: true });
     } catch (e) {
       log.error('anthropic stream error', e?.status ?? e?.message);
+      takeBudget.refund(); // rien n'a été produit: la place du budget est rendue (comme pour /chat)
       return send(res, e?.status === 429 ? 429 : 502, { error: 'teacher unavailable' });
     }
     let started = false;
@@ -76,11 +77,11 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
           res.write(`data: ${JSON.stringify({ delta: ev.delta.text })}\n\n`);
         }
       }
-      if (!total.trim()) return started ? res.end(`data: ${JSON.stringify({ error: 'empty reply' })}\n\n`) : send(res, 502, { error: 'empty reply' });
+      if (!total.trim()) { takeBudget.refund(); return started ? res.end(`data: ${JSON.stringify({ error: 'empty reply' })}\n\n`) : send(res, 502, { error: 'empty reply' }); }
       res.end(`data: ${JSON.stringify({ done: true })}\n\n`);
     } catch (e) {
       log.error('anthropic stream error', e?.status ?? e?.message);
-      if (!started) return send(res, e?.status === 429 ? 429 : 502, { error: 'teacher unavailable' });
+      if (!started) { takeBudget.refund(); return send(res, e?.status === 429 ? 429 : 502, { error: 'teacher unavailable' }); } // avant le 1er morceau: rien produit
       res.end(`data: ${JSON.stringify({ error: 'teacher unavailable' })}\n\n`);
     }
   }

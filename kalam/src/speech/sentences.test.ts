@@ -71,3 +71,17 @@ describe('guillemets fermants et « No. »', () => {
     expect(run(['He said "Hello there.', '" Then we left the house.'])).toEqual(['He said "Hello there."', 'Then we left the house.']);
   });
 });
+
+describe('« e.g. », « i.e. » et guillemets français ou typographiques', () => {
+  it('« e.g. » et « i.e. » ne coupent pas la phrase en deux', () => {
+    expect(run(['You can eat fruit, e.g. apples and pears. Then we go home.'])).toEqual(['You can eat fruit, e.g. apples and pears.', 'Then we go home.']);
+    expect(run(['A noun, i.e. a thing, is a word for it. Next sentence here.'])).toEqual(['A noun, i.e. a thing, is a word for it.', 'Next sentence here.']);
+  });
+  it('un guillemet typographique ou français fermant reste avec SA phrase (jamais seul en tête de la suivante)', () => {
+    expect(run(['She said ‘Hello there my friend!’ Then she left.'])).toEqual(['She said ‘Hello there my friend!’', 'Then she left.']);
+    expect(run(['Il a dit « Bonjour mon ami ! » Puis il est parti.'])).toEqual(['Il a dit « Bonjour mon ami ! »', 'Puis il est parti.']);
+  });
+  it('le guillemet arrive dans le morceau suivant', () => {
+    expect(run(['She said ‘Hello there my friend!', '’ Then she left.'])).toEqual(['She said ‘Hello there my friend!’', 'Then she left.']);
+  });
+});

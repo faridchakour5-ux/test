@@ -297,3 +297,15 @@ test('validation: une réponse du professeur trop longue est coupée (jamais ref
   assert.equal(validateChat({ ageProfile: 'adult', level: 'A1', messages: [{ role: 'user', content: long }] }).error, 'invalid message');
   assert.equal(validateChat({ ageProfile: 'adult', level: 'A1', messages: [{ role: 'assistant', content: '  ' }, { role: 'user', content: 'x' }] }).error, 'invalid message');
 });
+
+test('pii: des phrases ordinaires ne sont pas prises pour des adresses (« 5 minutes drive »), les vraies le restent', () => {
+  for (const ok of ['My school is 5 minutes drive away', 'It is 10 minutes drive from here', 'I have 2 big st', 'We walked 3 long road trips', 'about 20 hours drive']) {
+    assert.deepEqual(findPii(ok), [], ok);
+    assert.equal(redactPii(ok), ok);
+  }
+  for (const bad of ['I live at 5 Baker Street', 'at 221B Baker Street please', 'I live at 12 Oak Tree Lane', 'at 7 Elm Rd.', 'at 1 Park Avenue', 'at 99 Sunset Blvd']) {
+    assert.deepEqual(findPii(bad), ['address'], bad); // un seul « address », même si deux motifs correspondent
+  }
+  assert.match(redactPii('I live at 5 Baker Street today'), /I live at \[address removed\] today/);
+  assert.deepEqual(findPii('12 rue de la Paix et 5 Baker Street').sort(), ['address']);
+});

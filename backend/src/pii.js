@@ -9,7 +9,10 @@ function isCountingRun(match) {
 const PATTERNS = [
   { name: 'email', re: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi },
   { name: 'phone', re: /(?:\+?\d[\s.-]?){9,}\d/g, skip: isCountingRun },
-  { name: 'address', re: /\b\d{1,4}\s+(?:(?:rue|avenue|av\.?|boulevard|bd|chemin)|(?:[A-Za-z'’-]+\s+){0,2}(?:street|st\.?|road|rd\.?|lane|drive|avenue|ave\.?|boulevard|blvd\.?))(?![A-Za-z])/gi },
+  // Adresses françaises (rue, avenue…): insensible à la casse.
+  { name: 'address', re: /\b\d{1,4}\s+(?:rue|avenue|av\.?|boulevard|bd|chemin)(?![A-Za-z])/gi },
+  // Adresses anglaises: un numéro, 1 à 2 noms PROPRES (majuscule) puis un type de voie. « 5 minutes drive » n'en est pas une.
+  { name: 'address', re: /\b\d{1,4}[A-Za-z]?\s+(?:[A-Z][A-Za-z'’-]*\s+){1,2}(?:[Ss]treet|[Ss]t\.?|[Rr]oad|[Rr]d\.?|[Ll]ane|[Dd]rive|[Aa]venue|[Aa]ve\.?|[Bb]oulevard|[Bb]lvd\.?)(?![A-Za-z])/g },
   { name: 'url', re: /\bhttps?:\/\/\S+/gi },
 ];
 
@@ -20,7 +23,7 @@ function hits(text, re, skip) {
 }
 
 export function findPii(text) {
-  return PATTERNS.filter(({ re, skip }) => hits(text, re, skip).length > 0).map((p) => p.name);
+  return [...new Set(PATTERNS.filter(({ re, skip }) => hits(text, re, skip).length > 0).map((p) => p.name))];
 }
 
 export function redactPii(text) {

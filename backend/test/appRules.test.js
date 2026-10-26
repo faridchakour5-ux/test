@@ -320,3 +320,22 @@ test('historique qui commence par le salut du professeur: la consigne d\'ouvertu
     assert.deepEqual(calls[1].messages, [{ role: 'user', content: 'Hi' }]);
   });
 });
+
+test('flux: une panne avant le premier morceau ou une réponse vide rend la place du budget (les nouvelles tentatives ne le vident pas)', async () => {
+  const deltaEv = (text) => ({ type: 'content_block_delta', delta: { type: 'text_delta', text } });
+  let mode = 'fail';
+  const client = { messages: { create: async () => {
+    if (mode === 'fail') throw Object.assign(new Error('x'), { status: 500 });
+    if (mode === 'empty') return (async function* () { yield deltaEv('  '); })();
+    return (async function* () { yield deltaEv('Hi there'); })();
+  } } };
+  await withServer({ client, dailyBudget: 2, rate: { max: 100, windowMs: 60_000 } }, async (base) => {
+    for (let i = 0; i < 4; i++) assert.equal((await post(base, '/chat/stream', valid)).status, 502); // 4 pannes: budget intact
+    mode = 'empty';
+    for (let i = 0; i < 4; i++) { const r = await post(base, '/chat/stream', valid); await r.text(); assert.ok([200, 502].includes(r.status)); }
+    mode = 'ok';
+    assert.equal((await post(base, '/chat/stream', valid)).status, 200);
+    assert.equal((await post(base, '/chat/stream', valid)).status, 200);
+    assert.equal((await post(base, '/chat/stream', valid)).status, 503); // 2 réponses réussies: budget épuisé
+  });
+});

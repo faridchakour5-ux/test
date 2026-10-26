@@ -27,7 +27,7 @@ afterEach(async () => { await cleanup(); jest.useRealTimers(); jest.restoreAllMo
 describe('portail parental', () => {
   it('derrière le portail: question d\'adulte, quatre réponses, aucun réglage visible', async () => {
     await show();
-    expect(screen.getByText(new RegExp(`${t('fr', 'gateIntro')} 6 × 6`))).toBeTruthy();
+    expect(screen.getByText(new RegExp(`${t('fr', 'gateIntro').replace(/\s/g, ' ')} 6 × 6`))).toBeTruthy();
     for (const o of ['26', '46', '35', '36']) expect(screen.getByLabelText(o)).toBeTruthy();
     expect(screen.queryByLabelText(t('fr', 'micConsentTitle'))).toBeNull();
     expect(screen.queryByText(t('fr', 'eraseTitle'))).toBeNull();

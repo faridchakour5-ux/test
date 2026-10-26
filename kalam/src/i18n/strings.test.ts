@@ -77,3 +77,10 @@ describe('chiffres de l\'interface arabe', () => {
     expect(mixed).toEqual([]);
   });
 });
+
+describe('typographie française', () => {
+  it('espace insécable avant ! ? : ; (sinon le signe se retrouve seul au début de la ligne suivante); notification système exceptée', () => {
+    const bad = Object.entries(fr).filter(([k, v]) => k !== 'reminderNotifBody' && /\S [!?;:]/.test(String(v))).map(([k]) => k);
+    expect(bad).toEqual([]);
+  });
+});

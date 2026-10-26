@@ -25,6 +25,7 @@ Le micro, la voix, la réponse en flux et le rappel quotidien (notification à l
 4. Notez ce qui ne va pas (une capture du diagnostic aide beaucoup) et corrigez-le avant toute publication.
 
 ## Ce que vous devez faire vous-même
+- Politique de confidentialité: la faire valider, puis la publier avec le workflow dédié (`PUBLISHING.md` section 12).
 - Play Console (à la main, une seule fois): créer l'application, remplir les déclarations, envoyer le premier `.aab`; créer la clé d'envoi et le compte de service, ajouter les secrets GitHub (`PUBLISHING.md` section 11).
 - Choisir l'identifiant d'application avant le premier envoi sur Google Play et le donner à EAS dans `KALAM_APP_ID` (aucun fichier à modifier, `PUBLISHING.md` section 2).
 - Déployer le serveur et donner son adresse à EAS (`PUBLISHING.md`, sections 1 et 2).

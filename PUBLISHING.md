@@ -77,3 +77,6 @@ Le fichier `.github/workflows/play-release.yml` construit le `.aab` signé avec 
 5. Facultatif mais conseillé: Settings > Environments > `play-release` > exiger votre approbation avant chaque envoi.
 
 **À chaque version:** lancer le workflow en donnant un numéro de version plus grand que le précédent (le premier envoi manuel vaut souvent 1: mettez 2, puis 3...), la piste (`internal` pour commencer) et l'état `draft` (la version attend votre validation dans la Play Console). Les tests, le lint et la vérification des types passent avant la construction. Le script `kalam/scripts/signRelease.js` (testé) échoue plutôt que de signer en mode débogage si le projet natif change de forme.
+
+## 12. Adresse publique de la politique de confidentialité
+Google Play demande une adresse web publique. Une fois `PRIVACY.md` relu (le texte est un brouillon: retirez « BROUILLON » du titre et renseignez le contact après validation), activez GitHub > Settings > Pages > Source = « GitHub Actions », puis lancez Actions > « Publier la politique de confidentialité » > Run workflow. L'adresse sera `https://<votre-compte>.github.io/<dépôt>/privacy.html`: collez-la dans la Play Console (fiche > Politique de confidentialité). Relancez le workflow après chaque modification de `PRIVACY.md`.

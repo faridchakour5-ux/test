@@ -3,20 +3,25 @@
 const fs = require('fs');
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const inline = (s) => esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
+// Liens [texte](adresse): seulement https et mailto (jamais javascript: ni autre schéma). Le texte a déjà été échappé.
+const link = (s) => s.replace(/\[([^\]]+)\]\((https:\/\/[^\s)"'<>]+|mailto:[^\s)"'<>]+)\)/g, '<a href="$2">$1</a>');
+const inline = (s) => link(esc(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>'));
 
 function markdownToHtml(md) {
   const out = [];
-  let list = false;
-  const close = () => { if (list) { out.push('</ul>'); list = false; } };
+  let list = null; // 'ul' ou 'ol' quand une liste est ouverte
+  const close = () => { if (list) { out.push(`</${list}>`); list = null; } };
+  const open = (kind) => { if (list !== kind) { close(); out.push(`<${kind}>`); list = kind; } };
   let title = 'Politique de confidentialité';
   for (const raw of md.split(/\r?\n/)) {
     const line = raw.trimEnd();
     if (!line.trim()) { close(); continue; }
     let m;
     if ((m = /^# (.+)/.exec(line))) { close(); title = m[1]; out.push(`<h1>${inline(m[1])}</h1>`); }
+    else if ((m = /^### (.+)/.exec(line))) { close(); out.push(`<h3>${inline(m[1])}</h3>`); }
     else if ((m = /^## (.+)/.exec(line))) { close(); out.push(`<h2>${inline(m[1])}</h2>`); }
-    else if ((m = /^- (.+)/.exec(line))) { if (!list) { out.push('<ul>'); list = true; } out.push(`<li>${inline(m[1])}</li>`); }
+    else if ((m = /^[-*] (.+)/.exec(line))) { open('ul'); out.push(`<li>${inline(m[1])}</li>`); }
+    else if ((m = /^\d+[.)] (.+)/.exec(line))) { open('ol'); out.push(`<li>${inline(m[1])}</li>`); }
     else { close(); out.push(`<p>${inline(line)}</p>`); }
   }
   close();
@@ -31,7 +36,7 @@ function page(md) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
-<style>body{font:18px/1.6 system-ui,sans-serif;max-width:46rem;margin:0 auto;padding:1.5rem 1rem;color:#1b1a2e;background:#faf8f4}h1{font-size:1.6rem}h2{font-size:1.25rem;margin-top:2rem}code{background:#ece9f7;padding:0 .25em;border-radius:4px}@media(prefers-color-scheme:dark){body{background:#12111f;color:#f1eefc}code{background:#2a2745}}</style>
+<style>body{font:18px/1.6 system-ui,sans-serif;max-width:46rem;margin:0 auto;padding:1.5rem 1rem;color:#1b1a2e;background:#faf8f4}h1{font-size:1.6rem}h2{font-size:1.25rem;margin-top:2rem}h3{font-size:1.1rem;margin-top:1.5rem}a{color:#3b2fa3}code{background:#ece9f7;padding:0 .25em;border-radius:4px}@media(prefers-color-scheme:dark){body{background:#12111f;color:#f1eefc}code{background:#2a2745}}</style>
 </head>
 <body>
 ${body}

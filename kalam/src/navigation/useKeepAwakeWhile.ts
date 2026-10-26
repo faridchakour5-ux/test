@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 type KeepAwake = { activateKeepAwakeAsync(tag?: string): Promise<void>; deactivateKeepAwake(tag?: string): Promise<void> };
 
-const TAG = 'kalam-hands-free';
+let runs = 0; // une étiquette par activation: un relâchement tardif d'une ancienne activation ne coupe jamais la nouvelle
 
 // Chargé à la demande: si le module natif manque (ou dans un test), on continue sans écran maintenu allumé.
 function load(): KeepAwake | null {
@@ -22,10 +22,11 @@ export function useKeepAwakeWhile(active: boolean, loader: () => KeepAwake | nul
     if (!active) return;
     const mod = loaderRef.current();
     if (!mod) return;
+    const tag = `kalam-hands-free-${++runs}`;
     let closed = false;
-    const release = () => { mod.deactivateKeepAwake(TAG).catch(() => { /* sans effet grave: l'écran suivra le réglage du téléphone */ }); };
+    const release = () => { mod.deactivateKeepAwake(tag).catch(() => { /* sans effet grave: l'écran suivra le réglage du téléphone */ }); };
     // Si le mode s'arrête avant la fin de l'activation, on relâche aussi une fois l'activation terminée (sinon l'écran resterait allumé).
-    mod.activateKeepAwakeAsync(TAG).then(() => { if (closed) release(); }, () => { /* idem */ });
+    mod.activateKeepAwakeAsync(tag).then(() => { if (closed) release(); }, () => { /* idem */ });
     return () => { closed = true; release(); };
   }, [active]);
 }

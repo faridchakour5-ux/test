@@ -40,4 +40,19 @@ describe('page web de la politique de confidentialité', () => {
     fs.writeFileSync(src, '# Politique de confidentialité\n\n- un point');
     expect(spawnSync('node', [script, src, out], { encoding: 'utf8' }).status).toBe(0);
   });
+  it('sous-titres, listes numérotées, puces *, liens https et mailto', () => {
+    const { body } = markdownToHtml('### Sous-titre\n\n1. un\n2) deux\n\n* puce\n\nÉcrivez à [nous](mailto:contact@exemple.fr) ou voir [le site](https://exemple.fr/p).');
+    expect(body).toContain('<h3>Sous-titre</h3>');
+    expect(body).toContain('<ol>\n<li>un</li>\n<li>deux</li>\n</ol>');
+    expect(body).toContain('<ul>\n<li>puce</li>\n</ul>');
+    expect(body).toContain('<a href="mailto:contact@exemple.fr">nous</a>');
+    expect(body).toContain('<a href="https://exemple.fr/p">le site</a>');
+  });
+  it('liens dangereux jamais activés (javascript:, http en clair, data:) et HTML échappé', () => {
+    for (const bad of ['javascript:alert(1)', 'http://exemple.fr', 'data:text/html,x']) {
+      const { body } = markdownToHtml(`[clic](${bad})`);
+      expect(body).not.toContain('<a ');
+    }
+    expect(markdownToHtml('[<b>x</b>](https://e.fr)').body).toBe('<p><a href="https://e.fr">&lt;b&gt;x&lt;/b&gt;</a></p>');
+  });
 });

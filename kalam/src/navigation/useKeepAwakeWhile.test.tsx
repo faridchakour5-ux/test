@@ -59,4 +59,17 @@ describe('écran maintenu allumé pendant le mode mains libres', () => {
     await act(async () => { finish(); });
     expect(mockDeactivate).toHaveBeenCalledTimes(2); // et encore une fois après l'activation tardive
   });
+  it('arrêt puis redémarrage rapides: la fin tardive de la 1re activation ne coupe pas la 2e (une étiquette par activation)', async () => {
+    const finishers: (() => void)[] = [];
+    mockActivate.mockImplementation(() => new Promise<void>((resolve) => { finishers.push(resolve); }));
+    const view = await render(<Probe on />);
+    await view.rerender(<Probe on={false} />);
+    await view.rerender(<Probe on />);
+    const [tag1, tag2] = mockActivate.mock.calls.map((c) => c[0]);
+    expect(tag1).not.toBe(tag2);
+    mockDeactivate.mockClear();
+    await act(async () => { finishers[0](); finishers[1](); });
+    // la 1re activation est relâchée avec SON étiquette; la 2e (en cours) n'est pas touchée
+    expect(mockDeactivate.mock.calls.map((c) => c[0])).toEqual([tag1]);
+  });
 });

@@ -28,6 +28,17 @@ describe('SettingsScreen', () => {
     expect(screen.getByText('Exporter mes données')).toBeTruthy();
     expect(screen.getByText('Effacer mes données')).toBeTruthy();
   });
+  it('profil senior (contraste élevé): pas de choix de couleurs (il n\'aurait aucun effet visible), le reste est là', async () => {
+    await render(
+      <ThemeProvider profileId="senior">
+        <SettingsScreen lang="fr" dailyGoal={10} onGoal={jest.fn()} palette="violet" onPalette={jest.fn() as never} onLang={jest.fn() as never} onSwitchProfile={jest.fn()} onExport={async () => '{}'}
+          onErase={jest.fn()} onBack={jest.fn()} reminder={{ enabled: false, hour: 19, minute: 0 }} reminderAvailable onReminder={async () => ({ ok: true })} />
+      </ThemeProvider>,
+    );
+    expect(screen.queryByLabelText('Océan')).toBeNull();
+    expect(screen.getByLabelText('English')).toBeTruthy();
+    expect(screen.getByLabelText('20 min')).toBeTruthy();
+  });
   it('change l\'objectif quotidien, la langue et la palette', async () => {
     const onGoal = jest.fn(); const onLang = jest.fn(); const onPalette = jest.fn();
     await show({ onGoal, onLang, onPalette });

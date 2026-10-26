@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, I18nManager, View } from 'react-native';
+import { ActivityIndicator, AppState, I18nManager, View } from 'react-native';
 import { buildReviewSession } from './src/domain/deck';
 import { LESSONS, getLesson } from './src/domain/lessons';
 import { Card } from './src/domain/srs';
@@ -52,6 +52,11 @@ function Root() {
   // `now` n'est lu qu'à la création et à chaque retour à l'accueil (jamais pendant un rendu).
   const [now, setNow] = useState(() => Date.now());
   const home = () => { setNow(Date.now()); setRoute({ name: 'home' }); };
+  // Application restée ouverte (ou reprise le lendemain): le jour, les cartes à réviser et la limite des enfants se remettent à jour.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') setNow(Date.now()); });
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     I18nManager.allowRTL(true);
@@ -86,7 +91,9 @@ function Root() {
     home();
   };
 
-  const timeUp = timeIsUp(app.kids.dailyLimit, app.progress.minutesToday);
+  // Les minutes d'hier ne comptent pas aujourd'hui (la progression n'est remise à zéro qu'à la prochaine activité).
+  const minutesToday = app.progress.today === localDay(new Date(now)) ? app.progress.minutesToday : 0;
+  const timeUp = timeIsUp(app.kids.dailyLimit, minutesToday);
 
   let screen: React.ReactNode;
   if (!app.profile) {
@@ -122,7 +129,7 @@ function Root() {
     screen = <DiagnosticScreen lang={app.uiLang} onBack={() => setRoute({ name: 'settings' })} />;
   } else if (route.name === 'duo-setup') {
     screen = <DuoSetupScreen lang={app.uiLang} onBack={home}
-      onStart={(names, topic) => { void clearConversation(DUO_LESSON_ID).then(() => setRoute({ name: 'duo', names, topic })); }} />;
+      onStart={(names, topic) => { void clearConversation(DUO_LESSON_ID).catch(() => {}).then(() => setRoute({ name: 'duo', names, topic })); }} />;
   } else if (route.name === 'duo') {
     // Conversation à deux: deux personnes, le professeur anime. Jamais disponible en mode enfant (branche ci-dessus).
     screen = <ChatScreen duo={{ names: route.names }} target={app.targetLang} lang={app.uiLang} lesson={duoLesson(route.names[0], route.names[1], route.topic)} level={app.level} ageProfile={app.profile}
@@ -141,7 +148,7 @@ function Root() {
       target={app.targetLang} onTarget={app.setTargetLang} today={localDay(new Date(now))}
       reminderOffer={offerReminder ? {
         time: timeLabel(defaultReminder().hour, defaultReminder().minute),
-        onAccept: () => { app.markReminderAsked(); void changeReminder({ ...defaultReminder(), enabled: true }); },
+        onAccept: () => { app.markReminderAsked(); changeReminder({ ...defaultReminder(), enabled: true }).catch(() => { /* refus ou panne: la personne peut l'activer dans les réglages */ }); },
         onLater: app.markReminderAsked,
       } : undefined} />;
   }

@@ -14,8 +14,10 @@ interface Props {
 
 // Initiale du jour de la semaine dans la langue de l'interface (repli: numéro du jour).
 export function weekdayInitial(day: string, lang: UiLang): string {
+  const date = new Date(`${day}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return day.slice(8); // date illisible: « Invalid Date » ne doit jamais s'afficher
   try {
-    return new Date(`${day}T12:00:00Z`).toLocaleDateString(lang, { weekday: 'narrow', timeZone: 'UTC' });
+    return date.toLocaleDateString(lang, { weekday: 'narrow', timeZone: 'UTC' });
   } catch {
     return day.slice(8);
   }

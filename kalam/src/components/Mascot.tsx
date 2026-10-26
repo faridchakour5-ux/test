@@ -75,8 +75,8 @@ export function Mascot({ mood = 'happy', size = 120, animated = true }: Props) {
         {mood === 'cheer' && <Path d="M48 86 Q60 100 72 86 Z" fill={INK} />}
         {mood === 'happy' && <Path d="M50 86 Q60 93 70 86" stroke={INK} strokeWidth="3" strokeLinecap="round" fill="none" />}
         {/* ailes */}
-        <Ellipse cx={mood === 'cheer' ? 14 : 18} cy={mood === 'cheer' ? 60 : 82} rx="9" ry="18" fill="#5A4BD1" rotation={mood === 'cheer' ? 25 : -10} origin="18, 82" />
-        <Ellipse cx={mood === 'cheer' ? 106 : 102} cy={mood === 'cheer' ? 60 : 82} rx="9" ry="18" fill="#5A4BD1" rotation={mood === 'cheer' ? -25 : 10} origin="102, 82" />
+        <Ellipse cx={mood === 'cheer' ? 14 : 18} cy={mood === 'cheer' ? 60 : 82} rx="9" ry="18" fill="#5A4BD1" rotation={mood === 'cheer' ? 25 : -10} origin={mood === 'cheer' ? '14, 60' : '18, 82'} />
+        <Ellipse cx={mood === 'cheer' ? 106 : 102} cy={mood === 'cheer' ? 60 : 82} rx="9" ry="18" fill="#5A4BD1" rotation={mood === 'cheer' ? -25 : 10} origin={mood === 'cheer' ? '106, 60' : '102, 82'} />
         {/* pieds */}
         <Ellipse cx="48" cy="114" rx="10" ry="5" fill={ACCENT} />
         <Ellipse cx="72" cy="114" rx="10" ry="5" fill={ACCENT} />

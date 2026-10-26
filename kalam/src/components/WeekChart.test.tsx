@@ -20,5 +20,8 @@ describe('WeekChart', () => {
   it('donne une initiale de jour dans chaque langue', () => {
     for (const lang of UI_LANGS) expect(weekdayInitial('2026-03-09', lang).length).toBeGreaterThan(0);
     expect(weekdayInitial('2026-03-09', 'en')).toBe('M'); // lundi
+    // date illisible: le numéro du jour, jamais « Invalid Date »
+    expect(weekdayInitial('2026-99-99', 'fr')).toBe('99');
+    expect(weekdayInitial('abcdefghij', 'fr')).toBe('ij');
   });
 });

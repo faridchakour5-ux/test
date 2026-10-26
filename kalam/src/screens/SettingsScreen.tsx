@@ -61,7 +61,8 @@ export function SettingsScreen({ lang, dailyGoal, onGoal, palette, onPalette, on
       <KText size={28} weight="800" accessibilityRole="header">⚙️ {t(lang, 'settings')}</KText>
 
       <LanguagePicker value={lang} onChange={onLang} />
-      <PalettePicker lang={lang} value={palette} onChange={onPalette} />
+      {/* En contraste élevé (seniors), les couleurs sont imposées pour la lisibilité: un choix de palette n'aurait aucun effet visible. */}
+      {!profile.highContrast && <PalettePicker lang={lang} value={palette} onChange={onPalette} />}
 
       <Card style={{ gap: 8 }}>
         <KText weight="800" accessibilityRole="header">{t(lang, 'goal')}</KText>

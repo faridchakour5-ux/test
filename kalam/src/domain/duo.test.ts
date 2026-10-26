@@ -73,3 +73,18 @@ describe('duoScenario / duoLesson', () => {
     expect(l.title.zh).toBe('Sara & Léo');
   });
 });
+
+describe('prénoms et consigne à deux: limites', () => {
+  it('prénom identique tronqué: pas d\'espace double devant le numéro', () => {
+    const name = 'Abcdefghijklmn op';
+    const [a, b] = uniqueNames(name, name);
+    expect(b).not.toMatch(/\s{2}/);
+    expect(b.endsWith(' 2')).toBe(true);
+    expect(a).not.toBe(b);
+  });
+  it('la consigne ne dépasse jamais 300 caractères, même avec un sujet très long', () => {
+    const topic = { id: 't', emoji: '💬', title: { fr: 't', en: 't', ar: 't', es: 't', zh: 't' }, scenario: `Free conversation about: ${'x'.repeat(500)}. Let the learner choose.` } as unknown as Parameters<typeof duoScenario>[2];
+    expect(duoScenario('A'.repeat(16), 'B'.repeat(16), topic).length).toBeLessThanOrEqual(300);
+    expect(duoScenario('Sam', 'Léo', null).length).toBeLessThanOrEqual(300);
+  });
+});

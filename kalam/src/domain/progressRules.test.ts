@@ -234,3 +234,22 @@ describe('currentStreak (série affichée)', () => {
     expect(currentStreak(p(2, '2026-10-24'), '2026-10-25')).toBe(2);
   });
 });
+
+describe('entrées illisibles (revue de code)', () => {
+  it('minutes NaN, négatives ou infinies: la progression n\'est pas abîmée', () => {
+    for (const bad of [NaN, -5, Infinity, -Infinity]) {
+      const p = addMinutes(P({ minutesToday: 3, history: { [D]: 3 } }), bad, D);
+      expect(Number.isFinite(p.minutesToday)).toBe(true);
+      expect(p.minutesToday).toBeGreaterThanOrEqual(3);
+      expect(Number.isFinite(p.history?.[D] ?? 0)).toBe(true);
+    }
+    expect(addMinutes(P(), 4.5, D).minutesToday).toBe(4.5);
+  });
+  it('dernière activité illisible (texte quelconque, date impossible): ignorée, jamais « NaN »', () => {
+    for (const bad of ['garbage', '2026-13-45', '26-03-10', '', '2026-3-1']) {
+      const p = normalizeProgress({ ...initialProgress(D), lastActiveDay: bad, streak: 4 }, D);
+      expect(p.lastActiveDay).toBeNull();
+    }
+    expect(normalizeProgress({ ...initialProgress(D), lastActiveDay: '2026-03-09', streak: 4 }, D).lastActiveDay).toBe('2026-03-09');
+  });
+});

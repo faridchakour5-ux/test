@@ -59,6 +59,13 @@ const FALLBACK_IMPORTANCE_DEFAULT = 5;
 export function createReminders(mod: NotifModule | null, platform: string = 'android') {
   const isAvailable = () => !!mod;
 
+  // Android 8+: un canal est obligatoire avant toute notification. Android 13+: la boîte « Autoriser les notifications » ne
+  // s'affiche PAS tant qu'aucun canal n'existe; il faut donc le créer AVANT de demander l'autorisation (sinon, au premier essai,
+  // la demande échoue sans rien montrer et le rappel ne peut jamais être activé).
+  async function ensureChannel(): Promise<void> {
+    if (mod && platform === 'android') await mod.setNotificationChannelAsync(CHANNEL_ID, { name: 'Daily reminder', importance: mod.AndroidImportance?.DEFAULT ?? FALLBACK_IMPORTANCE_DEFAULT });
+  }
+
   async function ensurePermission(ask: boolean): Promise<ReminderResult> {
     if (!mod) return { ok: false, reason: 'unavailable' };
     try {
@@ -66,6 +73,7 @@ export function createReminders(mod: NotifModule | null, platform: string = 'and
       if (!perm.granted) {
         if (!ask) return { ok: false, reason: 'permission' };
         if (perm.canAskAgain === false) return { ok: false, reason: 'permission-blocked' };
+        await ensureChannel();
         perm = await mod.requestPermissionsAsync();
       }
       if (!perm.granted) return { ok: false, reason: perm.canAskAgain === false ? 'permission-blocked' : 'permission' };
@@ -78,8 +86,7 @@ export function createReminders(mod: NotifModule | null, platform: string = 'and
   async function schedule(s: ReminderSetting, texts: ReminderTexts): Promise<ReminderResult> {
     if (!mod) return { ok: false, reason: 'unavailable' };
     try {
-      // Android 8+: un canal est obligatoire avant toute notification.
-      if (platform === 'android') await mod.setNotificationChannelAsync(CHANNEL_ID, { name: 'Daily reminder', importance: mod.AndroidImportance?.DEFAULT ?? FALLBACK_IMPORTANCE_DEFAULT });
+      await ensureChannel();
       // Un seul rappel: on remplace toujours l'ancien (même identifiant), jamais de doublon.
       await mod.cancelScheduledNotificationAsync(REMINDER_ID);
       await mod.scheduleNotificationAsync({

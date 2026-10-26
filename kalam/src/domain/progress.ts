@@ -37,7 +37,8 @@ export function currentStreak(p: Progress, today: string): number {
   return gap <= 1 ? p.streak : 0; // un écart négatif (horloge du téléphone reculée) ne fait pas perdre la série
 }
 
-export function addMinutes(p: Progress, minutes: number, today: string): Progress {
+export function addMinutes(p: Progress, minutesRaw: number, today: string): Progress {
+  const minutes = Number.isFinite(minutesRaw) ? Math.max(0, minutesRaw) : 0; // NaN ou négatif ne doivent jamais abîmer la progression
   const rolled = rollDay(p, today);
   const first = rolled.minutesToday === 0 && rolled.lastActiveDay !== today;
   let streak = rolled.streak;
@@ -94,7 +95,7 @@ export function normalizeProgress(raw: Partial<Progress> | null | undefined, tod
     minutesToday: raw.today === today ? num(raw.minutesToday, 0) : 0,
     today,
     streak: num(raw.streak, 0),
-    lastActiveDay: typeof raw.lastActiveDay === 'string' ? raw.lastActiveDay : null,
+    lastActiveDay: typeof raw.lastActiveDay === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.lastActiveDay) && !Number.isNaN(Date.parse(`${raw.lastActiveDay}T00:00:00Z`)) ? raw.lastActiveDay : null, // un format illisible ne fait pas de la série un « NaN »
     completedLessons: Array.isArray(raw.completedLessons) ? raw.completedLessons.filter((x): x is string => typeof x === 'string') : [],
     history: pruneHistory(history, today),
     xp: Math.floor(num(raw.xp, 0)),

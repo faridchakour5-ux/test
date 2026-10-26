@@ -25,7 +25,7 @@ export function sanitizeName(raw: string, fallback: string): string {
 export function uniqueNames(a: string, b: string, fallbackA = 'A', fallbackB = 'B'): [string, string] {
   const na = sanitizeName(a, fallbackA);
   let nb = sanitizeName(b, fallbackB);
-  if (nb.toLowerCase() === na.toLowerCase()) nb = `${nb.slice(0, MAX_NAME_LENGTH - 2)} 2`;
+  if (nb.toLowerCase() === na.toLowerCase()) nb = `${nb.slice(0, MAX_NAME_LENGTH - 2).trimEnd()} 2`;
   return [na, nb];
 }
 
@@ -43,7 +43,7 @@ export function duoScenario(a: string, b: string, topic: FreeTopic | null): stri
   return (
     `Host a chat between learners ${a} and ${b} about ${subject}. ` +
     `Messages start with [name]. Invite each in turn, by name, with gentle feedback. Keep replies short.`
-  );
+  ).slice(0, 300); // jamais plus que la limite du serveur (un sujet très long ne doit pas faire échouer la conversation)
 }
 
 export function duoLesson(a: string, b: string, topic: FreeTopic | null): Lesson {

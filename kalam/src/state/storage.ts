@@ -4,7 +4,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export async function load<T>(key: string, fallback: T): Promise<T> {
   try {
     const raw = await AsyncStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw) as T | null;
+    return parsed ?? fallback; // « null » enregistré (valeur valide en JSON mais inutilisable) = pas de valeur
   } catch {
     return fallback;
   }

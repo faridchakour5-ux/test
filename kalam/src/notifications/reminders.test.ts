@@ -132,3 +132,45 @@ describe('createReminders', () => {
     });
   });
 });
+
+describe('Android 13+: le canal existe AVANT la demande d\'autorisation (sinon la boîte ne s\'affiche pas)', () => {
+  it('première activation sans autorisation: canal créé, PUIS autorisation demandée, PUIS rappel programmé', async () => {
+    const calls: string[] = [];
+    const f = fakeModule({
+      getPermissionsAsync: async () => ({ granted: false, canAskAgain: true }),
+      requestPermissionsAsync: async () => { calls.push('demande'); return { granted: true }; },
+      setNotificationChannelAsync: async () => { calls.push('canal'); return null; },
+      cancelScheduledNotificationAsync: async () => { calls.push('annule'); },
+      scheduleNotificationAsync: async () => { calls.push('programme'); return 'id'; },
+    });
+    expect(await createReminders(f.mod, 'android').enable(on, texts)).toEqual({ ok: true });
+    expect(calls.slice(0, 2)).toEqual(['canal', 'demande']); // l'ordre qui compte
+    expect(calls.at(-1)).toBe('programme');
+  });
+  it('autorisation refusée: le canal a quand même été créé avant la demande (sans erreur, rappel non programmé)', async () => {
+    const calls: string[] = [];
+    const f = fakeModule({
+      getPermissionsAsync: async () => ({ granted: false, canAskAgain: true }),
+      requestPermissionsAsync: async () => { calls.push('demande'); return { granted: false, canAskAgain: true }; },
+      setNotificationChannelAsync: async () => { calls.push('canal'); return null; },
+      scheduleNotificationAsync: async () => { calls.push('programme'); return 'id'; },
+    });
+    expect(await createReminders(f.mod, 'android').enable(on, texts)).toEqual({ ok: false, reason: 'permission' });
+    expect(calls).toEqual(['canal', 'demande']);
+  });
+  it('autorisation déjà donnée: pas de demande (un seul canal créé, au moment de programmer)', async () => {
+    const f = fakeModule();
+    await createReminders(f.mod, 'android').enable(on, texts);
+    expect(f.channels).toHaveLength(1);
+  });
+  it('iOS: aucun canal', async () => {
+    const f = fakeModule({ getPermissionsAsync: async () => ({ granted: false, canAskAgain: true }) });
+    await createReminders(f.mod, 'ios').enable(on, texts);
+    expect(f.channels).toHaveLength(0);
+  });
+  it('synchronisation au lancement sans autorisation: ne demande rien et ne crée pas de canal inutilement', async () => {
+    const f = fakeModule({ getPermissionsAsync: async () => ({ granted: false, canAskAgain: true }) });
+    expect(await createReminders(f.mod, 'android').sync(on, texts, true)).toEqual({ ok: false, reason: 'permission' });
+    expect(f.channels).toHaveLength(0);
+  });
+});

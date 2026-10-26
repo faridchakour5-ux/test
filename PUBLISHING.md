@@ -1,6 +1,8 @@
-# Publier Kalam sur Google Play (.aab) puis l'App Store
+# Publier Kalam sur Google Play (.aab)
 
-Tout se fait depuis VOTRE ordinateur: les identifiants Google/Apple ne doivent jamais être partagés dans un chat.
+Cible actuelle: Android uniquement (fichier .aab pour Google Play). iOS n'est pas travaillé pour le moment.
+
+Tout se fait depuis VOTRE ordinateur: les identifiants Google ne doivent jamais être partagés dans un chat.
 
 ## 1. Backend (obligatoire avant le test réel)
 1. Créez une clé API sur console.anthropic.com.
@@ -34,8 +36,8 @@ Pour automatiser ensuite: créez un compte de service (Play Console > Accès à 
 - Section Sécurité des données et classification du contenu.
 - Si l'app cible des enfants: programme « Famille » obligatoire (COPPA/RGPD) avant d'activer le mode enfant.
 
-## 5. iOS plus tard
-Compte Apple Developer (99 $/an), `eas build --platform ios`, `eas submit --platform ios`.
+## 5. iOS (reporté)
+Pas prévu pour l'instant. Si un jour: compte Apple Developer, `eas build --platform ios`.
 
 ## 6. Tester la prononciation (build de développement)
 La reconnaissance vocale est un module natif: elle ne marche PAS dans Expo Go (l'app l'indique poliment).

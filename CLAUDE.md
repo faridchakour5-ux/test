@@ -3,6 +3,9 @@
 Application mobile (Expo SDK 58, React Native, TypeScript) pour apprendre l'anglais et le français en parlant. Dossiers: `kalam/` (application), `backend/` (serveur Node qui parle à l'IA), `docs/`.
 Lire d'abord `docs/ETAT.md` (état et tâches du propriétaire), puis `docs/ARCHITECTURE.md` si besoin.
 
+## Cible
+- Android uniquement (fichier .aab pour Google Play). Ne PAS travailler sur iOS ni l'App Store (décision du propriétaire).
+
 ## Langue et git
 - Répondre en français, en mots simples.
 - Branche de travail: `ccr-6e077f69-a10f4g`. Pousser avec `git push -u origin ccr-6e077f69-a10f4g`. Pas de pull request sauf demande.
@@ -12,7 +15,7 @@ Lire d'abord `docs/ETAT.md` (état et tâches du propriétaire), puis `docs/ARCH
 ## Vérifier avant de pousser (dans `kalam/`)
 - `npx tsc --noEmit && npx eslint . && npx jest`
 - Serveur: `cd backend && npm test`
-- La CI rejoue les tests dans 3 fuseaux horaires et compile les bundles Android et iOS.
+- La CI rejoue les tests dans 3 fuseaux horaires et compile le bundle Android.
 
 ## Règles à ne jamais casser
 - Aucune clé d'API dans l'application: seul le serveur (`ANTHROPIC_API_KEY`) parle à l'IA. Ne jamais demander ni accepter d'identifiants.

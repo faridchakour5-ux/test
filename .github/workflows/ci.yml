@@ -34,13 +34,11 @@ jobs:
       # Compilation réelle du bundle Android (Hermes), comme le fera EAS: détecte tout de suite un import natif cassé.
       - name: Bundle Android
         run: npx expo export --platform android --output-dir /tmp/kalam-android
-      - name: Bundle iOS
-        run: npx expo export --platform ios --output-dir /tmp/kalam-ios
       # Même compilation avec un identifiant d'application personnalisé et un build « production » correctement configuré.
       - name: Configuration de production (identifiant et serveur)
         run: >-
           npx expo config --type public --json |
-          node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); if (d.android.package!=='com.exemple.kalam'||d.ios.bundleIdentifier!=='com.exemple.kalam') { console.error('identifiant inattendu', d.android.package, d.ios.bundleIdentifier); process.exit(1); } console.log('ok', d.android.package)"
+          node -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); if (d.android.package!=='com.exemple.kalam') { console.error('identifiant inattendu', d.android.package); process.exit(1); } console.log('ok', d.android.package)"
         env:
           KALAM_APP_ID: com.exemple.kalam
           EAS_BUILD_PROFILE: production

@@ -25,7 +25,8 @@ Le micro, la voix, la réponse en flux et le rappel quotidien (notification à l
 ## Ce que vous devez faire vous-même
 - Choisir l'identifiant d'application avant le premier envoi sur Google Play et le donner à EAS dans `KALAM_APP_ID` (aucun fichier à modifier, `PUBLISHING.md` section 2).
 - Déployer le serveur et donner son adresse à EAS (`PUBLISHING.md`, sections 1 et 2).
-- Ne jamais partager vos identifiants (Google, Apple, clé d'API) dans un chat.
+- Cible: Android seulement (.aab, Google Play); iOS est reporté.
+- Ne jamais partager vos identifiants (Google, clé d'API) dans un chat.
 
 ## Pour aller plus loin
 `docs/ARCHITECTURE.md` explique comment tout est construit, `docs/APPRENDRE.md` propose des exercices pour apprendre à programmer sur ce projet.

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { patchGradle, missingEnv } = require('../scripts/signRelease');
 
 // Extrait réel du build.gradle produit par « expo prebuild » (SDK 58).

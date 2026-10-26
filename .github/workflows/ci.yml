@@ -95,8 +95,29 @@ jobs:
       - run: npm ci
       - name: Projet Android natif
         run: npx expo prebuild --platform android --no-install
+      # Même chemin que le workflow d'envoi, avec une clé JETABLE créée ici: vérifie que la signature de publication fonctionne.
+      - name: Clé jetable et signature de publication
+        run: |
+          keytool -genkeypair -storetype PKCS12 -keystore "$RUNNER_TEMP/test.jks" -alias test -keyalg RSA -keysize 2048 -validity 2 \
+            -storepass testpass1 -keypass testpass1 -dname "CN=CI test"
+          node scripts/signRelease.js android/app/build.gradle
+        env:
+          KALAM_KEYSTORE_FILE: ${{ runner.temp }}/test.jks
+          KALAM_KEYSTORE_PASSWORD: testpass1
+          KALAM_KEY_ALIAS: test
+          KALAM_KEY_PASSWORD: testpass1
+          KALAM_VERSION_CODE: 7
       - name: Compilation du .aab
         working-directory: kalam/android
         run: ./gradlew bundleRelease --no-daemon --stacktrace
-      - name: Taille du .aab
-        run: ls -l android/app/build/outputs/bundle/release/*.aab
+        env:
+          KALAM_KEYSTORE_FILE: ${{ runner.temp }}/test.jks
+          KALAM_KEYSTORE_PASSWORD: testpass1
+          KALAM_KEY_ALIAS: test
+          KALAM_KEY_PASSWORD: testpass1
+      - name: Le .aab est signé par la clé de publication (pas par celle de débogage)
+        run: |
+          ls -l android/app/build/outputs/bundle/release/*.aab
+          jarsigner -verify -verbose -certs android/app/build/outputs/bundle/release/app-release.aab | tee /tmp/js.txt | tail -3
+          grep -q "CN=CI test" /tmp/js.txt
+          ! grep -q "Android Debug" /tmp/js.txt

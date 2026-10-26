@@ -23,6 +23,7 @@ import { clearConversation, loadConversation, loadTopicId, saveConversation, sav
 import { AgeProfileId } from '../theme/profiles';
 import { useTheme } from '../theme/ThemeProvider';
 import { useHardwareBack } from '../navigation/useHardwareBack';
+import { useKeepAwakeWhile } from '../navigation/useKeepAwakeWhile';
 
 const SAVE_DELAY_MS = 500;
 
@@ -241,6 +242,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
   const finish = () => { stopAll(); onFinish(Math.max(1, Math.round((Date.now() - startedAt) / 60_000))); };
   const back = () => { stopAll(); onBack(); };
   useHardwareBack(back); // bouton retour d'Android = bouton « Retour » de l'écran
+  useKeepAwakeWhile(turn.handsFree); // mains libres: l'écran ne s'éteint pas (il couperait l'écoute)
 
   const phase = turn.phase;
   const busy = phase === 'sending';

@@ -160,6 +160,13 @@ export const STORIES: Story[] = [
     ['Mom says good night.', 'Maman dit bonne nuit.', 'تقول لي أمي: تصبح على خير.'],
     ['Good night, moon!', 'Bonne nuit, la lune !', 'تصبح على خير يا قمر!'],
   ]),
+  ST('school-day', '🏫', "À l'école", 'At school', 'في المدرسة', [
+    ['I go to school.', "Je vais à l'école.", 'أذهب إلى المدرسة.'],
+    ['I open my bag.', "J'ouvre mon cartable.", 'أفتح حقيبتي.'],
+    ['I read a book.', 'Je lis un livre.', 'أقرأ كتابًا.'],
+    ['I draw with a pencil.', 'Je dessine avec un crayon.', 'أرسم بقلم الرصاص.'],
+    ['I like school!', "J'aime l'école !", 'أحب المدرسة!'],
+  ]),
 ];
 
 export const getStory = (id: string) => STORIES.find((s) => s.id === id);

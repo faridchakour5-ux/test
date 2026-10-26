@@ -325,4 +325,11 @@ export const KIDS_STORY_TR: Record<string, { title: { es: string; zh: string }; 
     { es: 'Mamá dice buenas noches.', zh: '妈妈说晚安。' },
     { es: '¡Buenas noches, luna!', zh: '晚安，月亮！' },
   ] },
+  'school-day': { title: { es: 'En la escuela', zh: '在学校' }, sentences: [
+    { es: 'Voy a la escuela.', zh: '我去上学。' },
+    { es: 'Abro mi mochila.', zh: '我打开书包。' },
+    { es: 'Leo un libro.', zh: '我读一本书。' },
+    { es: 'Dibujo con un lápiz.', zh: '我用铅笔画画。' },
+    { es: '¡Me gusta la escuela!', zh: '我喜欢学校！' },
+  ] },
 };

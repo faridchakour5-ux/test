@@ -224,7 +224,7 @@ describe('App: révision espacée de bout en bout', () => {
       expect(s.progress.xp).toBeGreaterThan(0);
     });
     await fireEvent.press(screen.getAllByText(t('fr', 'back')).pop()!);
-    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy();
+    expect(await screen.findByLabelText(/Kalam\s·\sA1/)).toBeTruthy();
   });
 
   it('une carte révisée ne revient plus dans la même séance de l\'accueil (compteur à jour)', async () => {
@@ -246,7 +246,7 @@ describe('App: conversation à deux', () => {
     await fireEvent.press(await screen.findByText(new RegExp(t('fr', 'duoTitle'))));
     expect(await screen.findByText(t('fr', 'duoStart'))).toBeTruthy();
     await fireEvent.press(screen.getByText(/Retour/));
-    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy();
+    expect(await screen.findByLabelText(/Kalam\s·\sA1/)).toBeTruthy();
   });
 });
 
@@ -270,7 +270,7 @@ describe('App: bouton retour physique d\'Android', () => {
   it('accueil: le retour n\'est pas intercepté (l\'application peut se fermer)', async () => {
     mockStore.set('kalam:state:v1', adult);
     await boot();
-    await screen.findByText(/Kalam\s·\sA1/);
+    await screen.findByLabelText(/Kalam\s·\sA1/);
     expect(await pressBack()).toBe(false);
   });
 
@@ -283,7 +283,7 @@ describe('App: bouton retour physique d\'Android', () => {
     expect(await pressBack()).toBe(true);
     expect(await screen.findByText(t('fr', 'switchProfile'))).toBeTruthy(); // retour aux réglages
     expect(await pressBack()).toBe(true);
-    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy(); // accueil
+    expect(await screen.findByLabelText(/Kalam\s·\sA1/)).toBeTruthy(); // accueil
     expect(await pressBack()).toBe(false);
   });
 
@@ -293,7 +293,7 @@ describe('App: bouton retour physique d\'Android', () => {
     await fireEvent.press(await screen.findByText(/▶ Continuer: /));
     expect(await screen.findByText(t('fr', 'finish'))).toBeTruthy();
     expect(await pressBack()).toBe(true);
-    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy();
+    expect(await screen.findByLabelText(/Kalam\s·\sA1/)).toBeTruthy();
   });
 
   it('révision et conversation à deux: retour vers l\'accueil', async () => {
@@ -305,7 +305,7 @@ describe('App: bouton retour physique d\'Android', () => {
     await fireEvent.press(await screen.findByText(new RegExp(t('fr', 'duoTitle'))));
     expect(await screen.findByText(t('fr', 'duoStart'))).toBeTruthy();
     expect(await pressBack()).toBe(true);
-    expect(await screen.findByText(/Kalam\s·\sA1/)).toBeTruthy();
+    expect(await screen.findByLabelText(/Kalam\s·\sA1/)).toBeTruthy();
   });
 
   it('enfant: histoire en cours → retour compte le temps comme le bouton; liste → aucun temps; espace parents → accueil enfant', async () => {

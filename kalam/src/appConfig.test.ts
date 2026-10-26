@@ -30,6 +30,12 @@ describe('configuration de l\'application (app.json)', () => {
     ])('%s est bloquée (ajoutée par défaut par Expo, jamais utilisée)', (perm) => {
       expect(blocked).toContain(perm);
     });
+    it('permissions de badges d\'icône (lanceurs), de notifications push et de référent d\'installation: ajoutées par la bibliothèque de rappels, jamais utilisées, donc retirées', () => {
+      for (const perm of [
+        'android.permission.READ_APP_BADGE', 'com.google.android.c2dm.permission.RECEIVE', 'com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE',
+        'com.sec.android.provider.badge.permission.READ', 'me.everything.badger.permission.BADGE_COUNT_WRITE', 'com.huawei.android.launcher.permission.CHANGE_BADGE',
+      ]) expect(blocked).toContain(perm);
+    });
     it('aucune permission supplémentaire n\'est demandée explicitement', () => {
       expect(expo.android?.permissions ?? []).toEqual([]);
     });

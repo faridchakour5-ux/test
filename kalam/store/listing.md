@@ -77,7 +77,7 @@ Kalam 让你通过开口说来学英语和法语，而不是靠点选择题。
 • 无广告，不出售数据。界面支持法语、英语、阿拉伯语（从右到左）、西班牙语和中文。
 
 ## Permissions Android (vérifiées par un test automatique)
-L'application déclare **INTERNET** et **RECORD_AUDIO** (micro, facultatif, pour la prononciation); les bibliothèques ajoutent celles des rappels (notifications, redémarrage du téléphone). La CI affiche la liste complète du manifeste final et refuse toute permission sensible (stockage, position, caméra, contacts, téléphone, SMS...). Les permissions ajoutées par défaut par Expo et jamais utilisées sont retirées du manifeste : stockage externe (lecture/écriture), affichage par-dessus d'autres applications, vibration. Si Play Console vous demande de justifier une permission, seul le micro est concerné.
+Le manifeste final (vérifié par la CI avec une liste blanche stricte) ne contient que: **INTERNET**, **RECORD_AUDIO** (micro, facultatif, pour la prononciation), **POST_NOTIFICATIONS** et **RECEIVE_BOOT_COMPLETED** (rappel quotidien, qui survit à un redémarrage), **WAKE_LOCK** et **ACCESS_NETWORK_STATE** (ajoutées par les bibliothèques, sans danger). Les dizaines de permissions de « badges d'icône » des lanceurs, de notifications push (FCM) et de référent d'installation, ajoutées par défaut par la bibliothèque de notifications et jamais utilisées, sont retirées. Seul le micro demande une justification à Google Play. Les permissions ajoutées par défaut par Expo et jamais utilisées sont retirées du manifeste : stockage externe (lecture/écriture), affichage par-dessus d'autres applications, vibration. Si Play Console vous demande de justifier une permission, seul le micro est concerné.
 
 ## Formulaire « Sécurité des données » (à vérifier avant d'envoyer)
 | Question | Réponse proposée | Pourquoi |

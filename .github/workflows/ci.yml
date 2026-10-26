@@ -123,9 +123,10 @@ jobs:
           test -n "$m" || { echo "::error::manifeste fusionné introuvable"; exit 1; }
           echo "Manifeste: $m"
           grep -o 'uses-permission[^>]*android:name="[^"]*"' "$m" | grep -o 'android:name="[^"]*"' | sort -u | tee /tmp/perms.txt
-          for bad in READ_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE SYSTEM_ALERT_WINDOW CAMERA ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION READ_CONTACTS READ_PHONE_STATE READ_SMS SEND_SMS RECORD_AUDIO_BACKGROUND FOREGROUND_SERVICE_MICROPHONE; do
-            if grep -q "permission.$bad\"" /tmp/perms.txt; then echo "::error::permission interdite dans le manifeste final: $bad"; exit 1; fi
-          done
+          # Liste blanche stricte: toute autre permission (même ajoutée par une bibliothèque) fait échouer la CI.
+          allowed='^android:name="(android\.permission\.(ACCESS_NETWORK_STATE|INTERNET|POST_NOTIFICATIONS|RECEIVE_BOOT_COMPLETED|RECORD_AUDIO|WAKE_LOCK)|[A-Za-z0-9_.]+\.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION)"$'
+          unexpected=$(grep -Ev "$allowed" /tmp/perms.txt || true)
+          if [ -n "$unexpected" ]; then echo "::error::permissions inattendues dans le manifeste final:"; echo "$unexpected"; exit 1; fi
           grep -q 'permission.RECORD_AUDIO"' /tmp/perms.txt
           grep -q 'permission.INTERNET"' /tmp/perms.txt
       - name: Le .aab est signé par la clé de publication (pas par celle de débogage)

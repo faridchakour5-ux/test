@@ -1,7 +1,7 @@
 # Fiche Google Play de Kalam (à copier dans la Play Console)
 
-Visuel de présentation (1024×500) : `store/feature-graphic.png` · Icône : `assets/icon.png` (512×512 à exporter si demandé).
-Captures d'écran : à faire sur un vrai téléphone (2 minimum, 16:9 ou 9:16). Je n'ai pas pu les produire depuis cet environnement.
+Visuel de présentation (1024×500) : `store/feature-graphic.png` · Icône 512×512 : `store/icon-512.png`.
+Captures d'écran (1080×1920, 9:16) : `store/screenshots/` (accueil, conversation, mode enfant, arabe de droite à gauche, seniors). Elles viennent du rendu web de l'application (le micro et la voix n'y existent pas): Google Play accepte ces images, mais vous pouvez les remplacer par des captures de votre téléphone une fois l'essai fait.
 
 ## Titre (30 caractères max)
 Kalam: apprends en parlant

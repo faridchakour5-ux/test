@@ -111,11 +111,11 @@ function Root() {
     } else if (route.name === 'stickers') {
       screen = <StickersScreen lang={app.uiLang} stars={app.kids.stars} onBack={home} />;
     } else if (route.name === 'parents') {
-      screen = <ParentsScreen lang={app.uiLang} kids={app.kids} minutesToday={app.progress.minutesToday}
+      screen = <ParentsScreen lang={app.uiLang} kids={app.kids} minutesToday={minutesToday}
         onMic={app.setMicConsent} onLimit={app.setKidsLimit}
         onSwitchProfile={() => { app.resetProfile(); home(); }} onErase={() => { app.eraseAll(); home(); }} onBack={home} palette={app.palette} onPalette={app.setPalette} onLang={app.setUiLang} onExport={app.exportData} />;
     } else {
-      screen = <KidsHomeScreen lang={app.uiLang} stars={app.kids.stars} minutesToday={app.progress.minutesToday} dailyLimit={app.kids.dailyLimit}
+      screen = <KidsHomeScreen lang={app.uiLang} stars={app.kids.stars} minutesToday={minutesToday} dailyLimit={app.kids.dailyLimit}
         onStories={() => setRoute({ name: 'story' })} onPlay={() => setRoute({ name: 'play' })}
         onStickers={() => setRoute({ name: 'stickers' })} onParents={() => setRoute({ name: 'parents' })} />;
     }

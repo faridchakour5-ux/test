@@ -37,6 +37,13 @@ npm test            # tout doit être vert avant que vous ne touchiez à quoi qu
 11. **Chasser un test instable** : lancez la suite 5 fois de suite avec `for i in 1 2 3 4 5; do npm test; done`. Un test qui échoue parfois est un bug (voir « Pièges rencontrés » dans `docs/ARCHITECTURE.md`).
 12. **Relire un changement** : faites `git diff` avant chaque commit et relisez-le comme si c'était le code de quelqu'un d'autre.
 
+## Niveau 5 : de votre ordinateur à Google Play
+
+13. **Lire une chaîne de contrôle** : ouvrez `.github/workflows/ci.yml` et, pour chaque étape (typecheck, lint, tests dans 3 fuseaux, bundle Android, manifeste, `.aab`), écrivez en une phrase quelle erreur elle attrape. Puis cassez volontairement une chose (ajoutez `android.permission.CAMERA` dans `blockedPermissions`... à l'envers : retirez `RECORD_AUDIO` du plugin micro) sur une branche de test et regardez quelle étape devient rouge.
+14. **Comprendre la signature** : lisez `kalam/scripts/signRelease.js` et `kalam/src/signRelease.test.ts`. Pourquoi les mots de passe restent-ils dans l'environnement et jamais dans le fichier ? Pourquoi le script échoue-t-il bruyamment plutôt que de signer en mode débogage ? (Indice: ce que Google Play ferait d'un `.aab` mal signé.)
+15. **Une fiche de store testée** : lisez `kalam/src/storeListing.test.ts`. Raccourcissez le titre de la fiche à 31 caractères dans `kalam/store/listing.md` : quel test refuse ? Quelle limite de Google Play protège-t-il ?
+16. **Un secret, ça se range où ?** Lisez `.github/workflows/play-release.yml`. Listez les 7 secrets et dites, pour chacun, qui le crée et où il est stocké. Pourquoi le workflow vérifie-t-il leur présence avant de commencer ?
+
 ## Travailler avec Claude Code (méthode)
 
 - **Petites demandes, une à la fois** : « ajoute X et son test », pas « refais toute l'app ».
@@ -44,6 +51,7 @@ npm test            # tout doit être vert avant que vous ne touchiez à quoi qu
 - **Demandez de casser pour vérifier** : « casse volontairement ce code à un endroit et montre-moi que les tests échouent ». C'est la meilleure défense contre les faux tests.
 - **Relisez ce qui est produit** : `git diff` et `git log` avant de pousser. Ne faites pas confiance, vérifiez.
 - **Une branche par sujet** : le travail se fait sur une branche (`git switch -c ma-fonction`), jamais directement sur la branche principale.
+- **Économiser les tokens sans perdre en fiabilité** : une session par sujet (`/clear` entre deux sujets, `/compact` quand elle s'allonge), des règles stables dans `CLAUDE.md` (relu à chaque session, donc court), des demandes qui nomment les fichiers, et un modèle plus léger pour les tâches simples (traductions, documentation). Ne supprimez jamais les tests ni la CI pour économiser: ils tournent chez GitHub, pas dans vos tokens, et évitent les corrections coûteuses plus tard.
 - **Gardez les secrets hors du code** : une clé d'API va dans une variable d'environnement du serveur. Si vous en collez une dans un message ou un fichier, considérez-la comme compromise et recréez-en une.
 
 ## Pour aller plus loin

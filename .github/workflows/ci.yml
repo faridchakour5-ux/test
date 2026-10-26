@@ -72,3 +72,31 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
       - run: npm test
+
+  # Compilation native réelle du fichier .aab (Gradle, comme le fera EAS), sans clé de publication: détecte tout de suite
+  # un module natif incompatible. Le fichier produit n'est pas conservé et ne sert à rien d'autre qu'à ce contrôle.
+  android-aab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: kalam
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: kalam/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+      - name: Projet Android natif
+        run: npx expo prebuild --platform android --no-install
+      - name: Compilation du .aab
+        working-directory: kalam/android
+        run: ./gradlew bundleRelease --no-daemon --stacktrace
+      - name: Taille du .aab
+        run: ls -l android/app/build/outputs/bundle/release/*.aab

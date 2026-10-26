@@ -30,16 +30,20 @@ via un petit serveur : la clé de l'IA ne quitte jamais le serveur.
 | `kalam/src/speech/` | La voix (synthèse), le micro (reconnaissance) et le découpage du texte parlé |
 | `kalam/src/api/` | Le dialogue avec le serveur (réponse simple, réponse en flux, nouvelles tentatives) |
 | `kalam/src/state/` | L'état de l'app et sa sauvegarde sur l'appareil, l'export des données |
-| `kalam/src/navigation/` | Le bouton « retour » physique d'Android (`useHardwareBack`): même effet que le bouton « Retour » de l'écran, jamais la fermeture de l'app depuis un sous-écran |
+| `kalam/src/navigation/` | Le bouton « retour » physique d'Android (`useHardwareBack`): même effet que le bouton « Retour » de l'écran, jamais la fermeture de l'app depuis un sous-écran. Et `useKeepAwakeWhile`: l'écran reste allumé pendant le mode mains libres (un écran éteint coupe le micro) |
 | `kalam/src/notifications/` | Le rappel quotidien (notification locale, désactivé par défaut) |
 | `kalam/src/diagnostics/` | Le diagnostic de l'appareil : vérifie serveur, voix, micro et rappels en un geste |
 | `kalam/src/theme/` | Couleurs (palettes vérifiées pour la lisibilité), profils d'âge (enfant, adulte, senior) |
 | `kalam/src/i18n/` | Les textes de l'interface, un fichier par langue |
 | `kalam/src/util/` | Petits utilitaires (expressions régulières tolérantes) |
-| `backend/` | Le serveur : `backend/src/app.js` (routes), `backend/src/prompt.js` (consignes de l'IA), `backend/src/validate.js` (validation), `backend/src/pii.js` (données personnelles), `backend/src/rateLimit.js` (limites) |
+| `backend/` | Le serveur : `backend/src/app.js` (routes), `backend/src/prompt.js` (consignes de l'IA), `backend/src/validate.js` (validation), `backend/src/pii.js` (données personnelles), `backend/src/rateLimit.js` (limites), `backend/src/config.js` (lecture stricte des variables d'environnement: une valeur invalide arrête le démarrage) |
 | `backend/test/` | Les tests du serveur, dont `backend/test/fakeServer.js` (vrai serveur, fausse IA) |
 | `kalam/app.config.js`, `kalam/scripts/appId.js` | Identifiant d'application réglable (`KALAM_APP_ID`) et contrôles de construction de production |
-| `.github/workflows/ci.yml` | La vérification automatique à chaque envoi de code |
+| `.github/workflows/ci.yml` | La vérification automatique à chaque envoi de code: tests (3 fuseaux horaires), bundle Android, manifeste Android (liste blanche stricte des permissions du manifeste FINAL), compilation du `.aab` avec une clé jetable et vérification de sa signature |
+| `.github/workflows/play-release.yml`, `kalam/scripts/signRelease.js` | Envoi manuel sur Google Play: construit le `.aab` signé avec VOTRE clé (lue dans les secrets GitHub) et l'envoie. Le script de signature est testé et échoue plutôt que de signer en mode débogage |
+| `.github/workflows/privacy-page.yml`, `kalam/scripts/privacyPage.js` | Publie `PRIVACY.md` en page web (adresse publique exigée par Google Play); refuse un texte encore marqué « BROUILLON » |
+| `kalam/store/` | La fiche Google Play: textes en 5 langues, captures 1080×1920, icône, visuel; `storeListing.test.ts` vérifie les limites de caractères et les dimensions |
+| `CLAUDE.md` | Les règles du projet pour l'assistant de code (commandes de vérification, garde-fous, pièges de test): garde les sessions courtes |
 | `PRIVACY.md`, `PUBLISHING.md` | Confidentialité et mise en ligne |
 
 ## 3. Les couches de l'application
@@ -144,3 +148,10 @@ sans espaces entre les mots (chinois) ou à écriture arabe demandent un traitem
 - **Répétition espacée** : revoir un mot juste avant de l'oublier, de plus en plus rarement s'il est bien su.
 - **SSE** : façon d'envoyer une réponse par morceaux au fil de l'eau.
 - **Mutation (test de)** : casser le code exprès pour vérifier que les tests le voient.
+- **Une négation n'arrête pas un script** : en bash avec `-e`, `! commande` ne fait jamais échouer l'étape. Un garde-fou de signature de la CI écrit ainsi ne pouvait pas échouer. On écrit `if commande; then exit 1; fi`.
+- **Les bibliothèques ajoutent des permissions** : le manifeste du projet ne montre pas le manifeste FINAL (fusionné avec celui des bibliothèques): il contenait une vingtaine de permissions inutiles (badges d'icône, notifications push). La CI contrôle donc le manifeste fusionné, avec une liste blanche.
+- **Android 13+: le canal avant l'autorisation** : la boîte « Autoriser les notifications » ne s'affiche pas tant qu'aucun canal de notification n'existe (`kalam/src/notifications/reminders.ts`).
+- **Un plafond doit exister des deux côtés** : la facilité d'une carte de révision n'était plafonnée qu'à la relecture, qui écartait la carte (donc perdue). On plafonne à l'écriture ET on ramène à la relecture au lieu d'écarter.
+- **Un double appui est un vrai cas** : un bouton qui note une carte ou valide un test doit se protéger avec une référence (`useRef`), pas avec un état (qui n'est mis à jour qu'au rendu suivant).
+- **Une protection qui ne dit rien est aussi dangereuse** : une valeur invalide de `DAILY_REQUEST_LIMIT` désactivait le plafond sans rien dire. Une valeur invalide doit arrêter le démarrage.
+- **Les revues de code trouvent ce que les tests ne cherchent pas** : relancer régulièrement une revue (commande `code-review` sur un dossier) a trouvé des défauts réels à chaque passage; ce qui est écarté doit l'être pour une raison écrite (un test existant montre que le comportement est voulu).

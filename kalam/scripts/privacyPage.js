@@ -28,8 +28,19 @@ function markdownToHtml(md) {
   return { title, body: out.join('\n') };
 }
 
+// Sections réservées à l'équipe (marquées « INTERNE » dans le titre): jamais sur la page publique.
+function publicPart(md) {
+  const out = [];
+  let skipping = false;
+  for (const line of md.split(/\r?\n/)) {
+    if (/^#{1,2} /.test(line)) skipping = /INTERNE/i.test(line);
+    if (!skipping) out.push(line);
+  }
+  return out.join('\n');
+}
+
 function page(md) {
-  const { title, body } = markdownToHtml(md);
+  const { title, body } = markdownToHtml(publicPart(md));
   return `<!doctype html>
 <html lang="fr">
 <head>
@@ -46,9 +57,9 @@ ${body}
 }
 
 // Un texte encore marqué « BROUILLON » n'est pas publié par erreur sur une adresse publique (sauf demande explicite).
-const isDraft = (md) => /BROUILLON/i.test(md);
+const isDraft = (md) => /BROUILLON|à renseigner/i.test(publicPart(md)); // texte public encore incomplet
 
-module.exports = { markdownToHtml, page, esc, isDraft };
+module.exports = { markdownToHtml, page, esc, isDraft, publicPart };
 
 if (require.main === module) {
   const args = process.argv.slice(2);
@@ -56,7 +67,7 @@ if (require.main === module) {
   const [src, dest] = args.filter((a) => !a.startsWith('--'));
   if (!src || !dest) { console.error('Usage: node scripts/privacyPage.js PRIVACY.md site/privacy.html [--allow-draft]'); process.exit(2); }
   if (isDraft(fs.readFileSync(src, 'utf8')) && !allowDraft) {
-    console.error('PRIVACY.md est encore marqué « BROUILLON »: faites-le valider, retirez la mention, puis relancez (ou lancez le workflow avec « allow_draft » pour un essai).');
+    console.error('PRIVACY.md est encore incomplet (« BROUILLON » ou « à renseigner » dans la partie publique): faites-le valider, complétez-le, puis relancez (ou lancez le workflow avec « allow_draft » pour un essai).');
     process.exit(1);
   }
   fs.mkdirSync(require('path').dirname(dest), { recursive: true });

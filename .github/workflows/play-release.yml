@@ -15,6 +15,10 @@ on:
         default: internal
         type: choice
         options: [internal, alpha, beta]
+      publish:
+        description: "Envoyer sur Google Play (décocher pour seulement construire le .aab signé et le télécharger: premier envoi à la main)"
+        type: boolean
+        default: true
       status:
         description: "État de la version"
         required: true
@@ -51,13 +55,15 @@ jobs:
         env:
           KEYSTORE_B64: ${{ secrets.KALAM_KEYSTORE_BASE64 }}
           PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          PUBLISH: ${{ inputs.publish }}
         run: |
           missing=""
           for v in KALAM_APP_ID EXPO_PUBLIC_API_URL KALAM_KEYSTORE_PASSWORD KALAM_KEY_ALIAS KALAM_KEY_PASSWORD; do
             [ -n "${!v}" ] || missing="$missing $v"
           done
           [ -n "$KEYSTORE_B64" ] || missing="$missing KALAM_KEYSTORE_BASE64"
-          [ -n "$PLAY_JSON" ] || missing="$missing PLAY_SERVICE_ACCOUNT_JSON"
+          # le compte de service n'est nécessaire que pour envoyer (pas pour seulement construire le .aab du premier envoi)
+          if [ "$PUBLISH" = "true" ]; then [ -n "$PLAY_JSON" ] || missing="$missing PLAY_SERVICE_ACCOUNT_JSON"; fi
           if [ -n "$missing" ]; then echo "::error::Secrets manquants:$missing (voir PUBLISHING.md section 11)"; exit 1; fi
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -90,7 +96,15 @@ jobs:
           jarsigner -verify -verbose -certs "$aab" | tee "$RUNNER_TEMP/js.txt" | tail -3
           grep -q "jar verified" "$RUNNER_TEMP/js.txt"
           if grep -q "Android Debug" "$RUNNER_TEMP/js.txt"; then echo "::error::Le .aab est signé avec la clé de débogage: envoi annulé"; exit 1; fi
+      - name: Conserver le .aab signé (premier envoi à la main dans la Play Console)
+        if: ${{ !inputs.publish }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: kalam-aab-signe
+          path: kalam/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 1
       - name: Envoyer sur Google Play
+        if: ${{ inputs.publish }}
         uses: r0adkll/upload-google-play@v1.1.3
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}

@@ -2,7 +2,7 @@
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-const { markdownToHtml, page, isDraft } = require('../scripts/privacyPage');
+const { markdownToHtml, page, isDraft, publicPart } = require('../scripts/privacyPage');
 
 describe('page web de la politique de confidentialité', () => {
   it('titres, listes, gras et code', () => {
@@ -20,7 +20,11 @@ describe('page web de la politique de confidentialité', () => {
     expect(html).toContain('Mode enfant');
     expect(html).toContain('Aucune publicité');
     expect(html).not.toMatch(/<script|https?:\/\//i);
-    expect((html.match(/<h2>/g) ?? []).length).toBe((md.match(/^## /gm) ?? []).length);
+    // les sections « INTERNE » (points à valider, garde-fous) ne sont jamais sur la page publique
+    const internal = (md.match(/^## .*INTERNE/gm) ?? []).length;
+    expect(internal).toBeGreaterThanOrEqual(2);
+    expect((html.match(/<h2>/g) ?? []).length).toBe((md.match(/^## /gm) ?? []).length - internal);
+    expect(html).not.toMatch(/privacy\.test\.ts|Points à valider|Garde-fous|COPPA/);
   });
   it('un texte encore marqué BROUILLON n\'est pas publié par erreur (sauf --allow-draft)', () => {
     expect(isDraft('# Politique (BROUILLON — à valider)')).toBe(true);
@@ -54,5 +58,18 @@ describe('page web de la politique de confidentialité', () => {
       expect(body).not.toContain('<a ');
     }
     expect(markdownToHtml('[<b>x</b>](https://e.fr)').body).toBe('<p><a href="https://e.fr">&lt;b&gt;x&lt;/b&gt;</a></p>');
+  });
+  it('sections INTERNE retirées de la partie publique; le reste est gardé', () => {
+    const md = '# Titre\n\n## Publique\n- visible\n\n## Notes (INTERNE: équipe)\n- secret\n\n### Sous-partie interne\n- encore secret\n\n## Autre publique\n- visible aussi';
+    const pub = publicPart(md);
+    expect(pub).toContain('visible');
+    expect(pub).toContain('visible aussi');
+    expect(pub).not.toContain('secret');
+    expect(page(md)).not.toContain('secret');
+  });
+  it('texte public encore incomplet (BROUILLON, « à renseigner »): refusé; la mention dans une section INTERNE ne bloque pas', () => {
+    expect(isDraft('# Politique\n\nContact : à renseigner.')).toBe(true);
+    expect(isDraft('# Politique (BROUILLON)')).toBe(true);
+    expect(isDraft('# Politique\n\nContact : a@b.fr\n\n## Notes (INTERNE)\n- à renseigner plus tard, BROUILLON')).toBe(false);
   });
 });

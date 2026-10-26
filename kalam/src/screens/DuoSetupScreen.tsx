@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { BackButton } from '../components/BackButton';
 import { KButton } from '../components/KButton';
 import { KText } from '../components/KText';
@@ -35,8 +35,10 @@ export function DuoSetupScreen({ lang, onStart, onBack }: Props) {
     />
   );
 
+  // Plein écran d'Android récent: le clavier ne redimensionne plus la fenêtre, on réserve sa place; un appui sur « Commencer » compte même clavier ouvert.
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: 24, paddingTop: 64, gap: 16 }}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior="padding">
+    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 24, paddingTop: 64, gap: 16 }}>
       <BackButton lang={lang} onPress={onBack} />
       <KText size={26} weight="800" accessibilityRole="header">👥 {t(lang, 'duoTitle')}</KText>
       <KText muted>{t(lang, 'duoIntro')}</KText>
@@ -57,5 +59,6 @@ export function DuoSetupScreen({ lang, onStart, onBack }: Props) {
       </View>
       <KButton label={t(lang, 'duoStart')} onPress={() => onStart(uniqueNames(a, b), topic)} />
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Pressable, ScrollView, Switch, TextInput, View } from 'react-native';
 import { ChatMessage, TeacherError, askTeacher, askTeacherStream, streamingEnabled } from '../api/teacher';
 import { BackButton } from '../components/BackButton';
 import { Card } from '../components/Card';
@@ -277,7 +277,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
   const lastIsUser = messages.length > 0 && messages[messages.length - 1].role === 'user';
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior="padding">
       <View style={{ paddingHorizontal: 24, paddingTop: 56, gap: 6 }}>
         <BackButton lang={lang} onPress={back} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -289,7 +289,7 @@ export function ChatScreen({ duo, target = DEFAULT_TARGET, lang, lesson, level, 
         </View>
       </View>
 
-      <ScrollView ref={scroller} contentContainerStyle={{ padding: 24, gap: 12 }} onContentSizeChange={scrollEnd}>
+      <ScrollView ref={scroller} keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 24, gap: 12 }} onContentSizeChange={scrollEnd}>
         {lesson.vocab.length > 0 && <Pressable accessibilityRole="button" accessibilityState={{ expanded: showPractice }} onPress={() => { stopSpeechAndMic(); setShowPractice((v) => !v); }} style={{ minHeight: profile.minTouchSize, justifyContent: 'center' }}>
           <KText weight="600" style={{ color: colors.primary }}>🎯 {t(lang, 'practice')} {showPractice ? '▲' : '▼'}</KText>
         </Pressable>}

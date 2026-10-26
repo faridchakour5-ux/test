@@ -22,6 +22,7 @@ Le micro, la voix, la réponse en flux et le rappel quotidien (notification à l
 1. Construisez le build de développement (`PUBLISHING.md`, section 6).
 2. Ouvrez Réglages → « 🩺 Diagnostic de l'appareil »: en quelques secondes, il vérifie le serveur, les voix (anglais et français), le micro et les rappels, et affiche pour chaque point ✓, ⚠ ou ✗ avec une explication. Les boutons « Entendre une phrase » et « Dire une phrase » testent la voix et le micro tout de suite.
 3. Essayez une conversation vocale complète, une prononciation, et couper l'application en pleine écoute.
+   Vérifiez aussi: le clavier ne cache pas la zone d'écriture du chat ni les noms de la conversation à deux (Android récent: plein écran, le clavier ne redimensionne plus la fenêtre).
 4. Notez ce qui ne va pas (une capture du diagnostic aide beaucoup) et corrigez-le avant toute publication.
 
 ## Ce que vous devez faire vous-même

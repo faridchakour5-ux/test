@@ -6,6 +6,7 @@ describe('openAppSettings', () => {
 
   it('ouvre les réglages', async () => {
     const spy = jest.spyOn(Linking, 'openSettings').mockResolvedValue(undefined);
+    spy.mockClear(); // l'original est déjà un faux appel partagé: on ne compte que cet essai
     await openAppSettings();
     expect(spy).toHaveBeenCalledTimes(1);
   });

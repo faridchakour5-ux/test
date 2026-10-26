@@ -85,7 +85,7 @@ describe('plateforme et valeurs de repli', () => {
 });
 
 describe('instance réelle (chargée à la demande)', () => {
-  afterEach(() => { jest.dontMock('expo-notifications'); });
+  afterEach(() => { jest.dontMock('expo-notifications'); jest.resetModules(); });
   const load = (factory: () => unknown) => {
     let api!: typeof import('./reminders');
     jest.isolateModules(() => {

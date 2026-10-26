@@ -34,6 +34,9 @@ jest.mock('expo-notifications', () => mockNotif);
 const saved = () => JSON.parse(mockStore.get('kalam:state:v1') ?? '{}');
 const boot = async () => { await render(<App />); await act(async () => {}); };
 
+// Les espions (ex. sur Alert) ne doivent pas passer d'un test au suivant: l'ordre des tests ne doit rien changer.
+afterEach(() => { jest.restoreAllMocks(); });
+
 beforeEach(() => {
   mockStore.clear();
   mockNotif.getPermissionsAsync.mockImplementation(async () => ({ granted: true }));

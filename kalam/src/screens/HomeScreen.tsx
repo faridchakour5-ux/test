@@ -12,7 +12,8 @@ import { LESSONS, Level, recommendLessons } from '../domain/lessons';
 import { FREE_LESSON_ID } from '../domain/freeTopics';
 import { Progress, currentStreak, goalReached, lastDays, rollDay } from '../domain/progress';
 import { DEFAULT_TARGET, TargetLang, lessonKey } from '../domain/targets';
-import { UiLang, isRtl, t, tf } from '../i18n/strings';
+import { UiLang, t, tf } from '../i18n/strings';
+import { rowDirection } from '../i18n/layout';
 import { useTheme } from '../theme/ThemeProvider';
 
 interface Props {
@@ -37,19 +38,18 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
   // La progression sauvegardée peut dater d'hier: on l'aligne sur le jour courant pour l'affichage.
   const progress = rollDay(storedProgress, today);
   const { colors, profile } = useTheme();
-  const rtl = isRtl(lang);
   const recommended = recommendLessons(level, progress.completedLessons, 3, target);
   // La prochaine leçon conseillée; à défaut (tout est fait), la conversation libre.
   const next = recommended[0] ?? LESSONS.find((l) => l.id === FREE_LESSON_ID);
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: 24, paddingTop: 64, gap: 16 }}>
-      <View style={{ flexDirection: rtl ? 'row-reverse' : 'row', alignItems: 'center', gap: 16 }}>
+      <View style={{ flexDirection: rowDirection(lang), alignItems: 'center', gap: 16 }}>
         <Mascot mood={goalReached(progress) ? 'cheer' : 'happy'} size={profile.id === 'kids' ? 120 : 72} />
         <View style={{ flex: 1 }}>
           {/* « Kalam » puis le niveau dans une pastille: avec de gros caractères (seniors), le niveau passe à la ligne entier au lieu de couper « · A1 » */}
           <View accessible accessibilityRole="header" accessibilityLabel={`Kalam · ${level}`}
-            style={{ flexDirection: rtl ? 'row-reverse' : 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 10, rowGap: 4 }}>
+            style={{ flexDirection: rowDirection(lang), flexWrap: 'wrap', alignItems: 'center', columnGap: 10, rowGap: 4 }}>
             <KText size={28} weight="800">Kalam</KText>
             <View style={{ borderWidth: 2, borderColor: colors.primary, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 2 }}>
               <KText size={16} weight="800">{level}</KText>
@@ -96,7 +96,7 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
           <KText size={22} weight="600" accessibilityRole="header">⭐ {t(lang, 'recommended')}</KText>
           {recommended.slice(1).map((l) => (
             <Pressable key={`rec-${l.id}`} accessibilityRole="button" accessibilityLabel={l.title[lang]} onPress={() => onOpenLesson(l.id)}>
-              <Card style={{ flexDirection: rtl ? 'row-reverse' : 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: profile.minTouchSize, borderColor: colors.primary, borderWidth: 2 }}>
+              <Card style={{ flexDirection: rowDirection(lang), justifyContent: 'space-between', alignItems: 'center', minHeight: profile.minTouchSize, borderColor: colors.primary, borderWidth: 2 }}>
                 <KText weight="600">{l.title[lang]}</KText>
                 <KText muted>{l.level}</KText>
               </Card>
@@ -113,7 +113,7 @@ export function HomeScreen({ lang, level, progress: storedProgress, onOpenLesson
       <KText size={22} weight="600" accessibilityRole="header">{t(lang, 'allLessons')}</KText>
       {LESSONS.map((l) => (
         <Pressable key={l.id} accessibilityRole="button" accessibilityLabel={l.title[lang]} onPress={() => onOpenLesson(l.id)}>
-          <Card style={{ flexDirection: rtl ? 'row-reverse' : 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: profile.minTouchSize }}>
+          <Card style={{ flexDirection: rowDirection(lang), justifyContent: 'space-between', alignItems: 'center', minHeight: profile.minTouchSize }}>
             <KText weight="600">{l.title[lang]}</KText>
             <KText muted>{progress.completedLessons.includes(lessonKey(l.id, target)) ? `✓ ${t(lang, 'done')}` : l.level}</KText>
           </Card>

@@ -6,7 +6,8 @@ import { KButton } from '../components/KButton';
 import { KText } from '../components/KText';
 import { LanguagePicker } from '../components/LanguagePicker';
 import { PalettePicker } from '../components/PalettePicker';
-import { StringKey, UiLang, isRtl, t } from '../i18n/strings';
+import { StringKey, UiLang, t } from '../i18n/strings';
+import { rowDirection } from '../i18n/layout';
 import { REMINDER_TIMES, ReminderFailure, ReminderResult, ReminderSetting, timeLabel } from '../notifications/reminders';
 import { openAppSettings } from '../speech/openSettings';
 import { PaletteId } from '../theme/palettes';
@@ -56,7 +57,7 @@ export function SettingsScreen({ lang, dailyGoal, onGoal, palette, onPalette, on
       setBusy(false);
     }
   };
-  const row = { flexDirection: isRtl(lang) ? ('row-reverse' as const) : ('row' as const), gap: 8 };
+  const row = { flexDirection: rowDirection(lang), gap: 8 };
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: 24, paddingTop: 64, gap: 20 }}>
       <BackButton lang={lang} onPress={onBack} />

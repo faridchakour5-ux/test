@@ -19,7 +19,7 @@ export function ChallengeCard({ lang, progress, today }: { lang: UiLang; progres
       <KText weight="800" accessibilityRole="header">🎯 {t(lang, 'challengeTitle')}</KText>
       <KText accessibilityLiveRegion="polite">{complete ? '✓ ' : ''}{t(lang, TEXT[id])}{complete ? '' : ` (${done}/${target})`}</KText>
       <View accessible accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: target, now: done }} style={{ height: 8, borderRadius: 4, backgroundColor: colors.border, overflow: 'hidden' }}>
-        <View testID="challenge-fill" style={{ height: 8, width: `${Math.round((done / target) * 100)}%`, backgroundColor: colors.primary }} />
+        <View testID="challenge-fill" style={{ height: 8, width: `${target > 0 ? Math.min(100, Math.max(0, Math.round((done / target) * 100))) : 0}%`, backgroundColor: colors.primary }} />
       </View>
       <KText size={13} muted>{complete ? t(lang, 'challengeDone') : t(lang, 'challengeHint')}</KText>
     </Card>

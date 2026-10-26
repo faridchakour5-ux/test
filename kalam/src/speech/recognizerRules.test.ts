@@ -335,6 +335,27 @@ describe('nouvel essai quand le moteur est occupé', () => {
     await sleep(50);
     expect(f.started).toHaveLength(1);
   });
+  it('le nouvel essai ne concerne que « occupé »: rien entendu ou erreur du micro ne relancent pas l\'écoute', async () => {
+    for (const code of ['no-speech', 'audio-capture', 'network']) {
+      const f = fakeModule({ supportsOnDeviceRecognition: () => false });
+      const p = createRecognizer(f.mod, 5).listenOnce();
+      await flush();
+      f.emit('error', { error: code });
+      await p;
+      await sleep(30);
+      expect([code, f.started.length]).toEqual([code, 1]);
+    }
+  });
+  it('le nouvel essai se fait avec le service normal (pas en reconnaissance locale)', async () => {
+    const f = fakeModule();
+    const p = createRecognizer(f.mod, 5).listenOnce();
+    await flush();
+    f.emit('error', { error: 'busy' });
+    await sleep(30);
+    expect(f.started.map((o) => o.requiresOnDeviceRecognition)).toEqual([false, false]);
+    f.emit('error', { error: 'busy' });
+    await p;
+  });
   it('sans délai configuré (par défaut): aucun nouvel essai', async () => {
     const f = fakeModule();
     const p = createRecognizer(f.mod).listenOnce();

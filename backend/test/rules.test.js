@@ -133,7 +133,7 @@ test('rateLimit: purge des clients inactifs quand la table est pleine (mémoire 
   assert.equal(a2('x', 10), false);
   assert.equal(a2('y', 10), false);
   assert.equal(a2('z', 10), true);
-  assert.equal(a2('x', 20), false);
+  assert.equal(a2('x', 20), true); // table toujours pleine de clients actifs: le plus ancien (x) a été écarté, la mémoire reste bornée
 });
 test('rateLimit: purge garde les coups récents d\'un client encore actif', () => {
   const allow = createRateLimiter({ max: 2, windowMs: 100, maxKeys: 2 });
@@ -170,9 +170,12 @@ test('clientKey: adresse directe, ou X-Forwarded-For seulement derrière un prox
   const req = (fwd, addr = '1.2.3.4') => ({ headers: fwd === undefined ? {} : { 'x-forwarded-for': fwd }, socket: addr === null ? undefined : { remoteAddress: addr } });
   assert.equal(clientKey(req('9.9.9.9')), '1.2.3.4'); // sans confiance: l'en-tête est ignoré (falsifiable)
   assert.equal(clientKey(req('9.9.9.9'), false), '1.2.3.4');
-  assert.equal(clientKey(req('9.9.9.9, 8.8.8.8'), true), '9.9.9.9');
-  assert.equal(clientKey(req(' 9.9.9.9 ,8.8.8.8'), true), '9.9.9.9');
-  assert.equal(clientKey(req(['7.7.7.7, 6.6.6.6', 'x']), true), '7.7.7.7');
+  assert.equal(clientKey(req('9.9.9.9, 8.8.8.8'), true), '8.8.8.8'); // à gauche: falsifiable par le client; à droite: ajouté par le proxy
+  assert.equal(clientKey(req(' 9.9.9.9 ,8.8.8.8'), true), '8.8.8.8');
+  assert.equal(clientKey(req(['7.7.7.7, 6.6.6.6', 'x']), true), 'x');
+  assert.equal(clientKey(req('forgé, 5.5.5.5, 6.6.6.6'), 2), '5.5.5.5'); // deux proxys: la 2e entrée en partant de la droite
+  assert.equal(clientKey(req('5.5.5.5'), 3), '5.5.5.5'); // moins d'entrées que de proxys: la première
+  assert.equal(clientKey(req('9.9.9.9, 8.8.8.8'), 0), '1.2.3.4');
   assert.equal(clientKey(req(undefined), true), '1.2.3.4');
   assert.equal(clientKey(req(''), true), '1.2.3.4');
   assert.equal(clientKey(req(undefined, null), true), 'unknown');
@@ -224,4 +227,45 @@ test('pii: enfants refusés, autres masqués, réponses du professeur intactes',
   assert.deepEqual(sanitizeMessages([{ role: 'user', content: 'hi' }], 'kids'), { messages: [{ role: 'user', content: 'hi' }] });
   // le message de l'assistant avec une donnée personnelle ne bloque pas un enfant
   assert.deepEqual(sanitizeMessages([{ role: 'assistant', content: 'a@b.co' }, { role: 'user', content: 'ok' }], 'kids'), { messages: [{ role: 'assistant', content: 'a@b.co' }, { role: 'user', content: 'ok' }] });
+});
+
+// ---------- corrections issues d'une revue de sécurité ----------
+import { parseDailyLimit, parseTrustProxy } from '../src/config.js';
+
+test('config: TRUST_PROXY et DAILY_REQUEST_LIMIT invalides arrêtent le démarrage (jamais de protection coupée en silence)', () => {
+  assert.equal(parseTrustProxy(undefined), 0);
+  assert.equal(parseTrustProxy(''), 0);
+  assert.equal(parseTrustProxy('1'), 1);
+  assert.equal(parseTrustProxy('2'), 2);
+  for (const bad of ['true', '-1', '1.5', 'deux', '11']) assert.throws(() => parseTrustProxy(bad), /TRUST_PROXY invalide/);
+  assert.equal(parseDailyLimit(undefined), 20_000);
+  assert.equal(parseDailyLimit('5000'), 5000);
+  assert.equal(parseDailyLimit('0'), 0);
+  for (const bad of ['20k', '20,000', '', ' ', '-5', 'NaN']) assert.throws(() => parseDailyLimit(bad), /DAILY_REQUEST_LIMIT invalide/);
+});
+
+test('budget quotidien: rendre une place après un appel raté; jamais en dessous de zéro, jamais d\'un autre jour', () => {
+  const take = createDailyBudget(2);
+  assert.equal(take(0), true);
+  assert.equal(take(1), true);
+  assert.equal(take(2), false);
+  take.refund(3);
+  assert.equal(take(4), true); // la place rendue est reprenable
+  assert.equal(take(5), false);
+  const day = 86_400_000;
+  take.refund(day + 1); // autre jour: sans effet
+  assert.equal(take(day + 2), true);
+  const fresh = createDailyBudget(1);
+  fresh.refund(0); fresh.refund(0); // rien à rendre
+  assert.equal(fresh(0), true);
+  assert.equal(fresh(1), false);
+});
+
+test('pii: une suite de chiffres qui se suivent (exercice de chiffres) n\'est pas un numéro de téléphone', () => {
+  assert.deepEqual(findPii('1 2 3 4 5 6 7 8 9 10'), []);
+  assert.deepEqual(findPii('10 9 8 7 6 5 4 3 2 1'), []);
+  assert.equal(redactPii('count: 1 2 3 4 5 6 7 8 9 10'), 'count: 1 2 3 4 5 6 7 8 9 10');
+  assert.deepEqual(findPii('call 06 12 34 56 78'), ['phone']); // un vrai numéro reste détecté
+  assert.deepEqual(findPii('0 1 2 3 4 5 6 7 8 9 and 06 12 34 56 78'), ['phone']);
+  assert.match(redactPii('0 1 2 3 4 5 6 7 8 9 and 06 12 34 56 78'), /0 1 2 3 4 5 6 7 8 9 and \[phone removed\]/);
 });

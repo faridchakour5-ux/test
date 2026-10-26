@@ -96,9 +96,11 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
     });
     try {
       if (req.method === 'OPTIONS') return send(res, 204, {});
-      if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, configured: !!client });
-      const streaming = req.method === 'POST' && req.url === '/chat/stream';
-      if (req.method !== 'POST' || (req.url !== '/chat' && !streaming)) return send(res, 404, { error: 'not found' });
+      // Chemin sans paramètres d'adresse ni barre finale: « /health?x=1 » ou « /chat/ » ne donnent plus 404.
+      const path = (req.url ?? '').split('?')[0].replace(/\/+$/, '') || '/';
+      if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, configured: !!client });
+      const streaming = req.method === 'POST' && path === '/chat/stream';
+      if (req.method !== 'POST' || (path !== '/chat' && !streaming)) return send(res, 404, { error: 'not found' });
 
       if (!allow(clientKey(req, trustProxy))) return send(res, 429, { error: 'too many requests' });
       if (!client) return send(res, 503, { error: 'server not configured' });
@@ -133,10 +135,11 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
       try {
         const reply = await client.messages.create(params);
         const text = reply.content.filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
-        if (!text) return send(res, 502, { error: 'empty reply' });
+        if (!text) { takeBudget.refund(); return send(res, 502, { error: 'empty reply' }); }
         send(res, 200, { reply: text });
       } catch (e) {
         log.error('anthropic error', e?.status ?? e?.message);
+        takeBudget.refund(); // l'appel a échoué sans rien produire: la place est rendue (les nouvelles tentatives ne vident pas le budget)
         // 429 côté fournisseur: on dit au client de réessayer plus tard; le reste est une panne côté serveur.
         send(res, e?.status === 429 ? 429 : 502, { error: 'teacher unavailable' });
       }

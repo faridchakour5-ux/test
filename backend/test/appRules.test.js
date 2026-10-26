@@ -207,7 +207,7 @@ test('journal d\'accès: méthode, chemin sans paramètres (40 caractères au pl
     const [a, b] = logs.info;
     assert.equal(a.evt, 'request');
     assert.equal(a.method, 'POST');
-    assert.equal(a.status, 404); // /chat?secret=abc n'est pas la route /chat: le chemin exact est exigé
+    assert.equal(a.status, 200); // les paramètres d'adresse ne changent pas la route (/chat?x=1 = /chat)
     assert.equal(a.path, '/chat');
     assert.equal(typeof a.ms, 'number');
     assert.ok(a.ms >= 0 && a.ms < 5000);
@@ -267,5 +267,43 @@ test('requête brute incomplète (client qui coupe avant la fin): le serveur res
       setTimeout(() => { req.destroy(); resolve(); }, 20);
     });
     assert.equal((await fetch(`${base}/health`)).status, 200);
+  });
+});
+
+// ---------- corrections issues d'une revue de sécurité ----------
+test('routes: les paramètres d\'adresse et la barre finale ne donnent plus 404 (sondes de santé, clients)', async () => {
+  await withServer({ client: textClient() }, async (base) => {
+    for (const p of ['/health', '/health?x=1', '/health/']) assert.equal((await fetch(base + p)).status, 200, p);
+    for (const p of ['/chat', '/chat?x=1', '/chat/']) assert.equal((await post(base, p, valid)).status, 200, p);
+    assert.equal((await fetch(`${base}/inconnu`)).status, 404);
+    assert.equal((await post(base, '/chatter', valid)).status, 404);
+  });
+});
+
+test('budget quotidien: une panne du fournisseur ne vide pas le budget (place rendue), les réponses réussies le consomment', async () => {
+  let fail = true;
+  const client = { messages: { create: async () => { if (fail) throw Object.assign(new Error('x'), { status: 500 }); return { content: [{ type: 'text', text: 'ok' }] }; } } };
+  await withServer({ client, dailyBudget: 2, rate: { max: 100, windowMs: 60_000 } }, async (base) => {
+    for (let i = 0; i < 5; i++) assert.equal((await post(base, '/chat', valid)).status, 502); // 5 pannes, budget intact
+    fail = false;
+    assert.equal((await post(base, '/chat', valid)).status, 200);
+    assert.equal((await post(base, '/chat', valid)).status, 200);
+    assert.equal((await post(base, '/chat', valid)).status, 503); // 2 réponses réussies: budget épuisé
+  });
+});
+
+test('réponse vide du fournisseur: 502 et la place du budget est rendue', async () => {
+  const client = { messages: { create: async () => ({ content: [{ type: 'text', text: '  ' }] }) } };
+  await withServer({ client, dailyBudget: 1, rate: { max: 100, windowMs: 60_000 } }, async (base) => {
+    for (let i = 0; i < 3; i++) assert.equal((await post(base, '/chat', valid)).status, 502);
+  });
+});
+
+test('limite de débit derrière un proxy: une adresse falsifiée à gauche ne contourne pas la limite', async () => {
+  await withServer({ client: textClient(), trustProxy: 1, rate: { max: 1, windowMs: 60_000 } }, async (base) => {
+    const hit = (xff) => fetch(`${base}/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-forwarded-for': xff }, body: JSON.stringify(valid) });
+    assert.equal((await hit('forgé-1, 7.7.7.7')).status, 200);
+    assert.equal((await hit('forgé-2, 7.7.7.7')).status, 429); // même adresse réelle (ajoutée par le proxy): même seau
+    assert.equal((await hit('forgé-3, 8.8.8.8')).status, 200);
   });
 });

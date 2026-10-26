@@ -18,7 +18,8 @@ test('budget 0 = illimité', () => {
 test('clientKey: adresse du socket par défaut, X-Forwarded-For seulement si on fait confiance au proxy', () => {
   const req = { headers: { 'x-forwarded-for': '203.0.113.7, 10.0.0.1' }, socket: { remoteAddress: '10.0.0.1' } };
   assert.equal(clientKey(req, false), '10.0.0.1');
-  assert.equal(clientKey(req, true), '203.0.113.7');
+  assert.equal(clientKey(req, true), '10.0.0.1'); // un proxy de confiance: l'entrée AJOUTÉE par lui (à droite)
+  assert.equal(clientKey(req, 2), '203.0.113.7'); // deux proxys de confiance
   assert.equal(clientKey({ headers: {}, socket: { remoteAddress: '1.2.3.4' } }, true), '1.2.3.4');
 });
 test('le limiteur purge les clients inactifs (mémoire bornée)', () => {

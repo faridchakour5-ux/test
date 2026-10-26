@@ -7,7 +7,9 @@ Tout se fait depuis VOTRE ordinateur: les identifiants Google ne doivent jamais 
 ## 1. Backend (obligatoire avant le test réel)
 1. Créez une clé API sur console.anthropic.com.
 2. Déployez `backend/` : le plus simple est Render > New > Blueprint (le fichier `render.yaml` est prêt). Saisissez `ANTHROPIC_API_KEY` dans le tableau de bord, jamais dans le dépôt.
-3. Variables utiles : `TRUST_PROXY=1` derrière un hébergeur (sinon tous les utilisateurs partagent une limite), `DAILY_REQUEST_LIMIT` pour plafonner la facture de l'API par jour.
+3. Variables utiles :
+   - `TRUST_PROXY` = **nombre de proxys de confiance** entre Internet et votre serveur (`1` pour un seul). Chaque proxy ajoute l'adresse du client à la FIN de `X-Forwarded-For`; le serveur lit l'entrée à cette position en partant de la droite (le début de l'en-tête est falsifiable par le client). Trop petit: plusieurs utilisateurs partagent une limite (30 requêtes/minute en commun). Trop grand: l'adresse peut être falsifiée. Sur Render, commencez par `1`, puis vérifiez avec deux téléphones sur des réseaux différents que chacun a sa propre limite; si ce n'est pas le cas, essayez `2` (Render passe par un équilibreur et un réseau de diffusion). Une valeur invalide (ex. `true`) empêche le démarrage.
+   - `DAILY_REQUEST_LIMIT` = plafond de requêtes par jour (UTC) pour borner la facture de l'API. Une valeur qui n'est pas un entier (ex. `20k`) empêche le démarrage au lieu de désactiver le plafond en silence; `0` = illimité. Une panne du fournisseur ne consomme pas le budget.
 4. Testez `GET https://votre-serveur/health` : la réponse doit contenir `"configured":true`.
 5. Mettez cette URL dans `EXPO_PUBLIC_API_URL` avant de construire l'app (HTTPS obligatoire).
 

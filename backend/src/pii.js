@@ -1,18 +1,30 @@
 // Détection simple de données personnelles dans les messages avant tout envoi au fournisseur d'IA.
 // Ce n'est pas exhaustif: c'est un filet de sécurité en plus des règles du prompt.
+// « 1 2 3 4 5 6 7 8 9 10 » (exercice de chiffres) n'est pas un numéro de téléphone: suite d'entiers qui se suivent de 1 en 1.
+function isCountingRun(match) {
+  const nums = match.split(/[\s.-]+/).filter(Boolean).map((t) => Number(t.replace(/^\+/, '')));
+  return nums.length >= 4 && nums.every((n, i) => Number.isInteger(n) && (i === 0 || n === nums[i - 1] + 1 || n === nums[i - 1] - 1));
+}
+
 const PATTERNS = [
   { name: 'email', re: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi },
-  { name: 'phone', re: /(?:\+?\d[\s.-]?){9,}\d/g },
+  { name: 'phone', re: /(?:\+?\d[\s.-]?){9,}\d/g, skip: isCountingRun },
   { name: 'address', re: /\b\d{1,4}\s+(?:(?:rue|avenue|av\.?|boulevard|bd|chemin)|(?:[A-Za-z'’-]+\s+){0,2}(?:street|st\.?|road|rd\.?|lane|drive|avenue|ave\.?|boulevard|blvd\.?))(?![A-Za-z])/gi },
   { name: 'url', re: /\bhttps?:\/\/\S+/gi },
 ];
 
+function hits(text, re, skip) {
+  re.lastIndex = 0;
+  const found = [...text.matchAll(re)].map((m) => m[0]);
+  return skip ? found.filter((m) => !skip(m)) : found;
+}
+
 export function findPii(text) {
-  return PATTERNS.filter(({ re }) => { re.lastIndex = 0; return re.test(text); }).map((p) => p.name);
+  return PATTERNS.filter(({ re, skip }) => hits(text, re, skip).length > 0).map((p) => p.name);
 }
 
 export function redactPii(text) {
-  return PATTERNS.reduce((acc, { re, name }) => acc.replace(re, `[${name} removed]`), text);
+  return PATTERNS.reduce((acc, { re, name, skip }) => acc.replace(re, (m) => (skip && skip(m) ? m : `[${name} removed]`)), text);
 }
 
 // Enfants: on refuse la requête. Autres profils: on masque, la conversation continue.

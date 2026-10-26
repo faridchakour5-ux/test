@@ -220,6 +220,18 @@ export const VOCAB_TR: Record<string, Tr> = {
   'waste': T('النفايات', 'residuos', '垃圾'),
   'climate change': T('تغيّر المناخ', 'cambio climático', '气候变化'),
   'save water': T('يوفّر الماء', 'ahorrar agua', '节约用水'),
+  'dog': T('كلب', 'perro', '狗'),
+  'cat': T('قطة', 'gato', '猫'),
+  'pet': T('حيوان أليف', 'mascota', '宠物'),
+  'feed': T('يُطعم', 'dar de comer', '喂'),
+  'cute': T('لطيف', 'adorable', '可爱'),
+  'walk the dog': T('يتمشى بالكلب', 'pasear al perro', '遛狗'),
+  'kitchen': T('مطبخ', 'cocina', '厨房'),
+  'bedroom': T('غرفة نوم', 'dormitorio', '卧室'),
+  'bathroom': T('حمّام', 'baño', '浴室'),
+  'garden': T('حديقة', 'jardín', '花园'),
+  'living room': T('غرفة المعيشة', 'salón', '客厅'),
+  'Make yourself at home': T('اعتبر البيت بيتك', 'Estás en tu casa', '请随意，就当在自己家'),
 };
 
 export const LESSON_TITLES_TR: Record<string, { es: string; zh: string }> = {
@@ -259,6 +271,8 @@ export const LESSON_TITLES_TR: Record<string, { es: string; zh: string }> = {
   technology: { es: 'La tecnología', zh: '科技' },
   invitation: { es: 'Una invitación', zh: '邀请' },
   environment: { es: 'El medio ambiente', zh: '环境' },
+  pets: { es: 'Las mascotas', zh: '宠物' },
+  house: { es: 'La casa', zh: '房子' },
 };
 
 // Mode enfant: mots (par id), titres de thèmes et d'histoires, phrases des histoires.

@@ -1,4 +1,4 @@
-// 36 leçons d'anglais organisées par situations (CEFR A1 -> B1), pas par listes de mots.
+// 38 leçons d'anglais organisées par situations (CEFR A1 -> B1), pas par listes de mots.
 import { UiLang } from '../i18n/strings';
 import { DEFAULT_TARGET, TargetLang, lessonKey } from './targets';
 import { LESSON_TITLES_TR, VOCAB_TR } from './translations';
@@ -53,6 +53,8 @@ export const LESSONS: Lesson[] = [
   L('restaurant', 'A1', 'Au restaurant', 'At the restaurant', 'في المطعم', 'You are a customer ordering food; the teacher is the waiter.', [['menu', 'carte'], ['I would like', 'Je voudrais'], ['water', 'eau'], ['the bill, please', 'l\'addition, s\'il vous plaît'], ['delicious', 'délicieux'], ['a table for two', 'une table pour deux']]),
   L('directions', 'A1', 'Demander son chemin', 'Asking directions', 'السؤال عن الطريق', 'You are lost in a city and ask a passer-by for directions.', [['turn left', 'tournez à gauche'], ['turn right', 'tournez à droite'], ['straight ahead', 'tout droit'], ['Where is...?', 'Où est... ?'], ['next to', 'à côté de'], ['far', 'loin']]),
   L('daily', 'A1', 'Ma journée', 'My day', 'يومي', 'You describe your daily routine to a new colleague.', [['wake up', 'se réveiller'], ['breakfast', 'petit-déjeuner'], ['go to work', 'aller au travail'], ['go to bed', 'se coucher'], ['take a shower', 'prendre une douche'], ['have lunch', 'déjeuner']]),
+  L('pets', 'A1', 'Les animaux de compagnie', 'Pets', 'الحيوانات الأليفة', 'You talk about your pet with a neighbour.', [['dog', 'chien'], ['cat', 'chat'], ['pet', 'animal de compagnie'], ['feed', 'nourrir'], ['cute', 'mignon'], ['walk the dog', 'promener le chien']]),
+  L('house', 'A1', 'La maison', 'The house', 'البيت', 'You show your new home to a friend.', [['kitchen', 'cuisine'], ['bedroom', 'chambre'], ['bathroom', 'salle de bain'], ['garden', 'jardin'], ['living room', 'salon'], ['Make yourself at home', 'Fais comme chez toi']]),
   L('shopping', 'A2', 'Faire les courses', 'Shopping', 'التسوق', 'You buy clothes in a shop; the teacher is the shop assistant.', [['size', 'taille'], ['try on', 'essayer'], ['discount', 'réduction'], ['receipt', 'ticket de caisse'], ['cash', 'en espèces'], ['I am just looking', 'Je regarde seulement']]),
   L('transport', 'A2', 'Les transports', 'Transport', 'المواصلات', 'You buy a train ticket at the station.', [['ticket', 'billet'], ['platform', 'quai'], ['delay', 'retard'], ['return ticket', 'aller-retour'], ['bus stop', 'arrêt de bus'], ['one-way ticket', 'aller simple']]),
   L('doctor', 'A2', 'Chez le médecin', 'At the doctor', 'عند الطبيب', 'You do not feel well and describe your symptoms to a doctor.', [['headache', 'mal de tête'], ['fever', 'fièvre'], ['prescription', 'ordonnance'], ['It hurts here', 'J\'ai mal ici'], ['cough', 'toux'], ['appointment', 'rendez-vous']]),

@@ -110,6 +110,8 @@ describe('compatibilité des sauvegardes existantes', () => {
     "technology": ["password", "download", "battery", "update"],
     "invitation": ["invite", "party", "gift", "Are you free on Saturday?"],
     "environment": ["recycle", "pollution", "energy", "waste"],
+    "pets": ["dog", "cat", "pet", "feed"],
+    "house": ["kitchen", "bedroom", "bathroom", "garden"],
   };
   it('chaque leçon garde ses 4 premiers mots, dans le même ordre', () => {
     expect(Object.keys(FIRST_FOUR).sort()).toEqual(LESSONS.map((l) => l.id).sort());

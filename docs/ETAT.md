@@ -33,5 +33,17 @@ Le micro, la voix, la réponse en flux et le rappel quotidien (notification à l
 - Cible: Android seulement (.aab, Google Play); iOS est reporté.
 - Ne jamais partager vos identifiants (Google, clé d'API) dans un chat.
 
+## Reprise: où on s'est arrêté (publication Android)
+Dernière mise à jour: 2026-11-10. À cocher au fur et à mesure.
+- [x] Secrets GitHub créés: `KALAM_APP_ID`, `KALAM_KEY_ALIAS` (2 sur 6). Identifiant d'application choisi par le propriétaire (non modifiable après le premier envoi sur Google Play).
+- [ ] Serveur Render: aucun serveur pour l'instant. Étapes: compte Render (connexion GitHub) → New + → Blueprint → dépôt `faridchakour5-ux/test` → saisir `ANTHROPIC_API_KEY` dans Render seulement (clé créée sur console.anthropic.com, jamais dans le dépôt ni dans le chat) → attendre « Live » → copier l'adresse `https://…onrender.com` et vérifier `/health`.
+- [ ] Secret `EXPO_PUBLIC_API_URL` = adresse du serveur (https).
+- [ ] Clé d'envoi: pas de `.jks` existant. Créer avec `sh kalam/scripts/createUploadKey.sh` (ou `keytool`, voir `PUBLISHING.md` §11), sauvegarder le fichier et le mot de passe en lieu sûr.
+- [ ] Secrets `KALAM_KEYSTORE_BASE64`, `KALAM_KEYSTORE_PASSWORD`, `KALAM_KEY_PASSWORD`.
+- [ ] Actions → « Envoi sur Google Play » → Run workflow (`version_code` 1, piste `internal`, « publish » décoché, état `draft`) → télécharger `kalam-aab-signe` (Artifacts, 1 jour).
+- [ ] Play Console: créer l'application « Kalam », envoyer le `.aab` en test interne, remplir les déclarations.
+- [ ] Politique de confidentialité: retirer « BROUILLON » et renseigner le contact (`PRIVACY.md`), puis publier la page (`PUBLISHING.md` §12).
+- [ ] Essai sur un vrai téléphone Android (voir plus haut).
+
 ## Pour aller plus loin
 `docs/ARCHITECTURE.md` explique comment tout est construit, `docs/APPRENDRE.md` propose des exercices pour apprendre à programmer sur ce projet.

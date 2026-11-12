@@ -48,13 +48,4 @@ command -v cloudshell >/dev/null 2>&1 && { echo "Sauvegardez le fichier de clé 
 read -r -p "Construire maintenant le .aab signé (15 à 20 minutes) ? [O/n] " GO
 if [ "${GO:-O}" = "n" ] || [ "${GO:-O}" = "N" ]; then echo "Terminé. Lancez le workflow plus tard (Actions > Envoi sur Google Play)."; exit 0; fi
 
-gh workflow run play-release.yml -R "$REPO" -f version_code=1 -f track=internal -f publish=false -f status=draft
-sleep 10
-RUN="$(gh run list -R "$REPO" --workflow play-release.yml --event workflow_dispatch -L 1 --json databaseId -q '.[0].databaseId')"
-echo "Construction en cours (suivi automatique)…"
-gh run watch "$RUN" -R "$REPO" --exit-status
-rm -rf "$HOME/aab"; mkdir -p "$HOME/aab"
-gh run download "$RUN" -R "$REPO" -n kalam-aab-signe -D "$HOME/aab"
-ls -l "$HOME/aab"
-command -v cloudshell >/dev/null 2>&1 && cloudshell download "$HOME/aab/app-release.aab" || true
-echo "Terminé: le .aab est dans $HOME/aab/app-release.aab"
+bash "$(dirname "$0")/buildAab.sh" 1

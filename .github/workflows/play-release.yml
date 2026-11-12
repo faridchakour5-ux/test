@@ -46,12 +46,15 @@ jobs:
       KALAM_KEY_PASSWORD: ${{ secrets.KALAM_KEY_PASSWORD }}
       KALAM_VERSION_CODE: ${{ inputs.version_code }}
     steps:
+      # Avant le téléchargement du code, le dossier kalam/ n'existe pas encore: ces contrôles s'exécutent à la racine.
       - name: Numéro de version valide (entier positif sans zéro au début)
+        working-directory: .
         env:
           VC: ${{ inputs.version_code }}
         run: |
           if ! printf '%s' "$VC" | grep -Eq '^[1-9][0-9]{0,9}$' || [ "$VC" -gt 2100000000 ]; then echo "::error::version_code invalide: « $VC » (entier de 1 à 2100000000, sans zéro au début)"; exit 1; fi
       - name: Vérifier que les secrets sont présents
+        working-directory: .
         env:
           KEYSTORE_B64: ${{ secrets.KALAM_KEYSTORE_BASE64 }}
           PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
@@ -76,7 +79,8 @@ jobs:
           distribution: temurin
           java-version: 17
       - run: npm ci
-      - run: npm run typecheck && npm run lint && npm test -- --ci
+      # Les tests tournent sans les variables de publication (comme dans la CI): ils fixent eux-mêmes ce dont ils ont besoin.
+      - run: npm run typecheck && npm run lint && env -u KALAM_APP_ID -u EXPO_PUBLIC_API_URL -u EAS_BUILD_PROFILE -u KALAM_VERSION_CODE npm test -- --ci
       - name: Projet Android natif
         run: npx expo prebuild --platform android --no-install
       - name: Clé de signature (jamais écrite dans le dépôt)
@@ -114,4 +118,5 @@ jobs:
           status: ${{ inputs.status }}
       - name: Effacer la clé
         if: always()
+        working-directory: .
         run: rm -f "$RUNNER_TEMP/kalam-upload.jks"

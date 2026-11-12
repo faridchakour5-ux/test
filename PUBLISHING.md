@@ -94,3 +94,6 @@ cd test/backend
 bash deploy-cloudrun.sh ID_DU_PROJET
 ```
 La clé d'API Anthropic est demandée sans affichage et va directement dans Secret Manager. À la fin, le script affiche l'adresse `https://…run.app` (à mettre dans le secret GitHub `EXPO_PUBLIC_API_URL`) et teste `/health`. Une seule copie du serveur tourne (`--max-instances 1`) car la limite de requêtes est en mémoire.
+
+## 14. Tout faire depuis Cloud Shell (clé, secrets GitHub, construction du .aab)
+Après `bash deploy-cloudrun.sh ID_PROJET` (§13): `cd ~ && sh ~/test/kalam/scripts/createUploadKey.sh`, puis `bash ~/test/kalam/scripts/setGithubSecrets.sh ID_PROJET`. Ce second script connecte `gh` à votre GitHub (vous validez dans le navigateur), crée les secrets manquants (adresse du serveur lue depuis Cloud Run, clé, mots de passe vérifiés), lance le workflow avec « publish » décoché, attend la fin et télécharge le `.aab`. Non essayé sur un vrai compte. Les secrets `KALAM_APP_ID` et `KALAM_KEY_ALIAS` doivent déjà exister (créés à la main).

@@ -34,15 +34,17 @@ Le micro, la voix, la réponse en flux et le rappel quotidien (notification à l
 - Ne jamais partager vos identifiants (Google, clé d'API) dans un chat.
 
 ## Reprise: où on s'est arrêté (publication Android)
-Dernière mise à jour: 2026-11-10. À cocher au fur et à mesure.
-- [x] Secrets GitHub créés: `KALAM_APP_ID`, `KALAM_KEY_ALIAS` (2 sur 6). Identifiant d'application choisi par le propriétaire (non modifiable après le premier envoi sur Google Play).
-- [ ] Serveur Render: aucun serveur pour l'instant. Étapes: compte Render (connexion GitHub) → New + → Blueprint → dépôt `faridchakour5-ux/test` → saisir `ANTHROPIC_API_KEY` dans Render seulement (clé créée sur console.anthropic.com, jamais dans le dépôt ni dans le chat) → attendre « Live » → copier l'adresse `https://…onrender.com` et vérifier `/health`.
-- [ ] Secret `EXPO_PUBLIC_API_URL` = adresse du serveur (https).
-- [ ] Clé d'envoi: pas de `.jks` existant. Créer avec `sh kalam/scripts/createUploadKey.sh` (ou `keytool`, voir `PUBLISHING.md` §11), sauvegarder le fichier et le mot de passe en lieu sûr.
-- [ ] Secrets `KALAM_KEYSTORE_BASE64`, `KALAM_KEYSTORE_PASSWORD`, `KALAM_KEY_PASSWORD`.
-- [ ] Actions → « Envoi sur Google Play » → Run workflow (`version_code` 1, piste `internal`, « publish » décoché, état `draft`) → télécharger `kalam-aab-signe` (Artifacts, 1 jour).
-- [ ] Play Console: créer l'application « Kalam », envoyer le `.aab` en test interne, remplir les déclarations.
+Dernière mise à jour: 2026-11-12. À cocher au fur et à mesure.
+- [x] Serveur en ligne sur Google Cloud Run (projet `kalam-514519`, région europe-west1, `/health` répond `{"ok":true,"configured":true}`), déployé avec `backend/deploy-cloudrun.sh`. La clé d'API Anthropic est dans Secret Manager (jamais dans le dépôt). Render n'est pas utilisé.
+- [x] Six secrets GitHub créés: `KALAM_APP_ID`, `KALAM_KEY_ALIAS`, `EXPO_PUBLIC_API_URL` (adresse du serveur Cloud Run), `KALAM_KEYSTORE_BASE64`, `KALAM_KEYSTORE_PASSWORD`, `KALAM_KEY_PASSWORD`.
+- [x] Clé d'envoi créée (`kalam-upload.jks`, dans Cloud Shell: à SAUVEGARDER hors de Cloud Shell avec son mot de passe).
+- [x] `.aab` signé construit par GitHub Actions (exécution 43302726772, artefact `kalam-aab-signe`, conservé 1 jour). Construit avec l'adresse réelle du serveur (la construction de production refuse sinon). Relancer: `bash ~/test/kalam/scripts/buildAab.sh 1`.
+- [ ] Play Console: créer l'application « Kalam » (envoi manuel du premier `.aab`, Test interne, « Signature d'application par Google Play »).
+- [ ] Décider du mode enfant (4-8 ans): il fait entrer l'application dans le programme « Famille » de Google (règles plus strictes). Option 1: l'accepter. Option 2: première version sans mode enfant.
+- [ ] Signalement d'une réponse IA inappropriée dans l'application (demandé par la règle de Google sur les contenus générés par IA, requis avant la production): n'existe pas encore. À concevoir (le signalement envoie un texte au serveur: à déclarer dans PRIVACY.md et la « Sécurité des données »).
+- [ ] Compte de service Play (droit « Publier des versions ») + secret `PLAY_SERVICE_ACCOUNT_JSON` pour les envois suivants automatiques.
 - [ ] Politique de confidentialité: retirer « BROUILLON » et renseigner le contact (`PRIVACY.md`), puis publier la page (`PUBLISHING.md` §12).
+- [ ] Alerte de budget Google Cloud (5 $) dans Facturation > Budgets et alertes.
 - [ ] Essai sur un vrai téléphone Android (voir plus haut).
 
 ## Pour aller plus loin

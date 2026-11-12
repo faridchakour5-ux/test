@@ -4,6 +4,8 @@
 # La clé d'API Anthropic est demandée ICI, sans affichage, et va directement dans Secret Manager:
 # elle ne passe ni par un fichier, ni par l'historique du terminal, ni par un chat.
 set -euo pipefail
+# Les questions de gcloud (ex. créer le dépôt d'images) reçoivent la réponse par défaut « oui »: rien à taper.
+export CLOUDSDK_CORE_DISABLE_PROMPTS=1
 
 PROJECT="${1:-$(gcloud config get-value project 2>/dev/null || true)}"
 REGION="${REGION:-europe-west1}"

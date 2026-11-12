@@ -84,3 +84,13 @@ Le fichier `.github/workflows/play-release.yml` construit le `.aab` signé avec 
 
 ## 12. Adresse publique de la politique de confidentialité
 Google Play demande une adresse web publique. Une fois `PRIVACY.md` relu (le texte est un brouillon: retirez « BROUILLON » du titre et renseignez le contact après validation), activez GitHub > Settings > Pages > Source = « GitHub Actions », puis lancez Actions > « Publier la politique de confidentialité » > Run workflow. L'adresse sera `https://<votre-compte>.github.io/<dépôt>/privacy.html`: collez-la dans la Play Console (fiche > Politique de confidentialité). Les parties marquées « INTERNE » de `PRIVACY.md` sont retirées de la page publique, et le workflow refuse de publier tant que « BROUILLON » ou « à renseigner » figure encore dans le texte public (option « allow_draft » pour un essai). Relancez le workflow après chaque modification de `PRIVACY.md`.
+
+## 13. Serveur sur Google Cloud Run (alternative à Render)
+Le script `backend/deploy-cloudrun.sh` fait tout en une commande (non essayé sur un vrai compte: si une étape échoue, copiez le message d'erreur sans la clé). Prérequis: un projet Google Cloud avec la facturation associée (carte demandée: Cloud Run a un quota gratuit mensuel, un « budget » de 5 $ avec alerte est conseillé).
+Dans Cloud Shell (icône `>_` de console.cloud.google.com):
+```
+git clone https://github.com/faridchakour5-ux/test.git
+cd test/backend
+bash deploy-cloudrun.sh ID_DU_PROJET
+```
+La clé d'API Anthropic est demandée sans affichage et va directement dans Secret Manager. À la fin, le script affiche l'adresse `https://…run.app` (à mettre dans le secret GitHub `EXPO_PUBLIC_API_URL`) et teste `/health`. Une seule copie du serveur tourne (`--max-instances 1`) car la limite de requêtes est en mémoire.

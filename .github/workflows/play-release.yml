@@ -19,6 +19,10 @@ on:
         description: "Envoyer sur Google Play (décocher pour seulement construire le .aab signé et le télécharger: premier envoi à la main)"
         type: boolean
         default: true
+      apk:
+        description: "Construire aussi un APK signé à installer directement sur un téléphone (essai seulement, pas pour Google Play)"
+        type: boolean
+        default: false
       status:
         description: "État de la version"
         required: true
@@ -100,6 +104,17 @@ jobs:
           jarsigner -verify -verbose -certs "$aab" | tee "$RUNNER_TEMP/js.txt" | tail -3
           grep -q "jar verified" "$RUNNER_TEMP/js.txt"
           if grep -q "Android Debug" "$RUNNER_TEMP/js.txt"; then echo "::error::Le .aab est signé avec la clé de débogage: envoi annulé"; exit 1; fi
+      - name: Compilation de l'APK signé (installation directe pour un essai)
+        if: ${{ inputs.apk }}
+        working-directory: kalam/android
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Conserver l'APK signé
+        if: ${{ inputs.apk }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: kalam-apk-signe
+          path: kalam/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 1
       - name: Conserver le .aab signé (premier envoi à la main dans la Play Console)
         if: ${{ !inputs.publish }}
         uses: actions/upload-artifact@v4

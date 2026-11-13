@@ -34,7 +34,7 @@ gcloud projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:$SA" 
 
 # Une seule copie du serveur: la limite de requêtes est gardée en mémoire.
 gcloud run deploy "$SERVICE" --source . --region "$REGION" --allow-unauthenticated --max-instances 1 \
-  --set-env-vars "TRUST_PROXY=1,DAILY_REQUEST_LIMIT=5000,KALAM_MODEL=claude-sonnet-5-5" \
+  --set-env-vars "TRUST_PROXY=1,DAILY_REQUEST_LIMIT=1000,PER_CLIENT_DAILY_LIMIT=200,HISTORY_FOR_AI=10,KALAM_MODEL=claude-haiku-5-5" \
   --set-secrets "ANTHROPIC_API_KEY=${SECRET}:latest"
 
 URL="$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')"

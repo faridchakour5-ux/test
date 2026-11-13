@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { createApp } from './app.js';
-import { parseDailyLimit, parseTrustProxy } from './config.js';
+import { parseCount, parseDailyLimit, parseTrustProxy } from './config.js';
 
 const PORT = Number(process.env.PORT ?? 8787);
 
@@ -11,13 +11,17 @@ const client = process.env.ANTHROPIC_API_KEY ? new Anthropic({ timeout: 25_000, 
 const app = createApp({
   log: { info: (line) => console.log(line), error: (...a) => console.error(...a) },
   client,
-  model: process.env.KALAM_MODEL ?? 'claude-sonnet-5-5',
+  model: process.env.KALAM_MODEL ?? 'claude-haiku-5-5',
   allowedOrigin: process.env.ALLOWED_ORIGIN ?? '*',
   // TRUST_PROXY = nombre de proxys de confiance devant le serveur (Render/Fly/Railway: voir PUBLISHING.md). Sans cela, tous les
   // utilisateurs partageraient l'adresse du proxy; avec une valeur trop forte, l'adresse pourrait être falsifiée.
   trustProxy: parseTrustProxy(process.env.TRUST_PROXY),
   // Plafond de requêtes par jour (UTC) pour borner la facture de l'API. 0 = illimité. Valeur invalide: le serveur ne démarre pas.
   dailyBudget: parseDailyLimit(process.env.DAILY_REQUEST_LIMIT),
+  // Plafond de requêtes valides par client (adresse) et par 24 h: protège le crédit contre un seul abuseur. 0 = pas de limite.
+  perClientDaily: parseCount('PER_CLIENT_DAILY_LIMIT', process.env.PER_CLIENT_DAILY_LIMIT, 200),
+  // Derniers messages envoyés à l'IA (1 à 20): moins d'historique = moins de tokens par tour.
+  historyForAi: parseCount('HISTORY_FOR_AI', process.env.HISTORY_FOR_AI, 10, { min: 1, max: 20 }),
 });
 
 app.listen(PORT, () => console.log(`Kalam backend on :${PORT} (${client ? 'configured' : 'NOT configured: set ANTHROPIC_API_KEY'})`));

@@ -15,4 +15,8 @@ services:
       - key: DAILY_REQUEST_LIMIT
         value: "5000"
       - key: KALAM_MODEL
-        value: claude-sonnet-5-5
+        value: claude-haiku-5-5
+      - key: PER_CLIENT_DAILY_LIMIT
+        value: "200"
+      - key: HISTORY_FOR_AI
+        value: "10"

@@ -239,7 +239,7 @@ test('pii: enfants refusés, autres masqués, réponses du professeur intactes',
 });
 
 // ---------- corrections issues d'une revue de sécurité ----------
-import { parseDailyLimit, parseTrustProxy } from '../src/config.js';
+import { parseCount, parseDailyLimit, parseTrustProxy } from '../src/config.js';
 
 test('config: TRUST_PROXY et DAILY_REQUEST_LIMIT invalides arrêtent le démarrage (jamais de protection coupée en silence)', () => {
   assert.equal(parseTrustProxy(undefined), 0);
@@ -308,4 +308,18 @@ test('pii: des phrases ordinaires ne sont pas prises pour des adresses (« 5 min
   }
   assert.match(redactPii('I live at 5 Baker Street today'), /I live at \[address removed\] today/);
   assert.deepEqual(findPii('12 rue de la Paix et 5 Baker Street').sort(), ['address']);
+});
+
+test('parseCount: absent = défaut, entier valide accepté, tout le reste refusé avec le nom de la variable', () => {
+  assert.equal(parseCount('X', undefined, 7), 7);
+  assert.equal(parseCount('X', '', 7), 7);
+  assert.equal(parseCount('X', '200', 7), 200);
+  assert.equal(parseCount('X', '0', 7), 0);
+  for (const bad of ['abc', '-1', '1.5', '10 ', 'dix', '1e3']) {
+    if (bad === '10 ') { assert.equal(parseCount('X', bad, 7), 10); continue; } // espaces autour tolérés
+    assert.throws(() => parseCount('PER_CLIENT_DAILY_LIMIT', bad, 7), /PER_CLIENT_DAILY_LIMIT invalide/);
+  }
+  assert.throws(() => parseCount('HISTORY_FOR_AI', '0', 10, { min: 1, max: 20 }), /entre 1 et 20/);
+  assert.throws(() => parseCount('HISTORY_FOR_AI', '21', 10, { min: 1, max: 20 }), /entre 1 et 20/);
+  assert.equal(parseCount('HISTORY_FOR_AI', '20', 10, { min: 1, max: 20 }), 20);
 });

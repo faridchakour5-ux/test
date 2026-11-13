@@ -16,3 +16,13 @@ export function parseDailyLimit(raw, fallback = 20_000) {
   if (!/^\d+$/.test(String(raw).trim())) throw new Error(`DAILY_REQUEST_LIMIT invalide: « ${raw} » (attendu: nombre entier, ex. 5000)`);
   return Number(raw);
 }
+
+// Entier positif lu dans l'environnement (ex. PER_CLIENT_DAILY_LIMIT). Absent = valeur par défaut; invalide = le serveur ne démarre pas.
+// `min`/`max` bornent la valeur (0 est permis seulement si min vaut 0).
+export function parseCount(name, raw, fallback, { min = 0, max = 1_000_000 } = {}) {
+  if (raw === undefined || raw === '') return fallback;
+  if (!/^\d+$/.test(String(raw).trim())) throw new Error(`${name} invalide: « ${raw} » (attendu: nombre entier)`);
+  const n = Number(raw);
+  if (n < min || n > max) throw new Error(`${name} invalide: « ${raw} » (entre ${min} et ${max})`);
+  return n;
+}

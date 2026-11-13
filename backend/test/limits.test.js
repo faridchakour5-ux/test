@@ -96,3 +96,13 @@ test('un corps énorme est refusé (413) et la connexion est coupée: le serveur
     assert.ok(result.sent < 10 * 1024 * 1024, `le serveur a laissé envoyer ${result.sent} octets`);
   });
 });
+
+test('limiteur: refund rend la dernière place du client (et libère la clé vide)', async () => {
+  const { createRateLimiter } = await import('../src/rateLimit.js');
+  const allow = createRateLimiter({ max: 1, windowMs: 60_000 });
+  assert.equal(allow('a', 0), true);
+  assert.equal(allow('a', 1), false);
+  allow.refund('a');
+  assert.equal(allow('a', 2), true);
+  allow.refund('inconnu'); // sans effet, sans erreur
+});

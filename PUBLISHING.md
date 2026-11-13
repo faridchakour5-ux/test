@@ -102,3 +102,12 @@ Pour essayer l'application sans passer par le Play Store: `bash ~/test/kalam/scr
 
 ## 15. Accès automatique à Google Play (compte de service)
 `bash ~/test/kalam/scripts/setupPlayAccess.sh ID_PROJET` (Cloud Shell) crée le compte de service `play-publisher`, sa clé, et l'enregistre directement dans le secret GitHub `PLAY_SERVICE_ACCOUNT_JSON` (fichier supprimé aussitôt). Il reste à inviter l'adresse affichée dans la Play Console (Utilisateurs et autorisations, droit « Publier des versions » sur Kalam seulement). Ensuite le workflow « Envoi sur Google Play » avec « publish » coché envoie directement les versions suivantes (version_code plus grand à chaque fois). Les déclarations (sécurité des données, classification, public cible) restent manuelles. Non essayé sur un vrai compte.
+
+## 16. Maîtriser le coût de l'IA (serveur)
+Chaque message d'un utilisateur est facturé sur la clé d'API du propriétaire. Réglages du serveur (variables d'environnement, voir `backend/deploy-cloudrun.sh`):
+- `KALAM_MODEL` (défaut `claude-haiku-5-5`, le moins cher): changer pour un modèle plus puissant augmente la qualité et le coût.
+- `DAILY_REQUEST_LIMIT` (1000 dans le script de déploiement): plafond global par jour (UTC). C'est la vraie borne de la facture.
+- `PER_CLIENT_DAILY_LIMIT` (défaut 200, 0 = aucune): requêtes valides par adresse et par 24 h. Le client est identifié par son adresse: sur un réseau mobile partagé, plusieurs personnes partagent ce plafond. Une limite réelle par personne demandera un identifiant d'installation et la vérification Play Integrity (voir le plan abonnement).
+- `HISTORY_FOR_AI` (défaut 10, de 1 à 20): derniers messages réellement envoyés à l'IA. Moins d'historique = moins de tokens par tour.
+Au-delà de la limite par client, le serveur répond 429 « daily limit reached » (l'application affiche aujourd'hui le message « trop de messages d'un coup »: un message dédié reste à ajouter). Mettre en plus une limite de dépense mensuelle sur console.anthropic.com.
+

@@ -234,7 +234,7 @@ test('modèle par défaut', async () => {
   const client = { messages: { create: async (p) => { calls.push(p); return { content: [{ type: 'text', text: 'Hi!' }] }; } } };
   await withServer({ client }, async (base) => {
     await post(base, '/chat', valid);
-    assert.equal(calls[0].model, 'claude-sonnet-5-5');
+    assert.equal(calls[0].model, 'claude-haiku-5-5'); // modèle économique par défaut (réglable avec KALAM_MODEL)
   });
 });
 test('limite de débit: par client, via X-Forwarded-For seulement si le proxy est de confiance', async () => {
@@ -337,5 +337,50 @@ test('flux: une panne avant le premier morceau ou une réponse vide rend la plac
     assert.equal((await post(base, '/chat/stream', valid)).status, 200);
     assert.equal((await post(base, '/chat/stream', valid)).status, 200);
     assert.equal((await post(base, '/chat/stream', valid)).status, 503); // 2 réponses réussies: budget épuisé
+  });
+});
+
+test('limite par client et par jour: au-delà, 429 « daily limit reached »; un autre client n\'est pas touché; une requête invalide ne compte pas', async () => {
+  const hit = (base, ip, body = valid) => fetch(`${base}/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-forwarded-for': ip }, body: JSON.stringify(body) });
+  await withServer({ client: textClient(), trustProxy: true, perClientDaily: 2, rate: { max: 100, windowMs: 60_000 } }, async (base) => {
+    assert.equal((await hit(base, '1.1.1.1', { nope: true })).status, 400); // invalide: ne consomme rien
+    assert.equal((await hit(base, '1.1.1.1')).status, 200);
+    assert.equal((await hit(base, '1.1.1.1')).status, 200);
+    const r = await hit(base, '1.1.1.1');
+    assert.deepEqual([r.status, await r.json()], [429, { error: 'daily limit reached' }]);
+    assert.equal((await hit(base, '2.2.2.2')).status, 200); // un autre client
+  });
+});
+test('limite par client: une panne du fournisseur rend la place (les nouvelles tentatives ne la vident pas), flux compris', async () => {
+  await withServer({ client: failClient(500), perClientDaily: 1, rate: { max: 100, windowMs: 60_000 } }, async (base) => {
+    for (let i = 0; i < 4; i++) assert.equal((await post(base, '/chat', valid)).status, 502);
+    for (let i = 0; i < 4; i++) assert.equal((await post(base, '/chat/stream', valid)).status, 502);
+  });
+});
+test('budget global épuisé: la place du client est rendue', async () => {
+  await withServer({ client: textClient(), dailyBudget: 1, perClientDaily: 5, rate: { max: 100, windowMs: 60_000 } }, async (base) => {
+    assert.equal((await post(base, '/chat', valid)).status, 200);
+    for (let i = 0; i < 8; i++) assert.equal((await post(base, '/chat', valid)).status, 503); // 503 à chaque fois, jamais 429
+  });
+});
+test('perClientDaily = 0: pas de limite par client', async () => {
+  await withServer({ client: textClient(), perClientDaily: 0, rate: { max: 1000, windowMs: 60_000 } }, async (base) => {
+    for (let i = 0; i < 20; i++) assert.equal((await post(base, '/chat', valid)).status, 200);
+  });
+});
+test('historique envoyé à l\'IA: seulement les derniers messages (historyForAi), le premier est toujours un message de l\'apprenant', async () => {
+  const calls = [];
+  const client = { messages: { create: async (p) => { calls.push(p); return { content: [{ type: 'text', text: 'ok' }] }; } } };
+  const msgs = Array.from({ length: 19 }, (_, i) => ({ role: i % 2 === 0 ? 'user' : 'assistant', content: `m${i}` }));
+  await withServer({ client, historyForAi: 4 }, async (base) => {
+    await post(base, '/chat', { ...valid, messages: msgs });
+    const sent = calls[0].messages;
+    assert.ok(sent.length <= 5, `au plus 4 messages (+ la consigne d'ouverture si besoin): ${sent.length}`);
+    assert.equal(sent[0].role, 'user');
+    assert.equal(sent.at(-1).content, 'm18'); // le dernier message est conservé
+  });
+  await withServer({ client }, async (base) => {
+    await post(base, '/chat', { ...valid, messages: msgs });
+    assert.ok(calls.at(-1).messages.length <= 11, 'par défaut: 10 derniers messages');
   });
 });

@@ -11,8 +11,13 @@ export const OPENING_PROMPT = '(Start the role-play now. Greet me briefly in cha
 const MAX_BODY = 20_000;
 
 // Crée le serveur HTTP. `client` est le client Anthropic (ou un faux dans les tests): aucune clé ici.
-export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin = '*', rate = { max: 30, windowMs: 60_000 }, trustProxy = false, dailyBudget = 0, log = console }) {
+// `perClientDaily`: nombre maximal de requêtes valides par client et par période de 24 h (0 = pas de limite). Le client est identifié par son
+// adresse: des personnes derrière la même adresse (réseau mobile partagé) partagent donc ce plafond; il sert surtout contre les abus.
+// `historyForAi`: nombre de derniers messages réellement envoyés à l'IA (le coût d'un tour croît avec l'historique).
+export const DAY_MS = 86_400_000;
+export function createApp({ client, model = 'claude-haiku-5-5', allowedOrigin = '*', rate = { max: 30, windowMs: 60_000 }, trustProxy = false, dailyBudget = 0, perClientDaily = 0, historyForAi = 10, log = console }) {
   const allow = createRateLimiter(rate);
+  const clientDay = perClientDaily > 0 ? createRateLimiter({ max: perClientDaily, windowMs: DAY_MS }) : null;
   const takeBudget = createDailyBudget(dailyBudget);
 
   function send(res, status, payload) {
@@ -43,7 +48,7 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
 
   // Réponse en flux (SSE): chaque morceau de texte part dès qu'il arrive. Les erreurs AVANT le premier
   // morceau sont de vraies erreurs HTTP (le client peut se replier sur /chat); après, un évènement « error ».
-  async function streamReply(req, res, params) {
+  async function streamReply(req, res, params, giveBack) {
     let aborted = false;
     res.on('close', () => { aborted = true; });
     let stream;
@@ -51,7 +56,7 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
       stream = await client.messages.create({ ...params, stream: true });
     } catch (e) {
       log.error('anthropic stream error', e?.status ?? e?.message);
-      takeBudget.refund(); // rien n'a été produit: la place du budget est rendue (comme pour /chat)
+      giveBack(); // rien n'a été produit: les places du budget et du client sont rendues (comme pour /chat)
       return send(res, e?.status === 429 ? 429 : 502, { error: 'teacher unavailable' });
     }
     let started = false;
@@ -77,11 +82,11 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
           res.write(`data: ${JSON.stringify({ delta: ev.delta.text })}\n\n`);
         }
       }
-      if (!total.trim()) { takeBudget.refund(); return started ? res.end(`data: ${JSON.stringify({ error: 'empty reply' })}\n\n`) : send(res, 502, { error: 'empty reply' }); }
+      if (!total.trim()) { giveBack(); return started ? res.end(`data: ${JSON.stringify({ error: 'empty reply' })}\n\n`) : send(res, 502, { error: 'empty reply' }); }
       res.end(`data: ${JSON.stringify({ done: true })}\n\n`);
     } catch (e) {
       log.error('anthropic stream error', e?.status ?? e?.message);
-      if (!started) { takeBudget.refund(); return send(res, e?.status === 429 ? 429 : 502, { error: 'teacher unavailable' }); } // avant le 1er morceau: rien produit
+      if (!started) { giveBack(); return send(res, e?.status === 429 ? 429 : 502, { error: 'teacher unavailable' }); } // avant le 1er morceau: rien produit
       res.end(`data: ${JSON.stringify({ error: 'teacher unavailable' })}\n\n`);
     }
   }
@@ -103,7 +108,8 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
       const streaming = req.method === 'POST' && path === '/chat/stream';
       if (req.method !== 'POST' || (path !== '/chat' && !streaming)) return send(res, 404, { error: 'not found' });
 
-      if (!allow(clientKey(req, trustProxy))) return send(res, 429, { error: 'too many requests' });
+      const key = clientKey(req, trustProxy);
+      if (!allow(key)) return send(res, 429, { error: 'too many requests' });
       if (!client) return send(res, 503, { error: 'server not configured' });
 
       let body;
@@ -122,11 +128,14 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
       const clean = sanitizeMessages(incoming, value.ageProfile);
       if (clean.error) return send(res, 400, { error: clean.error });
       // Le budget quotidien ne compte que les requêtes valides, celles qui coûtent vraiment un appel à l'IA.
-      if (!takeBudget()) return send(res, 503, { error: 'daily budget reached' });
+      if (clientDay && !clientDay(key)) return send(res, 429, { error: 'daily limit reached' });
+      if (!takeBudget()) { clientDay?.refund(key); return send(res, 503, { error: 'daily budget reached' }); }
+      const giveBack = () => { takeBudget.refund(); clientDay?.refund(key); };
 
       // La conversation commence par le salut du professeur (réponse à la consigne d'ouverture): l'API demande un premier message de
       // l'apprenant, on remet donc la consigne d'ouverture devant (l'historique fenêtré peut aussi commencer par le professeur).
-      const history = clean.messages[0]?.role === 'assistant' ? [{ role: 'user', content: OPENING_PROMPT }, ...clean.messages] : clean.messages;
+      const recent = clean.messages.slice(-Math.max(1, historyForAi));
+      const history = recent[0]?.role === 'assistant' ? [{ role: 'user', content: OPENING_PROMPT }, ...recent] : recent;
       const params = {
         model,
         max_tokens: value.ageProfile === 'kids' ? 150 : 300,
@@ -134,16 +143,16 @@ export function createApp({ client, model = 'claude-sonnet-5-5', allowedOrigin =
         messages: history,
       };
 
-      if (streaming) return await streamReply(req, res, params);
+      if (streaming) return await streamReply(req, res, params, giveBack);
 
       try {
         const reply = await client.messages.create(params);
         const text = reply.content.filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
-        if (!text) { takeBudget.refund(); return send(res, 502, { error: 'empty reply' }); }
+        if (!text) { giveBack(); return send(res, 502, { error: 'empty reply' }); }
         send(res, 200, { reply: text });
       } catch (e) {
         log.error('anthropic error', e?.status ?? e?.message);
-        takeBudget.refund(); // l'appel a échoué sans rien produire: la place est rendue (les nouvelles tentatives ne vident pas le budget)
+        giveBack(); // l'appel a échoué sans rien produire: les places sont rendues (les nouvelles tentatives ne vident pas les budgets)
         // 429 côté fournisseur: on dit au client de réessayer plus tard; le reste est une panne côté serveur.
         send(res, e?.status === 429 ? 429 : 502, { error: 'teacher unavailable' });
       }

@@ -10,7 +10,7 @@ export function createRateLimiter({ max = 30, windowMs = 60_000, maxKeys = 10_00
     }
   }
 
-  return function allow(key, now = Date.now()) {
+  const allow = function allow(key, now = Date.now()) {
     if (hits.size >= maxKeys && !hits.has(key)) {
       prune(now);
       // Toujours plein de clients actifs (ex.: adresses falsifiées en rafale): on écarte les plus anciens pour garder la mémoire bornée.
@@ -25,6 +25,14 @@ export function createRateLimiter({ max = 30, windowMs = 60_000, maxKeys = 10_00
     hits.set(key, recent);
     return true;
   };
+  // Rend la dernière place prise par ce client (appel au fournisseur échoué sans rien produire).
+  allow.refund = (key) => {
+    const times = hits.get(key);
+    if (!times || times.length === 0) return;
+    times.pop();
+    if (times.length === 0) hits.delete(key);
+  };
+  return allow;
 }
 
 // Plafond global quotidien (UTC): protège le budget de l'API en cas d'abus ou de boucle.

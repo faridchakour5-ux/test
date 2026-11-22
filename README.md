@@ -4,6 +4,10 @@ Apprendre les langues en parlant. Monorepo:
 - `kalam/` : application mobile (Expo, React Native, TypeScript)
 - `backend/` : serveur qui garde la clé API et appelle le professeur IA
 
+## Applications
+- **Zitoun** (`zitoun/`): commande d'huile d'olive au Maroc (litres, intensité, livraison, envoi par WhatsApp). Voir `zitoun/README.md`.
+- **Kalam** (`kalam/` + `backend/`): apprendre les langues en parlant. **En pause.**
+
 ## Documentation
 - `docs/ETAT.md` : où en est le projet, ce qui reste à faire et ce que vous devez faire vous-même (à lire en premier).
 - `docs/ARCHITECTURE.md` : comment l'application est construite et pourquoi (plan du dépôt, parcours d'un message, décisions, tests, recettes).

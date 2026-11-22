@@ -1,3 +1,5 @@
+> **PAUSE (2026-11-22):** le propriétaire a mis Kalam en pause et travaille sur **Zitoun** (`zitoun/`, huile d'olive au Maroc). Kalam est prêt pour la suite (test interne publié sur Google Play, serveur Cloud Run en ligne); les points ci-dessous restent valables à la reprise.
+
 # Où en est Kalam ? (à lire en premier)
 
 Ce fichier dit, en mots simples, ce qui est fait, ce qui ne l'est pas, et ce que vous devez faire vous-même.

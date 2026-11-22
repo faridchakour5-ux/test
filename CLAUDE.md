@@ -1,5 +1,7 @@
 # Kalam — règles du projet
 
+> **Kalam est en PAUSE** (décision du propriétaire, 2026-11-22). Le travail actif est **Zitoun** (`zitoun/`): application Android d'huile d'olive au Maroc (voir `zitoun/README.md`). Pour Zitoun: vérifier dans `zitoun/` avec `npx tsc --noEmit && npx eslint . && npx jest` (suite complète), même branche, mêmes règles de langue (français simple), de commit et de sécurité que ci-dessous; interface simple, minimaliste, élégante; aucune clé, aucun suivi, aucun appel réseau; arabe (droite à gauche) et français.
+
 Application mobile (Expo SDK 58, React Native, TypeScript) pour apprendre l'anglais et le français en parlant. Dossiers: `kalam/` (application), `backend/` (serveur Node qui parle à l'IA), `docs/`.
 Lire d'abord `docs/ETAT.md` (état et tâches du propriétaire), puis `docs/ARCHITECTURE.md` si besoin.
 

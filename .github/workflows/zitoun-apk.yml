@@ -1,0 +1,44 @@
+name: Zitoun APK (essai sur téléphone)
+
+# Lancement MANUEL (Actions > Zitoun APK > Run workflow). Construit un APK à installer directement sur un téléphone Android pour
+# ESSAYER l'application. Ce n'est PAS le fichier à publier sur Google Play (signé avec la clé de débogage).
+# Facultatif: secret ZITOUN_SELLER_WHATSAPP = numéro WhatsApp du vendeur, indicatif compris, chiffres seulement (ex. 212612345678).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: zitoun
+    env:
+      EXPO_PUBLIC_SELLER_WHATSAPP: ${{ secrets.ZITOUN_SELLER_WHATSAPP }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: zitoun/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+      - run: npm run typecheck && npm run lint && npm test -- --ci
+      - name: Projet Android natif
+        run: npx expo prebuild --platform android --no-install
+      - name: Compilation de l'APK
+        working-directory: zitoun/android
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Conserver l'APK (3 jours)
+        uses: actions/upload-artifact@v4
+        with:
+          name: zitoun-apk
+          path: zitoun/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 3

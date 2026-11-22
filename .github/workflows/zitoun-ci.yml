@@ -1,0 +1,57 @@
+name: Zitoun CI
+
+on:
+  push:
+    paths: ['zitoun/**', '.github/workflows/zitoun-*.yml']
+  pull_request:
+    paths: ['zitoun/**', '.github/workflows/zitoun-*.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zitoun-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: zitoun
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: zitoun/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --ci
+      # Les dates de livraison dépendent du fuseau horaire: la suite est rejouée dans deux fuseaux extrêmes.
+      - name: Tests dans le fuseau Pacific/Kiritimati
+        run: npm test -- --ci
+        env:
+          TZ: Pacific/Kiritimati
+      - name: Tests dans le fuseau America/Los_Angeles
+        run: npm test -- --ci
+        env:
+          TZ: America/Los_Angeles
+      # Compilation réelle du bundle Android (Hermes): détecte tout de suite un import natif cassé.
+      - name: Bundle Android
+        run: npx expo export --platform android --output-dir /tmp/zitoun-android
+      # Manifeste Android réel: l'application n'a besoin que d'Internet (le lien WhatsApp s'ouvre dans l'autre application).
+      - name: Manifeste Android (permissions)
+        run: |
+          rm -rf /tmp/zitoun-native && mkdir -p /tmp/zitoun-native/app
+          tar --exclude=./node_modules --exclude=./android --exclude=./ios -cf - . | tar -xf - -C /tmp/zitoun-native/app
+          ln -s "$PWD/node_modules" /tmp/zitoun-native/app/node_modules
+          cd /tmp/zitoun-native/app && npx expo prebuild --platform android --no-install
+          node -e "
+          const m=require('fs').readFileSync('android/app/src/main/AndroidManifest.xml','utf8');
+          const kept=[...m.matchAll(/<uses-permission android:name=\"([^\"]+)\"\/>/g)].map(x=>x[1]).sort();
+          if (JSON.stringify(kept)!==JSON.stringify(['android.permission.INTERNET'])) { console.error('permissions inattendues', kept); process.exit(1); }
+          if (!/allowBackup=\"false\"/.test(m)) { console.error('allowBackup doit être false'); process.exit(1); }
+          console.log('ok', kept.join(' '))"

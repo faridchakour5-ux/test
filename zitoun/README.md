@@ -29,5 +29,9 @@ Dans Cloud Shell: `bash ~/test/zitoun/scripts/buildApk.sh 212612345678` (votre n
 ## Identifiant Android
 Par défaut `com.faridchakour.zitoun` (`app.json`). Réglable sans modifier de fichier avec la variable `ZITOUN_APP_ID`. Il devient **définitif** au premier envoi sur Google Play.
 
+## Le fichier .aab (Google Play)
+Dans Cloud Shell: `bash ~/test/zitoun/scripts/buildAab.sh 1` (le numéro est la version: 1 la première fois, puis 2, 3…). Le script lance le workflow **Zitoun .aab**, attend la fin (15 à 20 minutes) et propose le fichier en téléchargement. Il est signé avec votre clé d'envoi: celle de Kalam sert aussi pour Zitoun (secrets `KALAM_KEYSTORE_*`), sauf si vous créez des secrets `ZITOUN_KEYSTORE_*`. Secrets facultatifs: `ZITOUN_APP_ID` (sinon `com.faridchakour.zitoun`) et `ZITOUN_SELLER_WHATSAPP`. ⚠️ Le numéro WhatsApp, les huiles et les prix sont **intégrés au fichier à la construction**: reconstruisez-le après chaque changement.
+Le tout premier envoi se fait à la main dans la Play Console (Créer une application « Zitoun » → Test interne → Importer le .aab). Les suivants peuvent partir par le workflow avec « publish » coché, une fois le compte de service `play-publisher` autorisé sur l'application Zitoun.
+
 ## Pour publier sur Google Play (plus tard)
 Même chaîne que Kalam (voir `PUBLISHING.md` à la racine): clé d'envoi, workflow, première version à envoyer à la main. Avant la production: politique de confidentialité (l'application ne collecte rien, mais le message WhatsApp contient les informations de livraison du client) et déclaration « Sécurité des données ».

@@ -1,0 +1,126 @@
+name: Zitoun .aab (Google Play)
+
+# Lancement MANUEL (Actions > Zitoun .aab > Run workflow). Construit le .aab signé de Zitoun avec VOTRE clé d'envoi, puis le met à
+# disposition en téléchargement (« publish » décoché: premier envoi à la main dans la Play Console) ou l'envoie sur Google Play.
+# La clé d'envoi de Kalam peut servir aussi pour Zitoun (une clé d'envoi vaut pour tout un compte développeur): les secrets
+# KALAM_KEYSTORE_* sont utilisés tant que des secrets ZITOUN_KEYSTORE_* ne sont pas créés.
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: "Numéro de version Android (entier, plus grand que celui du dernier envoi; 1 pour le tout premier)"
+        required: true
+        default: "1"
+      publish:
+        description: "Envoyer sur Google Play (décocher pour seulement construire le .aab signé et le télécharger)"
+        type: boolean
+        default: false
+      track:
+        description: "Piste Google Play (si « publish » est coché)"
+        type: choice
+        default: internal
+        options: [internal, alpha, beta]
+      status:
+        description: "État de la version (si « publish » est coché)"
+        type: choice
+        default: draft
+        options: [draft, completed]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: play-release
+    defaults:
+      run:
+        working-directory: zitoun
+    env:
+      ZITOUN_APP_ID: ${{ secrets.ZITOUN_APP_ID }}
+      EXPO_PUBLIC_SELLER_WHATSAPP: ${{ secrets.ZITOUN_SELLER_WHATSAPP }}
+      ZITOUN_KEYSTORE_PASSWORD: ${{ secrets.ZITOUN_KEYSTORE_PASSWORD || secrets.KALAM_KEYSTORE_PASSWORD }}
+      ZITOUN_KEY_ALIAS: ${{ secrets.ZITOUN_KEY_ALIAS || secrets.KALAM_KEY_ALIAS }}
+      ZITOUN_KEY_PASSWORD: ${{ secrets.ZITOUN_KEY_PASSWORD || secrets.KALAM_KEY_PASSWORD }}
+      ZITOUN_VERSION_CODE: ${{ inputs.version_code }}
+    steps:
+      # Avant le téléchargement du code, le dossier zitoun/ n'existe pas encore: ces contrôles s'exécutent à la racine.
+      - name: Numéro de version valide (entier positif sans zéro au début)
+        working-directory: .
+        env:
+          VC: ${{ inputs.version_code }}
+        run: |
+          if ! printf '%s' "$VC" | grep -Eq '^[1-9][0-9]{0,9}$' || [ "$VC" -gt 2100000000 ]; then echo "::error::version_code invalide: « $VC » (entier de 1 à 2100000000, sans zéro au début)"; exit 1; fi
+      - name: Vérifier que les secrets sont présents
+        working-directory: .
+        env:
+          KEYSTORE_B64: ${{ secrets.ZITOUN_KEYSTORE_BASE64 || secrets.KALAM_KEYSTORE_BASE64 }}
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          PUBLISH: ${{ inputs.publish }}
+        run: |
+          missing=""
+          for v in ZITOUN_KEYSTORE_PASSWORD ZITOUN_KEY_ALIAS ZITOUN_KEY_PASSWORD; do
+            [ -n "${!v}" ] || missing="$missing $v"
+          done
+          [ -n "$KEYSTORE_B64" ] || missing="$missing KEYSTORE_BASE64"
+          if [ "$PUBLISH" = "true" ]; then [ -n "$PLAY_JSON" ] || missing="$missing PLAY_SERVICE_ACCOUNT_JSON"; fi
+          if [ -n "$missing" ]; then echo "::error::Secrets manquants:$missing (clé d'envoi: ZITOUN_KEYSTORE_* ou, à défaut, KALAM_KEYSTORE_*)"; exit 1; fi
+          if [ -z "$EXPO_PUBLIC_SELLER_WHATSAPP" ]; then echo "::warning::ZITOUN_SELLER_WHATSAPP absent: l'application dira « numéro du vendeur non configuré » au moment d'envoyer une commande."; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: zitoun/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+      # Les tests tournent sans les variables de publication (comme dans la CI).
+      - run: npm run typecheck && npm run lint && env -u ZITOUN_APP_ID -u ZITOUN_VERSION_CODE npm test -- --ci
+      - name: Projet Android natif
+        run: npx expo prebuild --platform android --no-install
+      - name: Clé de signature (jamais écrite dans le dépôt)
+        env:
+          KEYSTORE_B64: ${{ secrets.ZITOUN_KEYSTORE_BASE64 || secrets.KALAM_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/zitoun-upload.jks"
+          echo "ZITOUN_KEYSTORE_FILE=$RUNNER_TEMP/zitoun-upload.jks" >> "$GITHUB_ENV"
+      - name: Signer et numéroter la version
+        run: node scripts/signRelease.js android/app/build.gradle
+      - name: Compilation du .aab signé
+        working-directory: zitoun/android
+        run: ./gradlew bundleRelease --no-daemon
+      - name: Vérifier la signature avant l'envoi (clé de publication, jamais celle de débogage)
+        run: |
+          aab=android/app/build/outputs/bundle/release/app-release.aab
+          jarsigner -verify -verbose -certs "$aab" | tee "$RUNNER_TEMP/js.txt" | tail -3
+          grep -q "jar verified" "$RUNNER_TEMP/js.txt"
+          if grep -q "Android Debug" "$RUNNER_TEMP/js.txt"; then echo "::error::Le .aab est signé avec la clé de débogage: envoi annulé"; exit 1; fi
+      - name: Vérifier le nom de package du .aab
+        run: |
+          expected="${ZITOUN_APP_ID:-com.faridchakour.zitoun}"
+          unzip -p android/app/build/outputs/bundle/release/app-release.aab base/manifest/AndroidManifest.xml | strings | grep -q "$expected" || { echo "::error::le .aab ne contient pas le nom de package attendu: $expected"; exit 1; }
+          echo "nom de package: $expected"
+      - name: Conserver le .aab signé (premier envoi à la main dans la Play Console)
+        if: ${{ !inputs.publish }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: zitoun-aab-signe
+          path: zitoun/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 1
+      - name: Envoyer sur Google Play
+        if: ${{ inputs.publish }}
+        uses: r0adkll/upload-google-play@v1.1.3
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ secrets.ZITOUN_APP_ID || 'com.faridchakour.zitoun' }}
+          releaseFiles: zitoun/android/app/build/outputs/bundle/release/app-release.aab
+          track: ${{ inputs.track }}
+          status: ${{ inputs.status }}
+      - name: Effacer la clé
+        if: always()
+        working-directory: .
+        run: rm -f "$RUNNER_TEMP/zitoun-upload.jks"
